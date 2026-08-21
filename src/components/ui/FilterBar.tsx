@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import type { FondoTipo, DateRange } from '../../types/suppen'
 import { OPC_LIST } from '../../constants/suppen'
 
@@ -31,52 +32,79 @@ export function FilterBar({
 }: FilterBarProps) {
   const hasDateFilter = dateRange && onDateRangeChange
   const hasFondoFilter = fondo !== undefined && onFondoChange !== undefined
+  // id único para asociar etiquetas con controles (evita colisiones en la página)
+  const uid = useId()
+  const fondoId = `${uid}-fondo`
+  const fechaInicioId = `${uid}-inicio`
+  const fechaFinId = `${uid}-fin`
+  const entidadId = `${uid}-entidad`
 
   return (
-    <div className="flex flex-wrap items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-      <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Filtros:</label>
-
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-3 p-3 bg-gray-50 rounded-lg border border-gray-200" role="group" aria-label="Filtros del reporte">
       {hasFondoFilter && (
-        <select
-          value={fondo}
-          onChange={(e) => onFondoChange(e.target.value as FondoTipo | '')}
-          className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          {FONDOS.map(f => (
-            <option key={f.value} value={f.value}>{f.label}</option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <label htmlFor={fondoId} className="text-xs font-medium text-gray-600">
+            Fondo
+          </label>
+          <select
+            id={fondoId}
+            value={fondo}
+            onChange={(e) => onFondoChange(e.target.value as FondoTipo | '')}
+            className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            {FONDOS.map(f => (
+              <option key={f.value} value={f.value}>{f.label}</option>
+            ))}
+          </select>
+        </div>
       )}
 
       {hasDateFilter && (
         <>
-          <input
-            type="date"
-            value={dateRange.FechaInicio}
-            onChange={(e) => onDateRangeChange({ ...dateRange, FechaInicio: e.target.value })}
-            className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-          <span className="text-gray-400">a</span>
-          <input
-            type="date"
-            value={dateRange.FechaFinal}
-            onChange={(e) => onDateRangeChange({ ...dateRange, FechaFinal: e.target.value })}
-            className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+          <div className="flex items-center gap-2">
+            <label htmlFor={fechaInicioId} className="text-xs font-medium text-gray-600 whitespace-nowrap">
+              Desde
+            </label>
+            <input
+              id={fechaInicioId}
+              type="date"
+              value={dateRange.FechaInicio}
+              onChange={(e) => onDateRangeChange({ ...dateRange, FechaInicio: e.target.value })}
+              className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label htmlFor={fechaFinId} className="text-xs font-medium text-gray-600 whitespace-nowrap">
+              Hasta
+            </label>
+            <input
+              id={fechaFinId}
+              type="date"
+              value={dateRange.FechaFinal}
+              onChange={(e) => onDateRangeChange({ ...dateRange, FechaFinal: e.target.value })}
+              className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
         </>
       )}
 
       {showEntidad && onEntidadChange && (
-        <select
-          value={entidad}
-          onChange={(e) => onEntidadChange(e.target.value)}
-          className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="">Todas las OPC</option>
-          {OPC_LIST.map(opc => (
-            <option key={opc} value={opc}>{opc}</option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <label htmlFor={entidadId} className="text-xs font-medium text-gray-600 whitespace-nowrap">
+            Operadora
+          </label>
+          <select
+            id={entidadId}
+            value={entidad}
+            onChange={(e) => onEntidadChange(e.target.value)}
+            className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">Todas las OPC</option>
+            {OPC_LIST.map(opc => (
+              <option key={opc} value={opc}>{opc}</option>
+            ))}
+          </select>
+        </div>
       )}
     </div>
   )

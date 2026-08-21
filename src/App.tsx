@@ -314,7 +314,15 @@ function App() {
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <ReportTabs active={activeTab} onChange={setActiveTab} />
-        {views[activeTab]()}
+        <section
+          role="tabpanel"
+          id={`panel-${activeTab}`}
+          aria-labelledby={`tab-${activeTab}`}
+          tabIndex={0}
+          className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
+        >
+          {views[activeTab]()}
+        </section>
       </main>
 
       <footer className="bg-gray-800 text-gray-300 py-8 mt-12">
