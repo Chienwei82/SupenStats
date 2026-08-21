@@ -10,6 +10,7 @@ interface FilterBarProps {
   showEntidad?: boolean
   entidad?: string
   onEntidadChange?: (entidad: string) => void
+  onConsult?: () => void
 }
 
 const FONDOS: { value: FondoTipo | ''; label: string }[] = [
@@ -29,6 +30,7 @@ export function FilterBar({
   showEntidad = false,
   entidad = '',
   onEntidadChange,
+  onConsult,
 }: FilterBarProps) {
   const hasDateFilter = dateRange && onDateRangeChange
   const hasFondoFilter = fondo !== undefined && onFondoChange !== undefined
@@ -105,6 +107,20 @@ export function FilterBar({
             ))}
           </select>
         </div>
+      )}
+
+      {onConsult && (
+        <button
+          type="button"
+          onClick={onConsult}
+          className="ml-auto inline-flex items-center gap-2 px-4 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" />
+            <path strokeLinecap="round" d="M15 11h-8M15 11v-4M15 11v4" />
+          </svg>
+          Consultar
+        </button>
       )}
     </div>
   )
