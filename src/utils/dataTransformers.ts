@@ -127,12 +127,14 @@ export function transformComisiones(raw: RawComision[]): Comision[] {
   // La API devuelve un registro por tipo (APORTE/RENDIMIENTO/SALDO).
   // Para el dashboard de comisiones de administración usamos la comisión
   // de SALDO, que es la que aplica sobre el saldo administrado.
-  // Agrupamos por entidad para generar un solo registro por OPC.
+  // Devolvemos la serie histórica (un registro por entidad y fecha de corte)
+  // para que el gráfico pueda mostrar la evolución en el tiempo.
   const map = new Map<string, Comision>()
   for (const item of raw) {
     if (item.tipo !== 'SALDO') continue
     const entidad = normalizeEntityName(item.entidad)
-    const existing = map.get(entidad) ?? {
+    const key = `${entidad}|${item.fecha}`
+    const existing = map.get(key) ?? {
       Entidad: entidad,
       Fondo: item.codigofondo,
       FechaCorte: item.fecha,
@@ -142,7 +144,7 @@ export function transformComisiones(raw: RawComision[]): Comision[] {
     }
     existing.ComisionAdministracion = item['comisión'] ?? 0
     existing.ComisionTotal = item['comisión'] ?? 0
-    map.set(entidad, existing)
+    map.set(key, existing)
   }
   return Array.from(map.values())
 }
