@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import { formatDateShort, formatCurrencyBillions, groupBy, getUniqueValues, sortByDateAsc } from '../../utils/dataTransformers'
 import { OPC_COLORS } from '../../constants/suppen'
+import { ChartNote } from '../ui/ChartNote'
 import type { Cuenta } from '../../types/suppen'
 
 interface Props {
@@ -64,6 +65,7 @@ export function CuentasChart({ data }: Props) {
           ))}
         </LineChart>
       </ResponsiveContainer>
+      <ChartNote noteId="cuentas" />
     </div>
   )
 }

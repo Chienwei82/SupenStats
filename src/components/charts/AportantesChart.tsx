@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import { formatNumber, sortByDateAsc } from '../../utils/dataTransformers'
 import { OPC_COLORS } from '../../constants/suppen'
+import { ChartNote } from '../ui/ChartNote'
 import type { AfiliadoAportante } from '../../types/suppen'
 
 interface Props {
@@ -55,6 +56,7 @@ export function AportantesChart({ data }: Props) {
           <Bar dataKey="Aportantes" fill={OPC_COLORS['BCR-PENSION'] || '#10b981'} radius={[2, 2, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
+      <ChartNote noteId="aportantes" />
     </div>
   )
 }

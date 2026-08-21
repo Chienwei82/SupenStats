@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import { sortByDateAsc, groupBy, getUniqueValues, formatDateShort, formatCurrencyBillions } from '../../utils/dataTransformers'
 import { OPC_COLORS } from '../../constants/suppen'
+import { ChartNote } from '../ui/ChartNote'
 import type { Portafolio } from '../../types/suppen'
 
 interface Props {
@@ -58,6 +59,7 @@ export function ActivosChart({ data }: Props) {
           ))}
         </BarChart>
       </ResponsiveContainer>
+      <ChartNote noteId="activos" />
     </div>
   )
 }

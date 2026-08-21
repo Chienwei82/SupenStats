@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import { formatNumber } from '../../utils/dataTransformers'
 import { CHART_COLORS } from '../../constants/suppen'
+import { ChartNote } from '../ui/ChartNote'
 import type { LibreTransferencia } from '../../types/suppen'
 
 interface Props {
@@ -49,6 +50,7 @@ export function TransferenciasChart({ data }: Props) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      <ChartNote noteId="transferencias" />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import { formatNumber, sortByDateAsc } from '../../utils/dataTransformers'
 import { CHART_COLORS } from '../../constants/suppen'
+import { ChartNote } from '../ui/ChartNote'
 import type { AfiliadoDemografico } from '../../types/suppen'
 
 interface Props {
@@ -57,6 +58,7 @@ export function DemografiaChart({ data }: Props) {
           <Bar dataKey="Masculino" fill={CHART_COLORS[1]} radius={[2, 2, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
+      <ChartNote noteId="demografia" />
     </div>
   )
 }

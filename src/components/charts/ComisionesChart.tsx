@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import { sortByDateAsc, groupBy, getUniqueValues, formatDateShort } from '../../utils/dataTransformers'
 import { OPC_COLORS } from '../../constants/suppen'
+import { ChartNote } from '../ui/ChartNote'
 import type { Comision } from '../../types/suppen'
 
 interface Props {
@@ -82,6 +83,7 @@ export function ComisionesChart({ data }: Props) {
           ))}
         </LineChart>
       </ResponsiveContainer>
+      <ChartNote noteId="comisiones" />
     </div>
   )
 }

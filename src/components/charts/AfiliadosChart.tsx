@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import { sortByDateAsc, groupBy, getUniqueValues, formatDateShort, formatNumber } from '../../utils/dataTransformers'
 import { OPC_COLORS } from '../../constants/suppen'
+import { ChartNote } from '../ui/ChartNote'
 import type { Afiliado } from '../../types/suppen'
 
 interface Props {
@@ -65,6 +66,7 @@ export function AfiliadosChart({ data }: Props) {
           ))}
         </AreaChart>
       </ResponsiveContainer>
+      <ChartNote noteId="afiliados" />
     </div>
   )
 }

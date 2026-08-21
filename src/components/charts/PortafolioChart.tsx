@@ -2,6 +2,7 @@ import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { CHART_COLORS } from '../../constants/suppen'
+import { ChartNote } from '../ui/ChartNote'
 import { sortByDateAsc } from '../../utils/dataTransformers'
 import type { Portafolio } from '../../types/suppen'
 
@@ -73,6 +74,7 @@ export function PortafolioChart({ data, title = 'Distribucion del Portafolio de 
           />
         </PieChart>
       </ResponsiveContainer>
+      <ChartNote noteId="portafolio" />
     </div>
   )
 }

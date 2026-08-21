@@ -3,6 +3,7 @@ import {
 } from 'recharts'
 import { formatCurrencyBillions, sortByDateAsc } from '../../utils/dataTransformers'
 import { CHART_COLORS } from '../../constants/suppen'
+import { ChartNote } from '../ui/ChartNote'
 import type { PortafolioISIN } from '../../types/suppen'
 
 interface Props {
@@ -74,6 +75,7 @@ export function PortafolioISINChart({ data }: Props) {
           />
         </PieChart>
       </ResponsiveContainer>
+      <ChartNote noteId="isin" />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import { formatDateShort, formatNumber, sortByDateAsc } from '../../utils/dataTransformers'
 import { CHART_COLORS } from '../../constants/suppen'
+import { ChartNote } from '../ui/ChartNote'
 import type { Beneficio } from '../../types/suppen'
 
 interface Props {
@@ -50,6 +51,7 @@ export function BeneficiosChart({ data }: Props) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      <ChartNote noteId="beneficios" />
     </div>
   )
 }
