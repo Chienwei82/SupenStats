@@ -44,16 +44,21 @@ export const CHART_COLORS = [
 
 export const FONDO_DEFAULT = 'ROP' as const
 
-export const DATE_RANGE_DEFAULT = {
-  FechaInicio: '2020-01-01',
-  FechaFinal: new Date().toISOString().split('T')[0],
+function isoDate(offsetYears: number): string {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() - offsetYears)
+  return d.toISOString().split('T')[0]
 }
 
-// Rango usado en el resumen inicial para que cargue rápido: últimos 2 años.
-const twoYearsAgo = new Date()
-twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2)
-export const SUMMARY_RANGE = {
-  FechaInicio: twoYearsAgo.toISOString().split('T')[0],
+function isoDateMonthsOffset(offsetMonths: number): string {
+  const d = new Date()
+  d.setMonth(d.getMonth() - offsetMonths)
+  return d.toISOString().split('T')[0]
+}
+
+// Rango por defecto para los reportes históricos: últimos 5 años.
+export const DATE_RANGE_DEFAULT = {
+  FechaInicio: isoDate(5),
   FechaFinal: new Date().toISOString().split('T')[0],
 }
 
@@ -61,6 +66,6 @@ export const SUMMARY_RANGE = {
 // (55MB sin filtro). Limitamos a los últimos 3 meses para que la consulta
 // sea rápida y suficiente para el donut y el gráfico de activos.
 export const PORTFOLIO_RANGE = {
-  FechaInicio: '2026-05-01',
+  FechaInicio: isoDateMonthsOffset(3),
   FechaFinal: new Date().toISOString().split('T')[0],
 }

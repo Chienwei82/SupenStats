@@ -37,9 +37,6 @@ function App() {
 
   const [afFondo, setAfFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
 
-  const [actFondo, setActFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
-  const [actDates, setActDates] = useState<DateRange>(PORTFOLIO_RANGE)
-
   // Fetchers — wrapped in useCallback with filter dependencies
   const fetchRendimientoCb = useCallback(
     () => fetchRendimiento(rendFondo || undefined, undefined, rendDates),
@@ -60,35 +57,40 @@ function App() {
 
   const [benFondo, setBenFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
   const [cueFondo, setCueFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
-  const [liqFondo, setLiqFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
   const [apoFondo, setApoFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
   const [demFondo, setDemFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
   const [isinFondo, setIsinFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
 
+  const [ltEntidad, setLtEntidad] = useState<string>('')
   const [ltDates, setLtDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
 
+  const [benDates, setBenDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
+  const [cueDates, setCueDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
+  const [apoDates, setApoDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
+  const [demDates, setDemDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
+
   const fetchBeneficiosCb = useCallback(
-    () => fetchBeneficios(undefined, benFondo || undefined),
-    [benFondo]
+    () => fetchBeneficios(undefined, benFondo || undefined, benDates),
+    [benFondo, benDates]
   )
   const fetchCuentasCb = useCallback(
-    () => fetchCuentas(undefined, cueFondo || undefined),
-    [cueFondo]
+    () => fetchCuentas(undefined, cueFondo || undefined, cueDates),
+    [cueFondo, cueDates]
   )
   const fetchLtCb = useCallback(
-    () => fetchLibreTransferencia(undefined, ltDates),
-    [ltDates]
+    () => fetchLibreTransferencia(ltEntidad || undefined, ltDates),
+    [ltEntidad, ltDates]
   )
   const fetchAportantesCb = useCallback(
-    () => fetchAfiliadosAportantes(undefined, apoFondo || undefined),
-    [apoFondo]
+    () => fetchAfiliadosAportantes(undefined, apoFondo || undefined, apoDates),
+    [apoFondo, apoDates]
   )
   const fetchDemCb = useCallback(
-    () => fetchAfiliadosDemograficos(undefined, demFondo || undefined),
-    [demFondo]
+    () => fetchAfiliadosDemograficos(undefined, demFondo || undefined, demDates),
+    [demFondo, demDates]
   )
   const fetchIsinCb = useCallback(
-    () => fetchPortafolioISIN(undefined, isinFondo || undefined),
+    () => fetchPortafolioISIN(undefined, isinFondo || undefined, PORTFOLIO_RANGE),
     [isinFondo]
   )
 
@@ -107,7 +109,7 @@ function App() {
   // ---- Pantalla de bienvenida (sin fetch pesado) ----
   const renderInicio = () => (
     <ErrorBoundary>
-      <WelcomeScreen imageSrc="/welcome.png" />
+      <WelcomeScreen />
     </ErrorBoundary>
   )
 
@@ -186,10 +188,10 @@ function App() {
   const renderActivos = () => (
     <div className="space-y-4">
       <FilterBar
-        fondo={actFondo}
-        onFondoChange={setActFondo}
-        dateRange={actDates}
-        onDateRangeChange={setActDates}
+        fondo={portFondo}
+        onFondoChange={setPortFondo}
+        dateRange={portDates}
+        onDateRangeChange={setPortDates}
       />
       <div className="relative">
         {loadingPort && portafolio.length === 0 ? <ChartSkeleton /> : !errorPort ? (
@@ -204,7 +206,7 @@ function App() {
 
   const renderBeneficios = () => (
     <div className="space-y-4">
-      <FilterBar fondo={benFondo} onFondoChange={setBenFondo} />
+      <FilterBar fondo={benFondo} onFondoChange={setBenFondo} dateRange={benDates} onDateRangeChange={setBenDates} />
       <div className="relative">
         {loadingBen && beneficios.length === 0 ? <ChartSkeleton /> : !errorBen ? (
           <ErrorBoundary><BeneficiosChart data={beneficios} /></ErrorBoundary>
@@ -218,7 +220,7 @@ function App() {
 
   const renderCuentas = () => (
     <div className="space-y-4">
-      <FilterBar fondo={cueFondo} onFondoChange={setCueFondo} />
+      <FilterBar fondo={cueFondo} onFondoChange={setCueFondo} dateRange={cueDates} onDateRangeChange={setCueDates} />
       <div className="relative">
         {loadingCue && cuentas.length === 0 ? <ChartSkeleton /> : !errorCue ? (
           <ErrorBoundary><CuentasChart data={cuentas} /></ErrorBoundary>
@@ -232,7 +234,13 @@ function App() {
 
   const renderTransferencias = () => (
     <div className="space-y-4">
-      <FilterBar fondo={liqFondo} onFondoChange={setLiqFondo} dateRange={ltDates} onDateRangeChange={setLtDates} />
+      <FilterBar
+        dateRange={ltDates}
+        onDateRangeChange={setLtDates}
+        showEntidad
+        entidad={ltEntidad}
+        onEntidadChange={setLtEntidad}
+      />
       <div className="relative">
         {loadingLt && transferencias.length === 0 ? <ChartSkeleton /> : !errorLt ? (
           <ErrorBoundary><TransferenciasChart data={transferencias} /></ErrorBoundary>
@@ -246,7 +254,7 @@ function App() {
 
   const renderAportantes = () => (
     <div className="space-y-4">
-      <FilterBar fondo={apoFondo} onFondoChange={setApoFondo} />
+      <FilterBar fondo={apoFondo} onFondoChange={setApoFondo} dateRange={apoDates} onDateRangeChange={setApoDates} />
       <div className="relative">
         {loadingApo && aportantes.length === 0 ? <ChartSkeleton /> : !errorApo ? (
           <ErrorBoundary><AportantesChart data={aportantes} /></ErrorBoundary>
@@ -260,7 +268,7 @@ function App() {
 
   const renderDemografia = () => (
     <div className="space-y-4">
-      <FilterBar fondo={demFondo} onFondoChange={setDemFondo} />
+      <FilterBar fondo={demFondo} onFondoChange={setDemFondo} dateRange={demDates} onDateRangeChange={setDemDates} />
       <div className="relative">
         {loadingDem && demografia.length === 0 ? <ChartSkeleton /> : !errorDem ? (
           <ErrorBoundary><DemografiaChart data={demografia} /></ErrorBoundary>

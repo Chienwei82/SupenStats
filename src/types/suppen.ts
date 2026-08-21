@@ -141,6 +141,7 @@ export interface RawPortafolio {
 
 export interface RawAfiliado {
   entidad: string
+  codigosexo: string
   sexo: string
   rangoedad: string
   afiliados: number | null

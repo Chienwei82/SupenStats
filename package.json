@@ -1,11 +1,12 @@
 {
   "name": "supenstats",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "version:bump": "node -e \"var fs=require('fs');var p=require('./package.json');var l=require('./package-lock.json');var v=p.version.split('.').map(Number);v[2]=v[2]+1;var nv=v.join('.');p.version=nv;l.version=nv;l.packages[''].version=nv;fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\\n');fs.writeFileSync('package-lock.json',JSON.stringify(l,null,2)+'\\n');console.log('Version -> '+nv)\"",
+    "build": "npm run version:bump && tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },

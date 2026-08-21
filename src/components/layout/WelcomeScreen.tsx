@@ -9,16 +9,11 @@ const API_ENDPOINTS: { path: string; descripcion: string }[] = [
   { path: '/estadisticas/api/lt', descripcion: 'Libre transferencia de afiliados entre operadoras' },
 ]
 
-export function WelcomeScreen({ imageSrc }: { imageSrc: string }) {
+export function WelcomeScreen() {
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <img
-          src={imageSrc}
-          alt="SUPEN Stats"
-          className="max-w-md mx-auto rounded-xl shadow-sm border border-gray-200"
-        />
-        <h2 className="text-xl font-bold text-gray-800 mt-4">Bienvenido a SUPEN Stats</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Bienvenido a SUPEN Stats</h2>
         <p className="text-gray-500 mt-2">
           Selecciona un reporte en las pestañas para comenzar a explorar las estadísticas del sistema de pensiones.
         </p>

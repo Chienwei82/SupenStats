@@ -2,8 +2,8 @@ import type { FondoTipo, DateRange } from '../../types/suppen'
 import { OPC_LIST } from '../../constants/suppen'
 
 interface FilterBarProps {
-  fondo: FondoTipo | ''
-  onFondoChange: (fondo: FondoTipo | '') => void
+  fondo?: FondoTipo | ''
+  onFondoChange?: (fondo: FondoTipo | '') => void
   dateRange?: DateRange
   onDateRangeChange?: (range: DateRange) => void
   showEntidad?: boolean
@@ -30,20 +30,23 @@ export function FilterBar({
   onEntidadChange,
 }: FilterBarProps) {
   const hasDateFilter = dateRange && onDateRangeChange
+  const hasFondoFilter = fondo !== undefined && onFondoChange !== undefined
 
   return (
     <div className="flex flex-wrap items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
       <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Filtros:</label>
 
-      <select
-        value={fondo}
-        onChange={(e) => onFondoChange(e.target.value as FondoTipo | '')}
-        className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-      >
-        {FONDOS.map(f => (
-          <option key={f.value} value={f.value}>{f.label}</option>
-        ))}
-      </select>
+      {hasFondoFilter && (
+        <select
+          value={fondo}
+          onChange={(e) => onFondoChange(e.target.value as FondoTipo | '')}
+          className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          {FONDOS.map(f => (
+            <option key={f.value} value={f.value}>{f.label}</option>
+          ))}
+        </select>
+      )}
 
       {hasDateFilter && (
         <>

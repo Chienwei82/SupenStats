@@ -21,8 +21,7 @@ export function DemografiaChart({ data }: Props) {
   const byRange = latest.reduce<Record<string, { F: number; M: number }>>((acc, d) => {
     const key = d.RangoEdad.trim()
     if (!acc[key]) acc[key] = { F: 0, M: 0 }
-    const sex = d.Sexo.trim()
-    if (sex === 'FEMENINO') acc[key].F += d.CantidadAfiliados ?? 0
+    if (d.Sexo === 'Femenino') acc[key].F += d.CantidadAfiliados ?? 0
     else acc[key].M += d.CantidadAfiliados ?? 0
     return acc
   }, {})

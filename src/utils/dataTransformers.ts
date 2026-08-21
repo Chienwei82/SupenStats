@@ -215,18 +215,27 @@ export function transformAfiliadosAportantes(raw: RawAfiliado[]): AfiliadoAporta
   return Array.from(map.values())
 }
 
+function normalizeSexo(sexo: string, codigosexo: string): string {
+  if (codigosexo === 'F' || codigosexo === 'M') {
+    return codigosexo === 'F' ? 'Femenino' : 'Masculino'
+  }
+  const s = sexo.trim().toUpperCase()
+  return s.startsWith('F') ? 'Femenino' : s.startsWith('M') ? 'Masculino' : s
+}
+
 export function transformAfiliadosDemograficos(raw: RawAfiliado[]): AfiliadoDemografico[] {
   // Desglose por sexo y rango de edad (sin perder la demografía,
   // que transformAfiliados descarta al sumar por entidad+fecha).
   const map = new Map<string, AfiliadoDemografico>()
   for (const item of raw) {
     const entidad = normalizeEntityName(item.entidad)
-    const key = `${entidad}|${item.sexo}|${item.rangoedad}|${item.fecha}|${item.codigofondo}`
+    const sexo = normalizeSexo(item.sexo, item.codigosexo)
+    const key = `${entidad}|${sexo}|${item.rangoedad}|${item.fecha}|${item.codigofondo}`
     const existing = map.get(key) ?? {
       Entidad: entidad,
       Fondo: item.codigofondo,
       FechaCorte: item.fecha,
-      Sexo: item.sexo,
+      Sexo: sexo,
       RangoEdad: item.rangoedad,
       CantidadAfiliados: 0,
     }
