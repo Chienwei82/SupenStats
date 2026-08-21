@@ -234,8 +234,10 @@ function App() {
       </main>
 
       <footer className="bg-gray-100 border-t border-gray-200 py-4 mt-12">
-        <div className="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
-          Datos obtenidos de la API publica de la Superintendencia de Pensiones de Costa Rica (SUPEN)
+        <div className="max-w-7xl mx-auto px-4 text-center text-xs text-gray-400 space-y-1">
+          <p>Datos obtenidos de la API publica de la Superintendencia de Pensiones de Costa Rica (SUPEN)</p>
+          <p>Proyecto recreativo con fines educativos. No es oficial de la SUPEN ni tiene afiliación con entes gubernamentales.</p>
+          <p>Código abierto — Contributions bienvenidas</p>
         </div>
       </footer>
     </div>

@@ -2,6 +2,8 @@
 
 Dashboard de visualización de datos financieros y de pensiones de Costa Rica, consumiendo la API pública de la Superintendencia de Pensiones (SUPEN).
 
+> **Aviso**: Este es un proyecto recreativo con fines educativos. No es oficial de la Superintendencia de Pensiones de Costa Rica (SUPEN) ni tiene afiliación alguna con entes gubernamentales. Es un proyecto de código abierto creado para practicar desarrollo web y visualización de datos.
+
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite)
