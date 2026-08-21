@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import { formatNumber, sortByDateAsc } from '../../utils/dataTransformers'
 import { OPC_COLORS } from '../../constants/suppen'
+import { ChartNote } from '../ui/ChartNote'
 import type { AfiliadoAportante } from '../../types/suppen'
 
 interface Props {
@@ -33,8 +34,8 @@ export function AportantesChart({ data }: Props) {
   const tooltipFormatter = (value: any, name: any) => [formatNumber(Number(value)), name]
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+    <div className="bg-white dark:bg-[#25293c] rounded-xl border border-gray-200 dark:border-[#34324a] p-6 shadow-md dark:shadow-xl dark:shadow-black/30">
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-[#eeffff] mb-4">
         Afiliados vs Aportantes por OPC {latestDate ? `(${latestDate})` : ''}
       </h3>
       <ResponsiveContainer width="100%" height={350}>
@@ -55,6 +56,7 @@ export function AportantesChart({ data }: Props) {
           <Bar dataKey="Aportantes" fill={OPC_COLORS['BCR-PENSION'] || '#10b981'} radius={[2, 2, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
+      <ChartNote noteId="aportantes" />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import { sortByDateAsc, groupBy, getUniqueValues, formatDateShort } from '../../utils/dataTransformers'
 import { OPC_COLORS } from '../../constants/suppen'
+import { ChartNote } from '../ui/ChartNote'
 import type { Comision } from '../../types/suppen'
 
 interface Props {
@@ -40,15 +41,15 @@ export function ComisionesChart({ data }: Props) {
   const tooltipFormatter = (value: any, name: any) => [`${Number(value).toFixed(2)}%`, name]
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-gray-800 mb-1">Evolucion de Comisiones de Administracion por OPC</h3>
+    <div className="bg-white dark:bg-[#25293c] rounded-xl border border-gray-200 dark:border-[#34324a] p-6 shadow-md dark:shadow-xl dark:shadow-black/30">
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-[#eeffff] mb-1">Evolucion de Comisiones de Administracion por OPC</h3>
       {allEqual && (
-        <p className="text-sm text-gray-500 mb-4">
-          Todas las operadoras cobran la misma comision de <span className="font-medium text-gray-700">{latestValues[0]?.toFixed(2)}%</span> en el periodo seleccionado. La comision quedo unificada tras la regulacion vigente desde 2020.
+        <p className="text-sm text-gray-500 dark:text-[#a6accd] mb-4">
+          Todas las operadoras cobran la misma comision de <span className="font-medium text-gray-700 dark:text-[#eeffff]">{latestValues[0]?.toFixed(2)}%</span> en el periodo seleccionado. La comision quedo unificada tras la regulacion vigente desde 2020.
         </p>
       )}
       {!allEqual && (
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-gray-500 dark:text-[#a6accd] mb-4">
           Evolucion de la comision de administracion (SALDO) por operadora.
         </p>
       )}
@@ -82,6 +83,7 @@ export function ComisionesChart({ data }: Props) {
           ))}
         </LineChart>
       </ResponsiveContainer>
+      <ChartNote noteId="comisiones" />
     </div>
   )
 }

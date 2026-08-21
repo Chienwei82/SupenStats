@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import { formatDateShort, formatNumber, sortByDateAsc } from '../../utils/dataTransformers'
 import { CHART_COLORS } from '../../constants/suppen'
+import { ChartNote } from '../ui/ChartNote'
 import type { Beneficio } from '../../types/suppen'
 
 interface Props {
@@ -28,8 +29,8 @@ export function BeneficiosChart({ data }: Props) {
   const tooltipFormatter = (value: any, name: any) => [formatNumber(Number(value)), name]
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+    <div className="bg-white dark:bg-[#25293c] rounded-xl border border-gray-200 dark:border-[#34324a] p-6 shadow-md dark:shadow-xl dark:shadow-black/30">
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-[#eeffff] mb-4">
         Pensionados por OPC {latestDate ? `(${formatDateShort(latestDate)})` : ''}
       </h3>
       <ResponsiveContainer width="100%" height={350}>
@@ -50,6 +51,7 @@ export function BeneficiosChart({ data }: Props) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      <ChartNote noteId="beneficios" />
     </div>
   )
 }

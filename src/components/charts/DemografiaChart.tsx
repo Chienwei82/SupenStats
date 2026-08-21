@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import { formatNumber, sortByDateAsc } from '../../utils/dataTransformers'
 import { CHART_COLORS } from '../../constants/suppen'
+import { ChartNote } from '../ui/ChartNote'
 import type { AfiliadoDemografico } from '../../types/suppen'
 
 interface Props {
@@ -38,8 +39,8 @@ export function DemografiaChart({ data }: Props) {
   const tooltipFormatter = (value: any, name: any) => [formatNumber(Number(value)), name]
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+    <div className="bg-white dark:bg-[#25293c] rounded-xl border border-gray-200 dark:border-[#34324a] p-6 shadow-md dark:shadow-xl dark:shadow-black/30">
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-[#eeffff] mb-4">
         Demografia de Afiliados por Rango de Edad {latestDate ? `(${latestDate})` : ''}
       </h3>
       <ResponsiveContainer width="100%" height={350}>
@@ -57,6 +58,7 @@ export function DemografiaChart({ data }: Props) {
           <Bar dataKey="Masculino" fill={CHART_COLORS[1]} radius={[2, 2, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
+      <ChartNote noteId="demografia" />
     </div>
   )
 }

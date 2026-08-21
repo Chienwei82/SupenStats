@@ -5,9 +5,31 @@ export const OPC_COLORS: Record<string, string> = {
   'CCSS-OPC': '#ef4444',
   'VIDA PLENA OPC': '#8b5cf6',
   'BAC SJ PENSIONES': '#ec4899',
+  // Regímenes básicos (fondo BASI)
+  'FONDO IVM-CCSS': '#0ea5e9',
+  'MAGISTERIO NAL': '#f97316',
+  'PODER JUDICIAL': '#14b8a6',
+  'FONDO BOMBEROS': '#e11d48',
+  'TRANS. MAGIST.': '#a855f7',
+  // Regímenes ocupacionales (fondo OCUP)
+  'FONDO FBNCR': '#06b6d4',
+  'FONDO FICE': '#84cc16',
+  'FONDO FRE-CCSS': '#d946ef',
+  'FONDO VEND LOT': '#f43f5e',
 }
 
-export const OPC_LIST = Object.keys(OPC_COLORS)
+// Lista de operadoras de pensiones (OPC) para el filtro de entidad.
+// Se mantiene separada de OPC_COLORS porque OPC_COLORS también incluye
+// entidades de regímenes básicos y ocupacionales (que no son OPCs y no
+// deben aparecer en el dropdown de libre transferencia).
+export const OPC_LIST = [
+  'POPULAR PENSIONES',
+  'BCR-PENSION',
+  'BN-VITAL',
+  'CCSS-OPC',
+  'VIDA PLENA OPC',
+  'BAC SJ PENSIONES',
+]
 
 // Mapeo de los nombres reales que devuelve la API a los nombres canónicos
 // usados en OPC_COLORS. La API usa nombres abreviados como 'POPULAR',
