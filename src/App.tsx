@@ -41,19 +41,19 @@ function App() {
 
   // Fetchers — wrapped in useCallback with filter dependencies
   const fetchRendimientoCb = useCallback(
-    () => fetchRendimiento(rendFondo || undefined, undefined, rendDates),
+    (signal?: AbortSignal) => fetchRendimiento(rendFondo || undefined, undefined, rendDates, signal),
     [rendFondo, rendDates]
   )
   const fetchComisionesCb = useCallback(
-    () => fetchComisiones(comFondo || undefined, comDates),
+    (signal?: AbortSignal) => fetchComisiones(comFondo || undefined, comDates, signal),
     [comFondo, comDates]
   )
   const fetchPortafolioCb = useCallback(
-    () => fetchPortafolio(undefined, portFondo || undefined, portDates),
+    (signal?: AbortSignal) => fetchPortafolio(undefined, portFondo || undefined, portDates, signal),
     [portFondo, portDates]
   )
   const fetchAfiliadosCb = useCallback(
-    () => fetchAfiliados(undefined, afFondo || undefined),
+    (signal?: AbortSignal) => fetchAfiliados(undefined, afFondo || undefined, undefined, signal),
     [afFondo]
   )
 
@@ -72,27 +72,27 @@ function App() {
   const [demDates, setDemDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
 
   const fetchBeneficiosCb = useCallback(
-    () => fetchBeneficios(undefined, benFondo || undefined, benDates),
+    (signal?: AbortSignal) => fetchBeneficios(undefined, benFondo || undefined, benDates, signal),
     [benFondo, benDates]
   )
   const fetchCuentasCb = useCallback(
-    () => fetchCuentas(undefined, cueFondo || undefined, cueDates),
+    (signal?: AbortSignal) => fetchCuentas(undefined, cueFondo || undefined, cueDates, signal),
     [cueFondo, cueDates]
   )
   const fetchLtCb = useCallback(
-    () => fetchLibreTransferencia(ltEntidad || undefined, ltDates),
+    (signal?: AbortSignal) => fetchLibreTransferencia(ltEntidad || undefined, ltDates, signal),
     [ltEntidad, ltDates]
   )
   const fetchAportantesCb = useCallback(
-    () => fetchAfiliadosAportantes(undefined, apoFondo || undefined, apoDates),
+    (signal?: AbortSignal) => fetchAfiliadosAportantes(undefined, apoFondo || undefined, apoDates, signal),
     [apoFondo, apoDates]
   )
   const fetchDemCb = useCallback(
-    () => fetchAfiliadosDemograficos(undefined, demFondo || undefined, demDates),
+    (signal?: AbortSignal) => fetchAfiliadosDemograficos(undefined, demFondo || undefined, demDates, signal),
     [demFondo, demDates]
   )
   const fetchIsinCb = useCallback(
-    () => fetchPortafolioISIN(undefined, isinFondo || undefined, PORTFOLIO_RANGE),
+    (signal?: AbortSignal) => fetchPortafolioISIN(undefined, isinFondo || undefined, PORTFOLIO_RANGE, signal),
     [isinFondo]
   )
 
