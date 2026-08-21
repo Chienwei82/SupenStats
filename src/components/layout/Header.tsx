@@ -20,7 +20,15 @@ export function Header({ theme, onToggleTheme }: Props) {
           <ThemeToggle theme={theme} onToggle={onToggleTheme} />
           <div className="text-right text-sm text-blue-200 hidden sm:block">
             <p>Datos oficiales SUPEN</p>
-            <p className="text-xs mt-1 opacity-75">webapps.supen.fi.cr</p>
+            <a
+              href="https://webapps.supen.fi.cr/Estadisticas/ui"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs mt-1 opacity-75 hover:opacity-100 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-blue-900"
+              aria-label="Ir a las estadísticas oficiales de SUPEN (se abre en una pestaña nueva)"
+            >
+              webapps.supen.fi.cr
+            </a>
           </div>
           <a
             href="https://github.com/Chienwei82/SupenStats"
