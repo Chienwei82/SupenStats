@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react'
 import { Header } from './components/layout/Header'
-import { KpiCards } from './components/layout/KpiCards'
 import { ReportTabs, type ReportId } from './components/layout/ReportTabs'
+import { WelcomeScreen } from './components/layout/WelcomeScreen'
 import { RendimientoChart } from './components/charts/RendimientoChart'
 import { ComisionesChart } from './components/charts/ComisionesChart'
 import { PortafolioChart } from './components/charts/PortafolioChart'
@@ -14,7 +14,7 @@ import { AportantesChart } from './components/charts/AportantesChart'
 import { DemografiaChart } from './components/charts/DemografiaChart'
 import { PortafolioISINChart } from './components/charts/PortafolioISINChart'
 import { FilterBar } from './components/ui/FilterBar'
-import { KpiSkeleton, ChartSkeleton, PageLoader, LoadingOverlay } from './components/ui/LoadingSkeleton'
+import { ChartSkeleton, LoadingOverlay } from './components/ui/LoadingSkeleton'
 import { ErrorMessage } from './components/ui/ErrorMessage'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { useSupenData } from './hooks/useSupenData'
@@ -23,7 +23,7 @@ import { FONDO_DEFAULT, DATE_RANGE_DEFAULT, PORTFOLIO_RANGE } from './constants/
 import type { FondoTipo, DateRange } from './types/suppen'
 
 function App() {
-  const [activeTab, setActiveTab] = useState<ReportId>('resumen')
+  const [activeTab, setActiveTab] = useState<ReportId>('inicio')
 
   // Filter states per report
   const [rendFondo, setRendFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
@@ -92,83 +92,24 @@ function App() {
     [isinFondo]
   )
 
-  const { data: beneficios, loading: loadingBen, error: errorBen, refetch: refetchBen } = useSupenData(fetchBeneficiosCb)
-  const { data: cuentas, loading: loadingCue, error: errorCue, refetch: refetchCue } = useSupenData(fetchCuentasCb)
-  const { data: transferencias, loading: loadingLt, error: errorLt, refetch: refetchLt } = useSupenData(fetchLtCb)
-  const { data: aportantes, loading: loadingApo, error: errorApo, refetch: refetchApo } = useSupenData(fetchAportantesCb)
-  const { data: demografia, loading: loadingDem, error: errorDem, refetch: refetchDem } = useSupenData(fetchDemCb)
-  const { data: isin, loading: loadingIsin, error: errorIsin, refetch: refetchIsin } = useSupenData(fetchIsinCb)
+  const { data: beneficios, loading: loadingBen, error: errorBen, refetch: refetchBen } = useSupenData(fetchBeneficiosCb, activeTab === 'beneficios')
+  const { data: cuentas, loading: loadingCue, error: errorCue, refetch: refetchCue } = useSupenData(fetchCuentasCb, activeTab === 'cuentas')
+  const { data: transferencias, loading: loadingLt, error: errorLt, refetch: refetchLt } = useSupenData(fetchLtCb, activeTab === 'transferencias')
+  const { data: aportantes, loading: loadingApo, error: errorApo, refetch: refetchApo } = useSupenData(fetchAportantesCb, activeTab === 'aportantes')
+  const { data: demografia, loading: loadingDem, error: errorDem, refetch: refetchDem } = useSupenData(fetchDemCb, activeTab === 'demografia')
+  const { data: isin, loading: loadingIsin, error: errorIsin, refetch: refetchIsin } = useSupenData(fetchIsinCb, activeTab === 'isin')
 
-  const { data: rendimientos, loading: loadingRend, error: errorRend, refetch: refetchRend } = useSupenData(fetchRendimientoCb)
-  const { data: comisiones, loading: loadingCom, error: errorCom, refetch: refetchCom } = useSupenData(fetchComisionesCb)
-  const { data: portafolio, loading: loadingPort, error: errorPort, refetch: refetchPort } = useSupenData(fetchPortafolioCb)
-  const { data: afiliados, loading: loadingAf, error: errorAf, refetch: refetchAf } = useSupenData(fetchAfiliadosCb)
+  const { data: rendimientos, loading: loadingRend, error: errorRend, refetch: refetchRend } = useSupenData(fetchRendimientoCb, activeTab === 'rendimiento')
+  const { data: comisiones, loading: loadingCom, error: errorCom, refetch: refetchCom } = useSupenData(fetchComisionesCb, activeTab === 'comisiones')
+  const { data: portafolio, loading: loadingPort, error: errorPort, refetch: refetchPort } = useSupenData(fetchPortafolioCb, activeTab === 'portafolio' || activeTab === 'activos')
+  const { data: afiliados, loading: loadingAf, error: errorAf, refetch: refetchAf } = useSupenData(fetchAfiliadosCb, activeTab === 'afiliados')
 
-  const isFirstLoad = loadingRend && loadingCom && loadingPort && loadingAf && rendimientos.length === 0
-
-  // ---- Resumen view ----
-  const renderResumen = () => {
-    const kpiReady = !loadingRend && !loadingCom && !loadingAf
-    const kpiError = errorRend || errorCom || errorAf
-
-    return (
-      <div className="space-y-8">
-        {/* KPIs */}
-        {!kpiReady && <KpiSkeleton />}
-        {kpiReady && !kpiError && (
-          <ErrorBoundary>
-            <KpiCards rendimientos={rendimientos} comisiones={comisiones} afiliados={afiliados} />
-          </ErrorBoundary>
-        )}
-        {kpiReady && kpiError && (
-          <ErrorMessage message={kpiError} onRetry={() => { refetchRend(); refetchCom(); refetchAf(); }} />
-        )}
-
-        {/* Rendimiento */}
-        {loadingRend && rendimientos.length === 0 ? <ChartSkeleton /> : !errorRend ? (
-          <ErrorBoundary><RendimientoChart data={rendimientos} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorRend} onRetry={refetchRend} />
-        )}
-
-        {/* Comisiones + Portafolio */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="relative">
-            {loadingCom && comisiones.length === 0 ? <ChartSkeleton /> : !errorCom ? (
-              <ErrorBoundary><ComisionesChart data={comisiones} /></ErrorBoundary>
-            ) : (
-              <ErrorMessage message={errorCom} onRetry={refetchCom} />
-            )}
-          </div>
-          <div className="relative">
-            {loadingPort && portafolio.length === 0 ? <ChartSkeleton /> : !errorPort ? (
-              <ErrorBoundary><PortafolioChart data={portafolio} /></ErrorBoundary>
-            ) : (
-              <ErrorMessage message={errorPort} onRetry={refetchPort} />
-            )}
-          </div>
-        </div>
-
-        {/* Afiliados + Activos */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="relative">
-            {loadingAf && afiliados.length === 0 ? <ChartSkeleton /> : !errorAf ? (
-              <ErrorBoundary><AfiliadosChart data={afiliados} /></ErrorBoundary>
-            ) : (
-              <ErrorMessage message={errorAf} onRetry={refetchAf} />
-            )}
-          </div>
-          <div className="relative">
-            {loadingPort && portafolio.length === 0 ? <ChartSkeleton /> : !errorPort ? (
-              <ErrorBoundary><ActivosChart data={portafolio} /></ErrorBoundary>
-            ) : (
-              <ErrorMessage message={errorPort} onRetry={refetchPort} />
-            )}
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // ---- Pantalla de bienvenida (sin fetch pesado) ----
+  const renderInicio = () => (
+    <ErrorBoundary>
+      <WelcomeScreen imageSrc="/welcome.png" />
+    </ErrorBoundary>
+  )
 
   // ---- Individual report views ----
   const renderRendimiento = () => (
@@ -346,7 +287,7 @@ function App() {
   )
 
   const views: Record<ReportId, () => React.ReactNode> = {
-    resumen: renderResumen,
+    inicio: renderInicio,
     rendimiento: renderRendimiento,
     comisiones: renderComisiones,
     portafolio: renderPortafolio,
@@ -362,8 +303,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {isFirstLoad && <PageLoader />}
-
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <ReportTabs active={activeTab} onChange={setActiveTab} />

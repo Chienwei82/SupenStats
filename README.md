@@ -10,6 +10,14 @@ Dashboard de visualización de datos financieros y de pensiones de Costa Rica, c
 ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss)
 ![Recharts](https://img.shields.io/badge/Recharts-2-FF6384)
 
+## Herramientas de Desarrollo
+
+En este proyecto se usaron los siguientes productos:
+
+- **[OpenCode](https://opencode.ai)** — CLI de agente de código asistido
+- **[DeepSeek](https://openrouter.com)** — modelo de lenguaje usado para asistencia de código
+- **Big-Pickle** — asistencia adicional en el desarrollo
+
 ## Inicio Rápido
 
 ### Requisitos

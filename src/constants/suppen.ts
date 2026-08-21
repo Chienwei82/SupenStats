@@ -49,6 +49,14 @@ export const DATE_RANGE_DEFAULT = {
   FechaFinal: new Date().toISOString().split('T')[0],
 }
 
+// Rango usado en el resumen inicial para que cargue rápido: últimos 2 años.
+const twoYearsAgo = new Date()
+twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2)
+export const SUMMARY_RANGE = {
+  FechaInicio: twoYearsAgo.toISOString().split('T')[0],
+  FechaFinal: new Date().toISOString().split('T')[0],
+}
+
 // El endpoint de portafolio devuelve datos desde 2010 y es muy pesado
 // (55MB sin filtro). Limitamos a los últimos 3 meses para que la consulta
 // sea rápida y suficiente para el donut y el gráfico de activos.

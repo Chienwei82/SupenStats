@@ -1,4 +1,4 @@
-export type ReportId = 'resumen' | 'rendimiento' | 'comisiones' | 'portafolio' | 'afiliados' | 'activos' | 'beneficios' | 'cuentas' | 'transferencias' | 'aportantes' | 'demografia' | 'isin'
+export type ReportId = 'inicio' | 'rendimiento' | 'comisiones' | 'portafolio' | 'afiliados' | 'activos' | 'beneficios' | 'cuentas' | 'transferencias' | 'aportantes' | 'demografia' | 'isin'
 
 interface ReportTabsProps {
   active: ReportId
@@ -6,7 +6,7 @@ interface ReportTabsProps {
 }
 
 const TABS: { id: ReportId; label: string }[] = [
-  { id: 'resumen', label: 'Resumen' },
+  { id: 'inicio', label: 'Inicio' },
   { id: 'rendimiento', label: 'Rendimiento' },
   { id: 'comisiones', label: 'Comisiones' },
   { id: 'portafolio', label: 'Portafolio' },
