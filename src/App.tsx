@@ -27,34 +27,41 @@ function App() {
   const [activeTab, setActiveTab] = useState<ReportId>('inicio')
   const { theme, toggleTheme } = useTheme()
 
-  // Filter states per report
+  // Filter states per report — estos son los "draft" (lo que ve el dropdown).
   const [rendFondo, setRendFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
   const [rendDates, setRendDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
+  // Estados "aplicados": solo cambian al pulsar el botón Consultar.
+  const [appliedRend, setAppliedRend] = useState<{ fondo: FondoTipo | ''; dates: DateRange }>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
 
   const [comFondo, setComFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
   const [comDates, setComDates] = useState<DateRange>(COMISION_RANGE)
+  const [appliedCom, setAppliedCom] = useState<{ fondo: FondoTipo | ''; dates: DateRange }>({ fondo: FONDO_DEFAULT, dates: COMISION_RANGE })
 
   const [portFondo, setPortFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
   const [portDates, setPortDates] = useState<DateRange>(PORTFOLIO_RANGE)
+  const [appliedPort, setAppliedPort] = useState<{ fondo: FondoTipo | ''; dates: DateRange }>({ fondo: FONDO_DEFAULT, dates: PORTFOLIO_RANGE })
 
   const [afFondo, setAfFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
+  const [appliedAf, setAppliedAf] = useState<FondoTipo | ''>(FONDO_DEFAULT)
 
-  // Fetchers — wrapped in useCallback with filter dependencies
+  // Fetchers — wrapped in useCallback with filter dependencies.
+  // Usan los estados APPLIED (solo cambian al pulsar Consultar), de modo que
+  // el dropdown/selector no dispara refetch hasta que se confirma la consulta.
   const fetchRendimientoCb = useCallback(
-    (signal?: AbortSignal) => fetchRendimiento(rendFondo || undefined, undefined, rendDates, signal),
-    [rendFondo, rendDates]
+    (signal?: AbortSignal) => fetchRendimiento(appliedRend.fondo || undefined, undefined, appliedRend.dates, signal),
+    [appliedRend]
   )
   const fetchComisionesCb = useCallback(
-    (signal?: AbortSignal) => fetchComisiones(comFondo || undefined, comDates, signal),
-    [comFondo, comDates]
+    (signal?: AbortSignal) => fetchComisiones(appliedCom.fondo || undefined, appliedCom.dates, signal),
+    [appliedCom]
   )
   const fetchPortafolioCb = useCallback(
-    (signal?: AbortSignal) => fetchPortafolio(undefined, portFondo || undefined, portDates, signal),
-    [portFondo, portDates]
+    (signal?: AbortSignal) => fetchPortafolio(undefined, appliedPort.fondo || undefined, appliedPort.dates, signal),
+    [appliedPort]
   )
   const fetchAfiliadosCb = useCallback(
-    (signal?: AbortSignal) => fetchAfiliados(undefined, afFondo || undefined, undefined, signal),
-    [afFondo]
+    (signal?: AbortSignal) => fetchAfiliados(undefined, appliedAf || undefined, undefined, signal),
+    [appliedAf]
   )
 
   const [benFondo, setBenFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
@@ -71,29 +78,37 @@ function App() {
   const [apoDates, setApoDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
   const [demDates, setDemDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
 
+  // Estados "aplicados" (solo cambian al pulsar Consultar).
+  const [appliedBen, setAppliedBen] = useState<{ fondo: FondoTipo | ''; dates: DateRange }>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
+  const [appliedCue, setAppliedCue] = useState<{ fondo: FondoTipo | ''; dates: DateRange }>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
+  const [appliedLt, setAppliedLt] = useState<{ entidad: string; dates: DateRange }>({ entidad: '', dates: DATE_RANGE_DEFAULT })
+  const [appliedApo, setAppliedApo] = useState<{ fondo: FondoTipo | ''; dates: DateRange }>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
+  const [appliedDem, setAppliedDem] = useState<{ fondo: FondoTipo | ''; dates: DateRange }>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
+  const [appliedIsin, setAppliedIsin] = useState<FondoTipo | ''>(FONDO_DEFAULT)
+
   const fetchBeneficiosCb = useCallback(
-    (signal?: AbortSignal) => fetchBeneficios(undefined, benFondo || undefined, benDates, signal),
-    [benFondo, benDates]
+    (signal?: AbortSignal) => fetchBeneficios(undefined, appliedBen.fondo || undefined, appliedBen.dates, signal),
+    [appliedBen]
   )
   const fetchCuentasCb = useCallback(
-    (signal?: AbortSignal) => fetchCuentas(undefined, cueFondo || undefined, cueDates, signal),
-    [cueFondo, cueDates]
+    (signal?: AbortSignal) => fetchCuentas(undefined, appliedCue.fondo || undefined, appliedCue.dates, signal),
+    [appliedCue]
   )
   const fetchLtCb = useCallback(
-    (signal?: AbortSignal) => fetchLibreTransferencia(ltEntidad || undefined, ltDates, signal),
-    [ltEntidad, ltDates]
+    (signal?: AbortSignal) => fetchLibreTransferencia(appliedLt.entidad || undefined, appliedLt.dates, signal),
+    [appliedLt]
   )
   const fetchAportantesCb = useCallback(
-    (signal?: AbortSignal) => fetchAfiliadosAportantes(undefined, apoFondo || undefined, apoDates, signal),
-    [apoFondo, apoDates]
+    (signal?: AbortSignal) => fetchAfiliadosAportantes(undefined, appliedApo.fondo || undefined, appliedApo.dates, signal),
+    [appliedApo]
   )
   const fetchDemCb = useCallback(
-    (signal?: AbortSignal) => fetchAfiliadosDemograficos(undefined, demFondo || undefined, demDates, signal),
-    [demFondo, demDates]
+    (signal?: AbortSignal) => fetchAfiliadosDemograficos(undefined, appliedDem.fondo || undefined, appliedDem.dates, signal),
+    [appliedDem]
   )
   const fetchIsinCb = useCallback(
-    (signal?: AbortSignal) => fetchPortafolioISIN(undefined, isinFondo || undefined, PORTFOLIO_RANGE, signal),
-    [isinFondo]
+    (signal?: AbortSignal) => fetchPortafolioISIN(undefined, appliedIsin || undefined, PORTFOLIO_RANGE, signal),
+    [appliedIsin]
   )
 
   const { data: beneficios, loading: loadingBen, error: errorBen, refetch: refetchBen } = useSupenData(fetchBeneficiosCb, activeTab === 'beneficios')
@@ -107,6 +122,19 @@ function App() {
   const { data: comisiones, loading: loadingCom, error: errorCom, refetch: refetchCom } = useSupenData(fetchComisionesCb, activeTab === 'comisiones')
   const { data: portafolio, loading: loadingPort, error: errorPort, refetch: refetchPort } = useSupenData(fetchPortafolioCb, activeTab === 'portafolio' || activeTab === 'activos')
   const { data: afiliados, loading: loadingAf, error: errorAf, refetch: refetchAf } = useSupenData(fetchAfiliadosCb, activeTab === 'afiliados')
+
+  // Handlers del botón "Consultar": actualizan los estados APPLIED a partir de
+  // los draft. Solo aquí se dispara el refetch (los fetchFn dependen de applied).
+  const consultRend = useCallback(() => setAppliedRend({ fondo: rendFondo, dates: rendDates }), [rendFondo, rendDates])
+  const consultCom = useCallback(() => setAppliedCom({ fondo: comFondo, dates: comDates }), [comFondo, comDates])
+  const consultPort = useCallback(() => setAppliedPort({ fondo: portFondo, dates: portDates }), [portFondo, portDates])
+  const consultAf = useCallback(() => setAppliedAf(afFondo), [afFondo])
+  const consultBen = useCallback(() => setAppliedBen({ fondo: benFondo, dates: benDates }), [benFondo, benDates])
+  const consultCue = useCallback(() => setAppliedCue({ fondo: cueFondo, dates: cueDates }), [cueFondo, cueDates])
+  const consultLt = useCallback(() => setAppliedLt({ entidad: ltEntidad, dates: ltDates }), [ltEntidad, ltDates])
+  const consultApo = useCallback(() => setAppliedApo({ fondo: apoFondo, dates: apoDates }), [apoFondo, apoDates])
+  const consultDem = useCallback(() => setAppliedDem({ fondo: demFondo, dates: demDates }), [demFondo, demDates])
+  const consultIsin = useCallback(() => setAppliedIsin(isinFondo), [isinFondo])
 
   // ---- Pantalla de bienvenida (sin fetch pesado) ----
   const renderInicio = () => (
@@ -123,6 +151,7 @@ function App() {
         onFondoChange={setRendFondo}
         dateRange={rendDates}
         onDateRangeChange={setRendDates}
+        onConsult={consultRend}
       />
       <div className="relative">
         {loadingRend && rendimientos.length === 0 ? <ChartSkeleton /> : !errorRend ? (
@@ -142,6 +171,7 @@ function App() {
         onFondoChange={setComFondo}
         dateRange={comDates}
         onDateRangeChange={setComDates}
+        onConsult={consultCom}
       />
       <div className="relative">
         {loadingCom && comisiones.length === 0 ? <ChartSkeleton /> : !errorCom ? (
@@ -161,6 +191,7 @@ function App() {
         onFondoChange={setPortFondo}
         dateRange={portDates}
         onDateRangeChange={setPortDates}
+        onConsult={consultPort}
       />
       <div className="relative">
         {loadingPort && portafolio.length === 0 ? <ChartSkeleton /> : !errorPort ? (
@@ -175,7 +206,7 @@ function App() {
 
   const renderAfiliados = () => (
     <div className="space-y-4">
-      <FilterBar fondo={afFondo} onFondoChange={setAfFondo} />
+      <FilterBar fondo={afFondo} onFondoChange={setAfFondo} onConsult={consultAf} />
       <div className="relative">
         {loadingAf && afiliados.length === 0 ? <ChartSkeleton /> : !errorAf ? (
           <ErrorBoundary><AfiliadosChart data={afiliados} /></ErrorBoundary>
@@ -194,6 +225,7 @@ function App() {
         onFondoChange={setPortFondo}
         dateRange={portDates}
         onDateRangeChange={setPortDates}
+        onConsult={consultPort}
       />
       <div className="relative">
         {loadingPort && portafolio.length === 0 ? <ChartSkeleton /> : !errorPort ? (
@@ -208,7 +240,7 @@ function App() {
 
   const renderBeneficios = () => (
     <div className="space-y-4">
-      <FilterBar fondo={benFondo} onFondoChange={setBenFondo} dateRange={benDates} onDateRangeChange={setBenDates} />
+      <FilterBar fondo={benFondo} onFondoChange={setBenFondo} dateRange={benDates} onDateRangeChange={setBenDates} onConsult={consultBen} />
       <div className="relative">
         {loadingBen && beneficios.length === 0 ? <ChartSkeleton /> : !errorBen ? (
           <ErrorBoundary><BeneficiosChart data={beneficios} /></ErrorBoundary>
@@ -222,7 +254,7 @@ function App() {
 
   const renderCuentas = () => (
     <div className="space-y-4">
-      <FilterBar fondo={cueFondo} onFondoChange={setCueFondo} dateRange={cueDates} onDateRangeChange={setCueDates} />
+      <FilterBar fondo={cueFondo} onFondoChange={setCueFondo} dateRange={cueDates} onDateRangeChange={setCueDates} onConsult={consultCue} />
       <div className="relative">
         {loadingCue && cuentas.length === 0 ? <ChartSkeleton /> : !errorCue ? (
           <ErrorBoundary><CuentasChart data={cuentas} /></ErrorBoundary>
@@ -242,6 +274,7 @@ function App() {
         showEntidad
         entidad={ltEntidad}
         onEntidadChange={setLtEntidad}
+        onConsult={consultLt}
       />
       <div className="relative">
         {loadingLt && transferencias.length === 0 ? <ChartSkeleton /> : !errorLt ? (
@@ -256,7 +289,7 @@ function App() {
 
   const renderAportantes = () => (
     <div className="space-y-4">
-      <FilterBar fondo={apoFondo} onFondoChange={setApoFondo} dateRange={apoDates} onDateRangeChange={setApoDates} />
+      <FilterBar fondo={apoFondo} onFondoChange={setApoFondo} dateRange={apoDates} onDateRangeChange={setApoDates} onConsult={consultApo} />
       <div className="relative">
         {loadingApo && aportantes.length === 0 ? <ChartSkeleton /> : !errorApo ? (
           <ErrorBoundary><AportantesChart data={aportantes} /></ErrorBoundary>
@@ -270,7 +303,7 @@ function App() {
 
   const renderDemografia = () => (
     <div className="space-y-4">
-      <FilterBar fondo={demFondo} onFondoChange={setDemFondo} dateRange={demDates} onDateRangeChange={setDemDates} />
+      <FilterBar fondo={demFondo} onFondoChange={setDemFondo} dateRange={demDates} onDateRangeChange={setDemDates} onConsult={consultDem} />
       <div className="relative">
         {loadingDem && demografia.length === 0 ? <ChartSkeleton /> : !errorDem ? (
           <ErrorBoundary><DemografiaChart data={demografia} /></ErrorBoundary>
@@ -284,7 +317,7 @@ function App() {
 
   const renderIsin = () => (
     <div className="space-y-4">
-      <FilterBar fondo={isinFondo} onFondoChange={setIsinFondo} />
+      <FilterBar fondo={isinFondo} onFondoChange={setIsinFondo} onConsult={consultIsin} />
       <div className="relative">
         {loadingIsin && isin.length === 0 ? <ChartSkeleton /> : !errorIsin ? (
           <ErrorBoundary><PortafolioISINChart data={isin} /></ErrorBoundary>
