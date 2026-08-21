@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/estadisticas/:path*",
+      "destination": "https://webapps.supen.fi.cr/estadisticas/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/estadisticas/:path*",
+      "headers": [
+        { "key": "x-vercel-enable-rewrite-caching", "value": "0" }
+      ]
+    }
+  ]
+}
