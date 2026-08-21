@@ -52,6 +52,19 @@ src/components/charts/*.tsx    Componentes de Recharts (líneas, barras, donut)
 - **Filtros por reporte**: cada pestaña mantiene su propio estado de filtros
   (fondo, rango de fechas, entidad). Los cambios en el `FilterBar` regeneran el
   `fetchFn` (via `useCallback`), lo que dispara un refetch automático.
+- **Tema claro/oscuro**: la app ofrece un toggle de tema (claro/oscuro) con
+  look futurista inspirado en la paleta *Palenight* de Material Theme. La
+  elección se guarda en `localStorage` y, si no existe, se usa la preferencia
+  del sistema (`prefers-color-scheme`). El tema se aplica con la clase `.dark`
+  en `<html>` y variantes `dark:` de Tailwind.
+- **Notas educativas**: cada gráfico incluye un acordeón *"¿Cómo leer este
+  gráfico?"* que explica en lenguaje sencillo qué significa y cómo interpretar
+  el dato, con referencias a SUPEN y otras fuentes, para apoyar la educación
+  financiera de la ciudadanía.
+- **Accesibilidad (WCAG)**: la UI usa etiquetas asociadas a controles, patrón
+  WAI-ARIA tabs con navegación por teclado, `role="alert"`/`role="status"` para
+  errores y carga, foco visible (`:focus-visible`) y respeta
+  `prefers-reduced-motion`.
 - **Predeterminados sensatos**:
   - Fondo por defecto: `ROP`.
   - Rango de fechas por defecto: **últimos 5 años** (dinámico) para reportes
@@ -66,12 +79,16 @@ src/
 ├── api/apiService.ts            # Fetchers por endpoint + query builder
 ├── types/suppen.ts              # Interfaces de dominio y Raw de la API
 ├── utils/dataTransformers.ts    # parseDate/formatters y transformers
-├── hooks/useSupenData.ts        # Hook de fetching con enabled / lazy
-├── constants/suppen.ts          # Colores OPC, rangos por defecto, mapas
+├── hooks/
+│   ├── useSupenData.ts          # Hook de fetching con enabled / lazy
+│   └── useTheme.ts              # Hook de tema claro/oscuro (localStorage + sistema)
+├── constants/
+│   ├── suppen.ts                # Colores OPC, rangos por defecto, mapas
+│   └── chartNotes.ts            # Notas educativas y referencias por gráfico
 ├── components/
-│   ├── layout/                  # Header, ReportTabs, WelcomeScreen
+│   ├── layout/                  # Header, ReportTabs, WelcomeScreen, ThemeToggle
 │   ├── charts/                  # 11 gráficos (Recharts)
-│   └── ui/                      # FilterBar, skeletons, errores, boundary
+│   └── ui/                      # FilterBar, skeletons, errores, boundary, ChartNote
 ├── App.tsx                      # Orquesta pestañas + hooks + vistas
 └── main.tsx                     # Punto de entrada
 ```
@@ -165,8 +182,35 @@ export const OPC_COLORS: Record<string, string> = {
   'CCSS-OPC': '#ef4444',
   'VIDA PLENA OPC': '#8b5cf6',
   'BAC SJ PENSIONES': '#ec4899',
+  // Regímenes básicos (fondo BASI)
+  'FONDO IVM-CCSS': '#0ea5e9',
+  'MAGISTERIO NAL': '#f97316',
+  'PODER JUDICIAL': '#14b8a6',
+  'FONDO BOMBEROS': '#e11d48',
+  'TRANS. MAGIST.': '#a855f7',
+  // Regímenes ocupacionales (fondo OCUP)
+  'FONDO FBNCR': '#06b6d4',
+  'FONDO FICE': '#84cc16',
+  'FONDO FRE-CCSS': '#d946ef',
+  'FONDO VEND LOT': '#f43f5e',
 }
 ```
+
+> `OPC_LIST` se mantiene separado de `OPC_COLORS` para que el filtro de libre
+> transferencia solo liste operadoras (OPC), sin incluir los regímenes básicos
+> u ocupacionales.
+
+### Tema Claro/Oscuro
+
+La app incluye un toggle de tema en el encabezado. La elección se guarda en
+`localStorage` (`supen-theme`) y, si no hay elección previa, se usa la
+preferencia del sistema operativo (`prefers-color-scheme`). El dark mode usa
+una paleta inspirada en *Palenight* de Material Theme.
+
+Para evitar un destello al cargar, `index.html` aplica la clase `dark` antes
+del primer render con un script inline. El modo oscuro se activa con la clase
+`.dark` en `<html>` y las variantes `dark:` de Tailwind (configuradas con
+`@custom-variant dark` en `src/index.css`).
 
 ## Uso de la API
 
