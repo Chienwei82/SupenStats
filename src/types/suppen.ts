@@ -55,8 +55,8 @@ export interface Cuenta {
   Entidad: string
   Fondo: string
   FechaCorte: string
-  CantidadCuentas: number
-  SaldoPromedio: number
+  CuentaTipo: string
+  MontoColones: number
 }
 
 export interface LibreTransferencia {
@@ -64,6 +64,25 @@ export interface LibreTransferencia {
   FechaCorte: string
   CantidadTransferencias: number
   MontoTransferido: number
+}
+
+// Afiliados con aportantes (usado en el reporte 'Aportantes vs Afiliados')
+export interface AfiliadoAportante {
+  Entidad: string
+  Fondo: string
+  FechaCorte: string
+  CantidadAfiliados: number
+  CantidadAportantes: number
+}
+
+// Afiliados con desglose demograficos (sexo y rango de edad)
+export interface AfiliadoDemografico {
+  Entidad: string
+  Fondo: string
+  FechaCorte: string
+  Sexo: string
+  RangoEdad: string
+  CantidadAfiliados: number
 }
 
 export type FondoTipo = 'ROP' | 'FCL' | 'VOL' | 'BASI' | 'OCUP'
@@ -129,4 +148,41 @@ export interface RawAfiliado {
   fecha: string
   codigofondo: string
   fondo: string
+}
+
+export interface RawBeneficio {
+  entidad: string
+  sexo: string
+  rangoedad: string
+  tipobeneficio: string
+  beneficio: number | null
+  beneficiocolones: number | null
+  fecha: string
+  codigofondo: string
+  fondo: string
+}
+
+export interface RawCuenta {
+  entidad: string
+  cuenta: string
+  montocolones: number | null
+  fecha: string
+  codigofondo: string
+  fondo: string
+}
+
+export interface RawLibreTransferencia {
+  entidadorigen: string
+  [clave: string]: string | number | null
+}
+
+export interface RawPortafolioISIN {
+  entidad: string
+  fecha: string
+  codigofondo: string
+  fondo: string
+  codigoisin: string
+  descripcion: string
+  monto: number | null
+  porcentaje: number | null
 }
