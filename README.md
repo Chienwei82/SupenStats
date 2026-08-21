@@ -10,6 +10,72 @@ Dashboard de visualización de datos financieros y de pensiones de Costa Rica, c
 ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss)
 ![Recharts](https://img.shields.io/badge/Recharts-2-FF6384)
 
+## Herramientas de Desarrollo
+
+En este proyecto se usaron los siguientes productos:
+
+- **[OpenCode](https://opencode.ai)** — CLI de agente de código asistido
+- **[DeepSeek](https://openrouter.com)** — modelo de lenguaje usado para asistencia de código
+- **Big-Pickle** — asistencia adicional en el desarrollo
+
+## Arquitectura
+
+El proyecto es una SPA de React con TypeScript que consume la API pública de
+SUPEN a través de un proxy local. El flujo de datos sigue una dirección única:
+
+```
+API SUPEN (webapps.supen.fi.cr)
+        │  (proxy Vite '/estadisticas' en dev)
+        ▼
+src/api/apiService.ts          Capa de acceso; construye query params y llama fetch
+        │  respuesta cruda (lowercase / con tildes)
+        ▼
+src/utils/dataTransformers.ts  Transforma raw → tipos de dominio (PascalCase)
+        │
+        ▼
+src/hooks/useSupenData.ts      Hook genérico: data, loading, error, refetch
+        │
+        ▼
+src/components/charts/*.tsx    Componentes de Recharts (líneas, barras, donut)
+```
+
+### Principios de diseño
+
+- **Lazy loading por pestaña**: cada reporte solo descarga sus datos cuando su
+  pestaña está activa (`useSupenData(fetchFn, enabled)`). La pantalla de
+  bienvenida (tab *Inicio*) no dispara ninguna petición, por lo que el arranque
+  es instantáneo.
+- **Capa de transformación separada**: la API devuelve campos en minúscula y
+  con acentos (`beneficiocolones`, `codigofondo`) y datos desglosados por
+  (sexo, edad, tipo). Los transformers agregan y normalizan antes de llegar a
+  los gráficos. Los shapes verificados se documentan en `docs/docs/api-notes.md`.
+- **Filtros por reporte**: cada pestaña mantiene su propio estado de filtros
+  (fondo, rango de fechas, entidad). Los cambios en el `FilterBar` regeneran el
+  `fetchFn` (via `useCallback`), lo que dispara un refetch automático.
+- **Predeterminados sensatos**:
+  - Fondo por defecto: `ROP`.
+  - Rango de fechas por defecto: **últimos 5 años** (dinámico) para reportes
+    históricos (`DATE_RANGE_DEFAULT`).
+  - `PORTFOLIO_RANGE`: últimos ~3 meses, porque el endpoint de portafolio es
+    muy pesado (decenas de MB sin filtro).
+
+### Componentes
+
+```
+src/
+├── api/apiService.ts            # Fetchers por endpoint + query builder
+├── types/suppen.ts              # Interfaces de dominio y Raw de la API
+├── utils/dataTransformers.ts    # parseDate/formatters y transformers
+├── hooks/useSupenData.ts        # Hook de fetching con enabled / lazy
+├── constants/suppen.ts          # Colores OPC, rangos por defecto, mapas
+├── components/
+│   ├── layout/                  # Header, ReportTabs, WelcomeScreen
+│   ├── charts/                  # 11 gráficos (Recharts)
+│   └── ui/                      # FilterBar, skeletons, errores, boundary
+├── App.tsx                      # Orquesta pestañas + hooks + vistas
+└── main.tsx                     # Punto de entrada
+```
+
 ## Inicio Rápido
 
 ### Requisitos
@@ -69,14 +135,17 @@ Para producción, configurar un proxy inverso (Nginx, Apache, etc.) o consumir l
 
 ### Cambiar Período de Datos
 
-Editar `src/constants/suppen.ts`:
+El rango por defecto de los reportes históricos son los **últimos 5 años**,
+calculado dinámicamente en `src/constants/suppen.ts`:
 
 ```typescript
 export const DATE_RANGE_DEFAULT = {
-  FechaInicio: '2020-01-01',  // Fecha de inicio
+  FechaInicio: isoDate(5),  // 5 años atrás desde hoy
   FechaFinal: new Date().toISOString().split('T')[0],  // Fecha actual
 }
 ```
+
+Cada pestaña permite además ajustar el rango en su barra de filtros.
 
 ### Cambiar Fondo por Defecto
 
@@ -107,12 +176,16 @@ export const OPC_COLORS: Record<string, string> = {
 |----------|------------|-----------|
 | `GET /api/comision` | Comisiones de administración | `Fondo`, `FechaInicio`, `FechaFinal` |
 | `GET /api/rendimiento` | Rendimientos históricos | `Fondo`, `Entidad`, `FechaInicio`, `FechaFinal` |
-| `GET /api/portafolio` | Composición del portafolio | `Entidad`, `Fondo` |
-| `GET /api/portafolioisin` | Portafolio por código ISIN | `Entidad`, `Fondo` |
-| `GET /api/afiliado` | Datos de afiliados | `Entidad`, `Fondo` |
-| `GET /api/beneficio` | Datos de pensionados | `Entidad`, `Fondo` |
-| `GET /api/cuenta` | Datos de cuentas | `Entidad`, `Fondo` |
+| `GET /api/portafolio` | Composición del portafolio | `Entidad`, `Fondo`, `FechaInicio`, `FechaFinal` |
+| `GET /api/portafolioisin` | Portafolio por código ISIN | `Entidad`, `Fondo` (pesado, usar rangos) |
+| `GET /api/afiliado` | Datos de afiliados (sexo, edad, aportantes) | `Entidad`, `Fondo`, `FechaInicio`, `FechaFinal` |
+| `GET /api/beneficio` | Datos de pensionados | `Entidad`, `Fondo`, `FechaInicio`, `FechaFinal` |
+| `GET /api/cuenta` | Estado contable del fondo | `Entidad`, `Fondo`, `FechaInicio`, `FechaFinal` |
 | `GET /api/lt` | Libre transferencia | `Entidad`, `FechaInicio`, `FechaFinal` |
+
+> Nota: los endpoints respetan los filtros de fecha solo cuando se envían
+> **ambos** `FechaInicio` y `FechaFinal`. Sin ellos devuelven todo el histórico
+> (desde 2010), lo que alarga mucho la respuesta.
 
 ### Ejemplos de Uso
 
@@ -157,19 +230,19 @@ SupenStats/
 ├── src/
 │   ├── api/                   # Capa de acceso a datos
 │   │   └── apiService.ts
-│   ├── types/                 # Definiciones de tipos
+│   ├── types/                 # Tipos de dominio + Raw de la API
 │   │   └── supen.ts
-│   ├── utils/                 # Funciones utilitarias
+│   ├── utils/                 # Transformers y formateadores
 │   │   └── dataTransformers.ts
 │   ├── hooks/                 # Custom hooks de React
 │   │   └── useSupenData.ts
 │   ├── constants/             # Constantes y configuración
 │   │   └── supen.ts
 │   ├── components/
-│   │   ├── layout/            # Componentes de layout
-│   │   ├── charts/            # Componentes de gráficos
-│   │   └── ui/                # Componentes de interfaz
-│   ├── App.tsx                # Componente raíz
+│   │   ├── layout/            # Header, ReportTabs, WelcomeScreen
+│   │   ├── charts/            # 11 gráficos de Recharts
+│   │   └── ui/                # FilterBar, skeletons, errores
+│   ├── App.tsx                # Orquestador: pestañas + hooks + vistas
 │   └── main.tsx               # Punto de entrada
 ├── index.html
 ├── package.json
@@ -183,8 +256,9 @@ SupenStats/
 
 ### Layout
 
-- **Header**: Cabecera con gradiente azul y título
-- **KpiCards**: 4 tarjetas con indicadores clave (Rendimiento Promedio, OPC más Rentable, Total Afiliados, Comisión Promedio)
+- **Header**: Cabecera con gradiente azul, título y enlace al código fuente en GitHub
+- **ReportTabs**: Navegación horizontal entre los 12 reportes (Inicio + 11 pestañas)
+- **WelcomeScreen**: Pantalla de bienvenida con la lista de APIs de datos usadas
 
 ### Charts
 
@@ -193,11 +267,19 @@ SupenStats/
 - **PortafolioChart**: Gráfico de donut con distribución por tipo de instrumento
 - **AfiliadosChart**: Gráfico de área con evolución temporal
 - **ActivosChart**: Gráfico de barras agrupadas por operadora
+- **BeneficiosChart**: Pensionados por OPC
+- **CuentasChart**: Activo neto del fondo por OPC
+- **TransferenciasChart**: Libre transferencia saliente por OPC
+- **AportantesChart**: Afiliados vs Aportantes por OPC
+- **DemografiaChart**: Distribución por rango de edad y sexo
+- **PortafolioISINChart**: Portafolio por instrumento (código ISIN)
 
 ### UI
 
-- **LoadingSkeleton**: Skeleton animado durante la carga
+- **FilterBar**: Filtros por fondo, rango de fechas y entidad (según el reporte)
+- **LoadingSkeleton / LoadingOverlay**: Estados de carga
 - **ErrorMessage**: Mensaje de error con botón de reintentar
+- **ErrorBoundary**: Aislamiento de errores por gráfico
 
 ## Hooks Personalizados
 
@@ -206,13 +288,15 @@ SupenStats/
 Hook genérico para fetching de datos con estados de carga y error:
 
 ```typescript
-const { data, loading, error, refetch } = useSupenData(fetchFn)
+const { data, loading, error, refetch } = useSupenData(fetchFn, enabled)
 ```
 
 - **data**: Array de datos obtenidos
 - **loading**: Booleano indicando si está cargando
 - **error**: Mensaje de error o null
 - **refetch**: Función para reintentar la carga
+- **enabled**: (opcional) si es `false`, no ejecuta el fetch. Se usa para la
+  carga perezosa por pestaña.
 
 ## Funciones de Transformación
 
@@ -260,14 +344,19 @@ npm run lint     # Verificación de código
 ### Agregar Nuevo Gráfico
 
 1. Crear componente en `src/components/charts/`
-2. Importar hooks y servicios de API
-3. Agregar en `App.tsx` dentro del grid
+2. Agregar un id y una etiqueta en `TABS` en `src/components/layout/ReportTabs.tsx`
+3. En `App.tsx`: crear el estado de filtros, el `fetchFn` (con `useCallback`) y
+   el hook `useSupenData(fetchFn, activeTab === 'miReporte')`
+4. Crear la función `renderMiReporte()` con su `FilterBar` y registrarla en el
+   mapa `views`
 
 ### Agregar Nuevo Endpoint
 
-1. Definir interfaz en `src/types/suppen.ts`
+1. Definir la interfaz de dominio **y** el tipo `Raw*` en `src/types/suppen.ts`
+   (verificar la forma real con la API antes)
 2. Agregar función fetch en `src/api/apiService.ts`
-3. Crear hook o usar `useSupenData` existente
+3. Agregar la transformación en `src/utils/dataTransformers.ts`
+4. Conectarla con `useSupenData` en `App.tsx` bajo su pestaña
 
 ## Troubleshooting
 

@@ -1,5 +1,5 @@
-import type { Comision, Rendimiento, Portafolio, PortafolioISIN, Afiliado, Beneficio, Cuenta, LibreTransferencia, FondoTipo, DateRange, RawComision, RawRendimiento, RawPortafolio, RawAfiliado } from '../types/suppen'
-import { transformComisiones, transformRendimientos, transformPortafolios, transformAfiliados } from '../utils/dataTransformers'
+import type { Comision, Rendimiento, Portafolio, PortafolioISIN, Afiliado, AfiliadoAportante, AfiliadoDemografico, Beneficio, Cuenta, LibreTransferencia, FondoTipo, DateRange, RawComision, RawRendimiento, RawPortafolio, RawAfiliado, RawBeneficio, RawCuenta, RawLibreTransferencia, RawPortafolioISIN } from '../types/suppen'
+import { transformComisiones, transformRendimientos, transformPortafolios, transformAfiliados, transformAfiliadosAportantes, transformAfiliadosDemograficos, transformBeneficios, transformCuentas, transformLibreTransferencia, transformPortafolioISIN } from '../utils/dataTransformers'
 
 const API_BASE = '/estadisticas/api'
 
@@ -62,25 +62,64 @@ export async function fetchPortafolio(entidad?: string, fondo?: FondoTipo, range
   return transformPortafolios(raw)
 }
 
-export async function fetchPortafolioISIN(entidad?: string, fondo?: FondoTipo): Promise<PortafolioISIN[]> {
-  const qs = buildQueryString({ Entidad: entidad, Fondo: fondo })
-  return fetchJson<PortafolioISIN[]>(`${API_BASE}/portafolioisin${qs}`)
+export async function fetchPortafolioISIN(entidad?: string, fondo?: FondoTipo, range?: DateRange): Promise<PortafolioISIN[]> {
+  const qs = buildQueryString({
+    Entidad: entidad,
+    Fondo: fondo,
+    ...fechaParams(range),
+  })
+  const raw = await fetchJson<RawPortafolioISIN[]>(`${API_BASE}/portafolioisin${qs}`)
+  return transformPortafolioISIN(raw)
 }
 
-export async function fetchAfiliados(entidad?: string, fondo?: FondoTipo): Promise<Afiliado[]> {
-  const qs = buildQueryString({ Entidad: entidad, Fondo: fondo })
+export async function fetchAfiliados(entidad?: string, fondo?: FondoTipo, range?: DateRange): Promise<Afiliado[]> {
+  const qs = buildQueryString({
+    Entidad: entidad,
+    Fondo: fondo,
+    ...fechaParams(range),
+  })
   const raw = await fetchJson<RawAfiliado[]>(`${API_BASE}/afiliado${qs}`)
   return transformAfiliados(raw)
 }
 
-export async function fetchBeneficios(entidad?: string, fondo?: FondoTipo): Promise<Beneficio[]> {
-  const qs = buildQueryString({ Entidad: entidad, Fondo: fondo })
-  return fetchJson<Beneficio[]>(`${API_BASE}/beneficio${qs}`)
+export async function fetchAfiliadosAportantes(entidad?: string, fondo?: FondoTipo, range?: DateRange): Promise<AfiliadoAportante[]> {
+  const qs = buildQueryString({
+    Entidad: entidad,
+    Fondo: fondo,
+    ...fechaParams(range),
+  })
+  const raw = await fetchJson<RawAfiliado[]>(`${API_BASE}/afiliado${qs}`)
+  return transformAfiliadosAportantes(raw)
 }
 
-export async function fetchCuentas(entidad?: string, fondo?: FondoTipo): Promise<Cuenta[]> {
-  const qs = buildQueryString({ Entidad: entidad, Fondo: fondo })
-  return fetchJson<Cuenta[]>(`${API_BASE}/cuenta${qs}`)
+export async function fetchAfiliadosDemograficos(entidad?: string, fondo?: FondoTipo, range?: DateRange): Promise<AfiliadoDemografico[]> {
+  const qs = buildQueryString({
+    Entidad: entidad,
+    Fondo: fondo,
+    ...fechaParams(range),
+  })
+  const raw = await fetchJson<RawAfiliado[]>(`${API_BASE}/afiliado${qs}`)
+  return transformAfiliadosDemograficos(raw)
+}
+
+export async function fetchBeneficios(entidad?: string, fondo?: FondoTipo, range?: DateRange): Promise<Beneficio[]> {
+  const qs = buildQueryString({
+    Entidad: entidad,
+    Fondo: fondo,
+    ...fechaParams(range),
+  })
+  const raw = await fetchJson<RawBeneficio[]>(`${API_BASE}/beneficio${qs}`)
+  return transformBeneficios(raw)
+}
+
+export async function fetchCuentas(entidad?: string, fondo?: FondoTipo, range?: DateRange): Promise<Cuenta[]> {
+  const qs = buildQueryString({
+    Entidad: entidad,
+    Fondo: fondo,
+    ...fechaParams(range),
+  })
+  const raw = await fetchJson<RawCuenta[]>(`${API_BASE}/cuenta${qs}`)
+  return transformCuentas(raw)
 }
 
 export async function fetchLibreTransferencia(entidad?: string, range?: DateRange): Promise<LibreTransferencia[]> {
@@ -88,5 +127,6 @@ export async function fetchLibreTransferencia(entidad?: string, range?: DateRang
     Entidad: entidad,
     ...fechaParams(range),
   })
-  return fetchJson<LibreTransferencia[]>(`${API_BASE}/lt${qs}`)
+  const raw = await fetchJson<RawLibreTransferencia[]>(`${API_BASE}/lt${qs}`)
+  return transformLibreTransferencia(raw)
 }

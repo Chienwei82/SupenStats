@@ -2,16 +2,18 @@ import { useState, useEffect, useCallback } from 'react'
 import type { ApiState } from '../types/suppen'
 
 export function useSupenData<T>(
-  fetchFn: () => Promise<T[]>
+  fetchFn: () => Promise<T[]>,
+  enabled = true
 ): ApiState<T> {
   const [data, setData] = useState<T[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(enabled)
   const [error, setError] = useState<string | null>(null)
   const [trigger, setTrigger] = useState(0)
 
   const refetch = useCallback(() => setTrigger(n => n + 1), [])
 
   useEffect(() => {
+    if (!enabled) return
     let cancelled = false
     setLoading(true)
     setError(null)
@@ -31,7 +33,7 @@ export function useSupenData<T>(
       })
 
     return () => { cancelled = true }
-  }, [fetchFn, trigger])
+  }, [fetchFn, trigger, enabled])
 
   return { data, loading, error, refetch }
 }

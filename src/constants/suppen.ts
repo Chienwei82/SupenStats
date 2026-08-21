@@ -44,15 +44,36 @@ export const CHART_COLORS = [
 
 export const FONDO_DEFAULT = 'ROP' as const
 
+function isoDate(offsetYears: number): string {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() - offsetYears)
+  return d.toISOString().split('T')[0]
+}
+
+function isoDateMonthsOffset(offsetMonths: number): string {
+  const d = new Date()
+  d.setMonth(d.getMonth() - offsetMonths)
+  return d.toISOString().split('T')[0]
+}
+
+// Rango por defecto para los reportes históricos: últimos 5 años.
 export const DATE_RANGE_DEFAULT = {
-  FechaInicio: '2020-01-01',
+  FechaInicio: isoDate(5),
   FechaFinal: new Date().toISOString().split('T')[0],
+}
+
+// Comisiones: por defecto mostramos el periodo pre-unificacion (2010-2020)
+// para que el usuario vea la diferenciacion historica entre OPCs antes de
+// que todas convergieran a 0.35%.
+export const COMISION_RANGE = {
+  FechaInicio: '2010-01-01',
+  FechaFinal: '2020-12-31',
 }
 
 // El endpoint de portafolio devuelve datos desde 2010 y es muy pesado
 // (55MB sin filtro). Limitamos a los últimos 3 meses para que la consulta
 // sea rápida y suficiente para el donut y el gráfico de activos.
 export const PORTFOLIO_RANGE = {
-  FechaInicio: '2026-05-01',
+  FechaInicio: isoDateMonthsOffset(3),
   FechaFinal: new Date().toISOString().split('T')[0],
 }

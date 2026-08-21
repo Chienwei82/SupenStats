@@ -101,7 +101,9 @@ export function findMin<T>(data: T[], key: keyof T): T | undefined {
 
 import type {
   Comision, Rendimiento, Portafolio, Afiliado,
+  AfiliadoAportante, AfiliadoDemografico, Beneficio, Cuenta, LibreTransferencia, PortafolioISIN,
   RawComision, RawRendimiento, RawPortafolio, RawAfiliado,
+  RawBeneficio, RawCuenta, RawLibreTransferencia, RawPortafolioISIN,
 } from '../types/suppen'
 import { normalizeEntityName } from '../constants/suppen'
 
@@ -125,12 +127,14 @@ export function transformComisiones(raw: RawComision[]): Comision[] {
   // La API devuelve un registro por tipo (APORTE/RENDIMIENTO/SALDO).
   // Para el dashboard de comisiones de administración usamos la comisión
   // de SALDO, que es la que aplica sobre el saldo administrado.
-  // Agrupamos por entidad para generar un solo registro por OPC.
+  // Devolvemos la serie histórica (un registro por entidad y fecha de corte)
+  // para que el gráfico pueda mostrar la evolución en el tiempo.
   const map = new Map<string, Comision>()
   for (const item of raw) {
     if (item.tipo !== 'SALDO') continue
     const entidad = normalizeEntityName(item.entidad)
-    const existing = map.get(entidad) ?? {
+    const key = `${entidad}|${item.fecha}`
+    const existing = map.get(key) ?? {
       Entidad: entidad,
       Fondo: item.codigofondo,
       FechaCorte: item.fecha,
@@ -140,7 +144,7 @@ export function transformComisiones(raw: RawComision[]): Comision[] {
     }
     existing.ComisionAdministracion = item['comisión'] ?? 0
     existing.ComisionTotal = item['comisión'] ?? 0
-    map.set(entidad, existing)
+    map.set(key, existing)
   }
   return Array.from(map.values())
 }
@@ -190,4 +194,131 @@ export function transformAfiliados(raw: RawAfiliado[]): Afiliado[] {
     map.set(key, existing)
   }
   return Array.from(map.values())
+}
+
+export function transformAfiliadosAportantes(raw: RawAfiliado[]): AfiliadoAportante[] {
+  // Preserva tanto afiliados como aportantes por (entidad, fecha, fondo).
+  // La tasa AFILIADOS/APORTANTES es clave para medir salud del sistema.
+  const map = new Map<string, AfiliadoAportante>()
+  for (const item of raw) {
+    const entidad = normalizeEntityName(item.entidad)
+    const key = `${entidad}|${item.fecha}|${item.codigofondo}`
+    const existing = map.get(key) ?? {
+      Entidad: entidad,
+      Fondo: item.codigofondo,
+      FechaCorte: item.fecha,
+      CantidadAfiliados: 0,
+      CantidadAportantes: 0,
+    }
+    existing.CantidadAfiliados += item.afiliados ?? 0
+    existing.CantidadAportantes += item.aportantes ?? 0
+    map.set(key, existing)
+  }
+  return Array.from(map.values())
+}
+
+function normalizeSexo(sexo: string, codigosexo: string): string {
+  if (codigosexo === 'F' || codigosexo === 'M') {
+    return codigosexo === 'F' ? 'Femenino' : 'Masculino'
+  }
+  const s = sexo.trim().toUpperCase()
+  return s.startsWith('F') ? 'Femenino' : s.startsWith('M') ? 'Masculino' : s
+}
+
+export function transformAfiliadosDemograficos(raw: RawAfiliado[]): AfiliadoDemografico[] {
+  // Desglose por sexo y rango de edad (sin perder la demografía,
+  // que transformAfiliados descarta al sumar por entidad+fecha).
+  const map = new Map<string, AfiliadoDemografico>()
+  for (const item of raw) {
+    const entidad = normalizeEntityName(item.entidad)
+    const sexo = normalizeSexo(item.sexo, item.codigosexo)
+    const key = `${entidad}|${sexo}|${item.rangoedad}|${item.fecha}|${item.codigofondo}`
+    const existing = map.get(key) ?? {
+      Entidad: entidad,
+      Fondo: item.codigofondo,
+      FechaCorte: item.fecha,
+      Sexo: sexo,
+      RangoEdad: item.rangoedad,
+      CantidadAfiliados: 0,
+    }
+    existing.CantidadAfiliados += item.afiliados ?? 0
+    map.set(key, existing)
+  }
+  return Array.from(map.values())
+}
+
+export function transformBeneficios(raw: RawBeneficio[]): Beneficio[] {
+  // La API desglosa pensiones por (sexo, rango edad, tipo beneficio, fecha).
+  // Sumamos por (entidad, fecha, tipo) para obtener pensionados y montos.
+  const map = new Map<string, Beneficio>()
+  for (const item of raw) {
+    const entidad = normalizeEntityName(item.entidad)
+    const key = `${entidad}|${item.fecha}|${item.codigofondo}|${item.tipobeneficio}`
+    const existing = map.get(key) ?? {
+      Entidad: entidad,
+      Fondo: item.codigofondo,
+      FechaCorte: item.fecha,
+      CantidadPensionados: 0,
+      MontoBeneficios: 0,
+    }
+    existing.CantidadPensionados += item.beneficio ?? 0
+    existing.MontoBeneficios += item.beneficiocolones ?? 0
+    map.set(key, existing)
+  }
+  return Array.from(map.values())
+}
+
+export function transformCuentas(raw: RawCuenta[]): Cuenta[] {
+  // La API devuelve un desglose por categoría contable (ACTIVO, GASTOS,
+  // INGRESOS, PASIVO, PATRIMONIO, VALOR DE LA CUOTA...) con montos en colones.
+  // Mapeamos cada registro a (entidad, tipo de cuenta, fecha, monto).
+  const map = new Map<string, Cuenta>()
+  for (const item of raw) {
+    const entidad = normalizeEntityName(item.entidad)
+    const key = `${entidad}|${item.cuenta}|${item.fecha}|${item.codigofondo}`
+    const existing = map.get(key) ?? {
+      Entidad: entidad,
+      Fondo: item.codigofondo,
+      FechaCorte: item.fecha,
+      CuentaTipo: item.cuenta,
+      MontoColones: 0,
+    }
+    existing.MontoColones += item.montocolones ?? 0
+    map.set(key, existing)
+  }
+  return Array.from(map.values())
+}
+
+export function transformLibreTransferencia(raw: RawLibreTransferencia[]): LibreTransferencia[] {
+  // La API devuelve una matriz: fila por OPC origen, columnas por OPC destino,
+  // tanto en cantidad ({OPC}_C) como en monto ({OPC}_M). Generamos un registro
+  // plano por (origen, destino, fecha) contando transferencias y montos.
+  const result: LibreTransferencia[] = []
+  const DEST_KEYS = ['POPULAR', 'VIDA_PLENA', 'BACSJ_PENSIONES', 'BCR_PENSION', 'CCSS_OPC', 'BN_VITAL', 'INS_PENSIONES', 'IBP_PENSIONES']
+  for (const item of raw) {
+    const fecha = String(item.fecha ?? '')
+    for (const dest of DEST_KEYS) {
+      const count = Number(item[`${dest}_C`] ?? 0)
+      const monto = Number(item[`${dest}_M`] ?? 0)
+      result.push({
+        Entidad: `${normalizeEntityName(item.entidadorigen)} -> ${dest.replace(/_/g, ' ')}`,
+        FechaCorte: fecha,
+        CantidadTransferencias: count,
+        MontoTransferido: monto,
+      })
+    }
+  }
+  return result
+}
+
+export function transformPortafolioISIN(raw: RawPortafolioISIN[]): PortafolioISIN[] {
+  return raw.map(item => ({
+    Entidad: normalizeEntityName(item.entidad),
+    Fondo: item.codigofondo,
+    FechaCorte: item.fecha,
+    CodigoISIN: item.codigoisin,
+    Descripcion: item.descripcion,
+    Monto: item.monto ?? 0,
+    Porcentaje: item.porcentaje ?? 0,
+  }))
 }
