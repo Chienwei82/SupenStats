@@ -37,7 +37,12 @@ export function KpiCards({ rendimientos, comisiones, afiliados }: KpiCardsProps)
     ? [...rendimientosValidos].sort((a, b) => (b.RendimientoNominal ?? 0) - (a.RendimientoNominal ?? 0))[0]
     : null
 
-  const totalAfiliados = afiliados.reduce((sum, a) => sum + (a.CantidadAfiliados ?? 0), 0)
+  const latestDate = afiliados.length > 0
+    ? afiliados.reduce((latest, a) => a.FechaCorte > latest ? a.FechaCorte : latest, afiliados[0].FechaCorte)
+    : null
+  const totalAfiliados = afiliados
+    .filter(a => latestDate && a.FechaCorte === latestDate)
+    .reduce((sum, a) => sum + (a.CantidadAfiliados ?? 0), 0)
 
   const comisionesValidas = comisiones.filter(c => c.ComisionTotal != null && c.ComisionTotal !== 0)
 
@@ -62,7 +67,7 @@ export function KpiCards({ rendimientos, comisiones, afiliados }: KpiCardsProps)
       <KpiCard
         title="Total Afiliados"
         value={formatNumber(totalAfiliados)}
-        subtitle="Across todas las OPC"
+        subtitle={latestDate ? `A fecha: ${latestDate}` : 'Sin datos'}
         color="text-amber-600"
       />
       <KpiCard

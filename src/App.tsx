@@ -1,34 +1,55 @@
-import { useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import { Header } from './components/layout/Header'
 import { KpiCards } from './components/layout/KpiCards'
+import { ReportTabs, type ReportId } from './components/layout/ReportTabs'
 import { RendimientoChart } from './components/charts/RendimientoChart'
 import { ComisionesChart } from './components/charts/ComisionesChart'
 import { PortafolioChart } from './components/charts/PortafolioChart'
 import { AfiliadosChart } from './components/charts/AfiliadosChart'
 import { ActivosChart } from './components/charts/ActivosChart'
-import { ChartSkeleton } from './components/ui/LoadingSkeleton'
+import { FilterBar } from './components/ui/FilterBar'
+import { KpiSkeleton, ChartSkeleton, PageLoader, LoadingOverlay } from './components/ui/LoadingSkeleton'
 import { ErrorMessage } from './components/ui/ErrorMessage'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { useSupenData } from './hooks/useSupenData'
 import { fetchComisiones, fetchRendimiento, fetchPortafolio, fetchAfiliados } from './api/apiService'
 import { FONDO_DEFAULT, DATE_RANGE_DEFAULT, PORTFOLIO_RANGE } from './constants/suppen'
+import type { FondoTipo, DateRange } from './types/suppen'
 
 function App() {
+  const [activeTab, setActiveTab] = useState<ReportId>('resumen')
+
+  // Filter states per report
+  const [rendFondo, setRendFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
+  const [rendDates, setRendDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
+
+  const [comFondo, setComFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
+  const [comDates, setComDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
+
+  const [portFondo, setPortFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
+  const [portDates, setPortDates] = useState<DateRange>(PORTFOLIO_RANGE)
+
+  const [afFondo, setAfFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
+
+  const [actFondo, setActFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
+  const [actDates, setActDates] = useState<DateRange>(PORTFOLIO_RANGE)
+
+  // Fetchers — wrapped in useCallback with filter dependencies
   const fetchRendimientoCb = useCallback(
-    () => fetchRendimiento(FONDO_DEFAULT, undefined, DATE_RANGE_DEFAULT),
-    []
+    () => fetchRendimiento(rendFondo || undefined, undefined, rendDates),
+    [rendFondo, rendDates]
   )
   const fetchComisionesCb = useCallback(
-    () => fetchComisiones(FONDO_DEFAULT, DATE_RANGE_DEFAULT),
-    []
+    () => fetchComisiones(comFondo || undefined, comDates),
+    [comFondo, comDates]
   )
   const fetchPortafolioCb = useCallback(
-    () => fetchPortafolio(undefined, FONDO_DEFAULT, PORTFOLIO_RANGE),
-    []
+    () => fetchPortafolio(undefined, portFondo || undefined, portDates),
+    [portFondo, portDates]
   )
   const fetchAfiliadosCb = useCallback(
-    () => fetchAfiliados(undefined, FONDO_DEFAULT),
-    []
+    () => fetchAfiliados(undefined, afFondo || undefined),
+    [afFondo]
   )
 
   const { data: rendimientos, loading: loadingRend, error: errorRend, refetch: refetchRend } = useSupenData(fetchRendimientoCb)
@@ -36,99 +57,204 @@ function App() {
   const { data: portafolio, loading: loadingPort, error: errorPort, refetch: refetchPort } = useSupenData(fetchPortafolioCb)
   const { data: afiliados, loading: loadingAf, error: errorAf, refetch: refetchAf } = useSupenData(fetchAfiliadosCb)
 
-  // Cada sección maneja su propio estado de carga/error de forma independiente,
-  // para que los gráficos rápidos se muestren mientras el portafolio (lento)
-  // sigue cargando.
-  const kpiReady = !loadingRend && !loadingCom && !loadingAf
-  const kpiError = errorRend || errorCom || errorAf
+  const isFirstLoad = loadingRend && loadingCom && loadingPort && loadingAf && rendimientos.length === 0
 
-  const rendimientoReady = !loadingRend
-  const comisionReady = !loadingCom
-  const portafolioReady = !loadingPort
-  const afiliadoReady = !loadingAf
+  // ---- Resumen view ----
+  const renderResumen = () => {
+    const kpiReady = !loadingRend && !loadingCom && !loadingAf
+    const kpiError = errorRend || errorCom || errorAf
+
+    return (
+      <div className="space-y-8">
+        {/* KPIs */}
+        {!kpiReady && <KpiSkeleton />}
+        {kpiReady && !kpiError && (
+          <ErrorBoundary>
+            <KpiCards rendimientos={rendimientos} comisiones={comisiones} afiliados={afiliados} />
+          </ErrorBoundary>
+        )}
+        {kpiReady && kpiError && (
+          <ErrorMessage message={kpiError} onRetry={() => { refetchRend(); refetchCom(); refetchAf(); }} />
+        )}
+
+        {/* Rendimiento */}
+        {loadingRend && rendimientos.length === 0 ? <ChartSkeleton /> : !errorRend ? (
+          <ErrorBoundary><RendimientoChart data={rendimientos} /></ErrorBoundary>
+        ) : (
+          <ErrorMessage message={errorRend} onRetry={refetchRend} />
+        )}
+
+        {/* Comisiones + Portafolio */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="relative">
+            {loadingCom && comisiones.length === 0 ? <ChartSkeleton /> : !errorCom ? (
+              <ErrorBoundary><ComisionesChart data={comisiones} /></ErrorBoundary>
+            ) : (
+              <ErrorMessage message={errorCom} onRetry={refetchCom} />
+            )}
+          </div>
+          <div className="relative">
+            {loadingPort && portafolio.length === 0 ? <ChartSkeleton /> : !errorPort ? (
+              <ErrorBoundary><PortafolioChart data={portafolio} /></ErrorBoundary>
+            ) : (
+              <ErrorMessage message={errorPort} onRetry={refetchPort} />
+            )}
+          </div>
+        </div>
+
+        {/* Afiliados + Activos */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="relative">
+            {loadingAf && afiliados.length === 0 ? <ChartSkeleton /> : !errorAf ? (
+              <ErrorBoundary><AfiliadosChart data={afiliados} /></ErrorBoundary>
+            ) : (
+              <ErrorMessage message={errorAf} onRetry={refetchAf} />
+            )}
+          </div>
+          <div className="relative">
+            {loadingPort && portafolio.length === 0 ? <ChartSkeleton /> : !errorPort ? (
+              <ErrorBoundary><ActivosChart data={portafolio} /></ErrorBoundary>
+            ) : (
+              <ErrorMessage message={errorPort} onRetry={refetchPort} />
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ---- Individual report views ----
+  const renderRendimiento = () => (
+    <div className="space-y-4">
+      <FilterBar
+        fondo={rendFondo}
+        onFondoChange={setRendFondo}
+        dateRange={rendDates}
+        onDateRangeChange={setRendDates}
+      />
+      <div className="relative">
+        {loadingRend && rendimientos.length === 0 ? <ChartSkeleton /> : !errorRend ? (
+          <ErrorBoundary><RendimientoChart data={rendimientos} /></ErrorBoundary>
+        ) : (
+          <ErrorMessage message={errorRend} onRetry={refetchRend} />
+        )}
+        {loadingRend && rendimientos.length > 0 && <LoadingOverlay />}
+      </div>
+    </div>
+  )
+
+  const renderComisiones = () => (
+    <div className="space-y-4">
+      <FilterBar
+        fondo={comFondo}
+        onFondoChange={setComFondo}
+        dateRange={comDates}
+        onDateRangeChange={setComDates}
+      />
+      <div className="relative">
+        {loadingCom && comisiones.length === 0 ? <ChartSkeleton /> : !errorCom ? (
+          <ErrorBoundary><ComisionesChart data={comisiones} /></ErrorBoundary>
+        ) : (
+          <ErrorMessage message={errorCom} onRetry={refetchCom} />
+        )}
+        {loadingCom && comisiones.length > 0 && <LoadingOverlay />}
+      </div>
+    </div>
+  )
+
+  const renderPortafolio = () => (
+    <div className="space-y-4">
+      <FilterBar
+        fondo={portFondo}
+        onFondoChange={setPortFondo}
+        dateRange={portDates}
+        onDateRangeChange={setPortDates}
+      />
+      <div className="relative">
+        {loadingPort && portafolio.length === 0 ? <ChartSkeleton /> : !errorPort ? (
+          <ErrorBoundary><PortafolioChart data={portafolio} /></ErrorBoundary>
+        ) : (
+          <ErrorMessage message={errorPort} onRetry={refetchPort} />
+        )}
+        {loadingPort && portafolio.length > 0 && <LoadingOverlay />}
+      </div>
+    </div>
+  )
+
+  const renderAfiliados = () => (
+    <div className="space-y-4">
+      <FilterBar fondo={afFondo} onFondoChange={setAfFondo} />
+      <div className="relative">
+        {loadingAf && afiliados.length === 0 ? <ChartSkeleton /> : !errorAf ? (
+          <ErrorBoundary><AfiliadosChart data={afiliados} /></ErrorBoundary>
+        ) : (
+          <ErrorMessage message={errorAf} onRetry={refetchAf} />
+        )}
+        {loadingAf && afiliados.length > 0 && <LoadingOverlay />}
+      </div>
+    </div>
+  )
+
+  const renderActivos = () => (
+    <div className="space-y-4">
+      <FilterBar
+        fondo={actFondo}
+        onFondoChange={setActFondo}
+        dateRange={actDates}
+        onDateRangeChange={setActDates}
+      />
+      <div className="relative">
+        {loadingPort && portafolio.length === 0 ? <ChartSkeleton /> : !errorPort ? (
+          <ErrorBoundary><ActivosChart data={portafolio} /></ErrorBoundary>
+        ) : (
+          <ErrorMessage message={errorPort} onRetry={refetchPort} />
+        )}
+        {loadingPort && portafolio.length > 0 && <LoadingOverlay />}
+      </div>
+    </div>
+  )
+
+  const views: Record<ReportId, () => React.ReactNode> = {
+    resumen: renderResumen,
+    rendimiento: renderRendimiento,
+    comisiones: renderComisiones,
+    portafolio: renderPortafolio,
+    afiliados: renderAfiliados,
+    activos: renderActivos,
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {isFirstLoad && <PageLoader />}
+
       <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {kpiReady && !kpiError && (
-          <ErrorBoundary>
-            <KpiCards
-              rendimientos={rendimientos}
-              comisiones={comisiones}
-              afiliados={afiliados}
-            />
-          </ErrorBoundary>
-        )}
-
-        {kpiReady && kpiError && (
-          <ErrorMessage
-            message={kpiError}
-            onRetry={() => { refetchRend(); refetchCom(); refetchAf(); }}
-          />
-        )}
-
-        {!kpiReady && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 animate-pulse">
-                <div className="h-3 bg-gray-200 rounded w-2/3 mb-3" />
-                <div className="h-6 bg-gray-200 rounded w-1/2" />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {rendimientoReady && !errorRend && (
-          <ErrorBoundary>
-            <RendimientoChart data={rendimientos} />
-          </ErrorBoundary>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {comisionReady && !errorCom ? (
-            <ErrorBoundary>
-              <ComisionesChart data={comisiones} />
-            </ErrorBoundary>
-          ) : (
-            <ChartSkeleton />
-          )}
-
-          {portafolioReady && !errorPort ? (
-            <ErrorBoundary>
-              <PortafolioChart data={portafolio} />
-            </ErrorBoundary>
-          ) : errorPort ? (
-            <ErrorMessage message={errorPort} onRetry={refetchPort} />
-          ) : (
-            <ChartSkeleton />
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {afiliadoReady && !errorAf ? (
-            <ErrorBoundary>
-              <AfiliadosChart data={afiliados} />
-            </ErrorBoundary>
-          ) : (
-            <ChartSkeleton />
-          )}
-
-          {portafolioReady && !errorPort ? (
-            <ErrorBoundary>
-              <ActivosChart data={portafolio} />
-            </ErrorBoundary>
-          ) : errorPort ? (
-            <ErrorMessage message={errorPort} onRetry={refetchPort} />
-          ) : (
-            <ChartSkeleton />
-          )}
-        </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <ReportTabs active={activeTab} onChange={setActiveTab} />
+        {views[activeTab]()}
       </main>
 
-      <footer className="bg-gray-100 border-t border-gray-200 py-4 mt-12">
-        <div className="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
-          Datos obtenidos de la API publica de la Superintendencia de Pensiones de Costa Rica (SUPEN)
+      <footer className="bg-gray-800 text-gray-300 py-8 mt-12">
+        <div className="max-w-7xl mx-auto px-4 text-center text-xs space-y-3">
+          <p className="text-gray-400">
+            Datos obtenidos de la API publica de la Superintendencia de Pensiones de Costa Rica (SUPEN)
+          </p>
+          <div className="border-t border-gray-700 pt-3">
+            <p className="font-medium text-gray-300">Proyecto recreativo con fines educativos</p>
+            <p className="text-gray-500 mt-1">
+              Este proyecto no es oficial de la Superintendencia de Pensiones (SUPEN) ni tiene afiliacion alguna con entes gubernamentales. Es un proyecto de codigo abierto creado para practicar desarrollo web y visualizacion de datos.
+            </p>
+          </div>
+          <a
+            href="https://github.com/Chienwei82/SupenStats"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+            </svg>
+            Codigo fuente en GitHub
+          </a>
         </div>
       </footer>
     </div>
