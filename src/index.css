@@ -8,16 +8,26 @@
   }
 }
 
-/* Respetar la preferencia de movimiento reducido del usuario (WCAG 2.3.3).
-   Deja de animar el shimmer del skeleton, el spinner y el chevron. */
+/* Reducción de movimiento en animaciones decorativas (WCAG 2.3.3).
+   El shimmer del skeleton y el spinner de carga son señales de estado
+   esenciales (indican progreso de carga), por lo que se conservan.
+   Solo se reducen las transiciones y animaciones puramente decorativas
+   (fade, pulsos, flechas, etc.) cuando el usuario pide menos movimiento. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* Animaciones puramente decorativas: se detienen */
+  .animate-pulse,
+  .animate-bounce,
+  .animate-ping,
+  [class*="transition-"] {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
 
