@@ -19,7 +19,7 @@ import { ErrorMessage } from './components/ui/ErrorMessage'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { useSupenData } from './hooks/useSupenData'
 import { fetchComisiones, fetchRendimiento, fetchPortafolio, fetchAfiliados, fetchBeneficios, fetchCuentas, fetchLibreTransferencia, fetchAfiliadosAportantes, fetchAfiliadosDemograficos, fetchPortafolioISIN } from './api/apiService'
-import { FONDO_DEFAULT, DATE_RANGE_DEFAULT, PORTFOLIO_RANGE } from './constants/suppen'
+import { FONDO_DEFAULT, DATE_RANGE_DEFAULT, PORTFOLIO_RANGE, COMISION_RANGE } from './constants/suppen'
 import type { FondoTipo, DateRange } from './types/suppen'
 
 function App() {
@@ -30,7 +30,7 @@ function App() {
   const [rendDates, setRendDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
 
   const [comFondo, setComFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
-  const [comDates, setComDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
+  const [comDates, setComDates] = useState<DateRange>(COMISION_RANGE)
 
   const [portFondo, setPortFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
   const [portDates, setPortDates] = useState<DateRange>(PORTFOLIO_RANGE)

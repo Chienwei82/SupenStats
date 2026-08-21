@@ -62,6 +62,14 @@ export const DATE_RANGE_DEFAULT = {
   FechaFinal: new Date().toISOString().split('T')[0],
 }
 
+// Comisiones: por defecto mostramos el periodo pre-unificacion (2010-2020)
+// para que el usuario vea la diferenciacion historica entre OPCs antes de
+// que todas convergieran a 0.35%.
+export const COMISION_RANGE = {
+  FechaInicio: '2010-01-01',
+  FechaFinal: '2020-12-31',
+}
+
 // El endpoint de portafolio devuelve datos desde 2010 y es muy pesado
 // (55MB sin filtro). Limitamos a los últimos 3 meses para que la consulta
 // sea rápida y suficiente para el donut y el gráfico de activos.
