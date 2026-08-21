@@ -36,8 +36,8 @@ export function PortafolioChart({ data, title = 'Distribucion del Portafolio de 
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
+    <div className="bg-white dark:bg-[#25293c] rounded-xl border border-gray-200 dark:border-[#34324a] p-6 shadow-md dark:shadow-xl dark:shadow-black/30">
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-[#eeffff] mb-4">{title}</h3>
       <ResponsiveContainer width="100%" height={350}>
         <PieChart>
           <Pie

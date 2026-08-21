@@ -1,6 +1,14 @@
-export function Header() {
+import { ThemeToggle } from './ThemeToggle'
+import type { Theme } from '../../hooks/useTheme'
+
+interface Props {
+  theme: Theme
+  onToggleTheme: () => void
+}
+
+export function Header({ theme, onToggleTheme }: Props) {
   return (
-    <header className="bg-gradient-to-r from-blue-900 to-blue-700 text-white py-6 px-8 shadow-lg">
+    <header className="bg-gradient-to-r from-[#202331] via-[#2b2a3e] to-[#34324a] text-white py-6 px-8 shadow-xl">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">SUPEN Stats</h1>
@@ -9,6 +17,7 @@ export function Header() {
           </p>
         </div>
         <div className="flex items-center gap-4">
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
           <div className="text-right text-sm text-blue-200 hidden sm:block">
             <p>Datos oficiales SUPEN</p>
             <p className="text-xs mt-1 opacity-75">webapps.supen.fi.cr</p>

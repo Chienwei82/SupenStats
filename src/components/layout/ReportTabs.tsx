@@ -66,7 +66,7 @@ export function ReportTabs({ active, onChange }: ReportTabsProps) {
 
   return (
     <nav
-      className="flex gap-1 p-1 bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto"
+      className="flex gap-1 p-1 bg-white dark:bg-[#292d3e] rounded-xl border border-gray-200 dark:border-[#34324a] shadow-md dark:shadow-lg dark:shadow-black/40 overflow-x-auto"
       role="tablist"
       aria-label="Reportes"
     >
@@ -85,10 +85,10 @@ export function ReportTabs({ active, onChange }: ReportTabsProps) {
             onKeyDown={handleKeyDown}
             className={`
               px-4 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#89ddff] focus-visible:ring-offset-1 dark:focus-visible:ring-offset-[#292d3e]
               ${isActive
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-[#7c4dff] to-[#82aaff] text-white shadow-md'
+                : 'text-gray-600 dark:text-[#a6accd] hover:bg-gray-100 dark:hover:bg-[#303348] hover:text-gray-900 dark:hover:text-[#eeffff]'
               }
             `}
           >

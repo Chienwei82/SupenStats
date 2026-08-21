@@ -40,17 +40,17 @@ export function FilterBar({
   const entidadId = `${uid}-entidad`
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-3 p-3 bg-gray-50 rounded-lg border border-gray-200" role="group" aria-label="Filtros del reporte">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-3 p-3 bg-gray-50 dark:bg-[#262a3a] rounded-lg border border-gray-200 dark:border-[#34324a]" role="group" aria-label="Filtros del reporte">
       {hasFondoFilter && (
         <div className="flex items-center gap-2">
-          <label htmlFor={fondoId} className="text-xs font-medium text-gray-600">
+          <label htmlFor={fondoId} className="text-xs font-medium text-gray-600 dark:text-[#a6accd]">
             Fondo
           </label>
           <select
             id={fondoId}
             value={fondo}
             onChange={(e) => onFondoChange(e.target.value as FondoTipo | '')}
-            className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-3 py-1.5 text-sm bg-white dark:bg-[#25293c] dark:text-[#eeffff] border border-gray-300 dark:border-[#34324a] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#82aaff] focus:border-blue-500"
           >
             {FONDOS.map(f => (
               <option key={f.value} value={f.value}>{f.label}</option>
@@ -62,7 +62,7 @@ export function FilterBar({
       {hasDateFilter && (
         <>
           <div className="flex items-center gap-2">
-            <label htmlFor={fechaInicioId} className="text-xs font-medium text-gray-600 whitespace-nowrap">
+            <label htmlFor={fechaInicioId} className="text-xs font-medium text-gray-600 dark:text-[#a6accd] whitespace-nowrap">
               Desde
             </label>
             <input
@@ -70,11 +70,11 @@ export function FilterBar({
               type="date"
               value={dateRange.FechaInicio}
               onChange={(e) => onDateRangeChange({ ...dateRange, FechaInicio: e.target.value })}
-              className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-1.5 text-sm bg-white dark:bg-[#25293c] dark:text-[#eeffff] border border-gray-300 dark:border-[#34324a] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#82aaff] focus:border-blue-500"
             />
           </div>
           <div className="flex items-center gap-2">
-            <label htmlFor={fechaFinId} className="text-xs font-medium text-gray-600 whitespace-nowrap">
+            <label htmlFor={fechaFinId} className="text-xs font-medium text-gray-600 dark:text-[#a6accd] whitespace-nowrap">
               Hasta
             </label>
             <input
@@ -82,7 +82,7 @@ export function FilterBar({
               type="date"
               value={dateRange.FechaFinal}
               onChange={(e) => onDateRangeChange({ ...dateRange, FechaFinal: e.target.value })}
-              className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-1.5 text-sm bg-white dark:bg-[#25293c] dark:text-[#eeffff] border border-gray-300 dark:border-[#34324a] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#82aaff] focus:border-blue-500"
             />
           </div>
         </>

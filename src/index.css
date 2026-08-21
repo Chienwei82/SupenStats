@@ -1,11 +1,23 @@
 @import "tailwindcss";
 
+/* Dark mode por clase (strategy de Tailwind v4).
+   La clase `.dark` en <html> activa las variantes `dark:`. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   @keyframes shimmer {
     100% {
       transform: translateX(100%);
     }
   }
+}
+
+/* Base: color de fondo según el tema para evitar destellos */
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
 }
 
 /* Reducción de movimiento en animaciones decorativas (WCAG 2.3.3).
@@ -40,4 +52,23 @@
 :focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
+}
+
+/* Recharts: adapta ejes, etiquetas y grid al tema oscuro (Palenight).
+   Recharts aplica colores inline, por lo que se necesita !important. */
+html.dark .recharts-cartesian-axis-tick-value {
+  fill: #a6accd !important;
+}
+html.dark .recharts-cartesian-grid line {
+  stroke: #2b2a3e !important;
+}
+html.dark .recharts-legend-item-text {
+  color: #a6accd !important;
+}
+html.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: #25293c !important;
+  border-color: #34324a !important;
+}
+html.dark .recharts-default-tooltip .recharts-tooltip-label {
+  color: #eeffff !important;
 }
