@@ -23,7 +23,7 @@ import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { useSupenData } from './hooks/useSupenData'
 import { useReportFilters } from './hooks/useReportFilters'
 import { fetchComisiones, fetchRendimiento, fetchPortafolio, fetchAfiliados, fetchBeneficios, fetchCuentas, fetchLibreTransferencia, fetchAfiliadosAportantes, fetchAfiliadosDemograficos, fetchPortafolioISIN } from './api/apiService'
-import { FONDO_DEFAULT, DATE_RANGE_DEFAULT, PORTFOLIO_RANGE, COMISION_RANGE } from './constants/suppen'
+import { FONDO_DEFAULT, DATE_RANGE_DEFAULT, PORTFOLIO_RANGE, COMISION_RANGE, LT_FONDO_OPTIONS } from './constants/suppen'
 import type { FondoTipo, DateRange } from './types/suppen'
 
 interface FondoFilters {
@@ -45,9 +45,9 @@ function App() {
   const cue = useReportFilters<FondoFilters>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
   const apo = useReportFilters<FondoFilters>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
   const dem = useReportFilters<FondoFilters>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
-  // /lt no soporta filtro de fondo ni entidad (verificado contra la API real);
-  // solo el rango de fechas tiene efecto.
-  const lt = useReportFilters<{ dates: DateRange }>({ dates: DATE_RANGE_DEFAULT })
+  // /lt no soporta filtro de entidad (verificado contra la API real);
+  // Fondo (ROP/FCL/VOLCA/VOLCB/VOLDA/VOLDB) y fechas sí filtran.
+  const lt = useReportFilters<{ fondo: FondoTipo | ''; dates: DateRange }>({ fondo: 'ROP', dates: DATE_RANGE_DEFAULT })
   const isinFilters = useReportFilters<{ fondo: FondoTipo | '' }>({ fondo: FONDO_DEFAULT })
 
   // Fetchers — wrapped in useCallback with filter dependencies.
@@ -77,10 +77,8 @@ function App() {
     (signal?: AbortSignal) => fetchCuentas(undefined, cue.applied.fondo || undefined, cue.applied.dates, signal),
     [cue.applied]
   )
-  // Nota: /lt ignora el parámetro Entidad (verificado contra la API real);
-  // la matriz ya incluye todos los orígenes/destinos, solo filtran las fechas.
   const fetchLtCb = useCallback(
-    (signal?: AbortSignal) => fetchLibreTransferencia(undefined, lt.applied.dates, signal),
+    (signal?: AbortSignal) => fetchLibreTransferencia(lt.applied.fondo || undefined, lt.applied.dates, signal),
     [lt.applied]
   )
   const fetchAportantesCb = useCallback(
@@ -236,6 +234,9 @@ function App() {
   const renderTransferencias = () => (
     <div className="space-y-4">
       <FilterBar
+        fondo={lt.draft.fondo}
+        onFondoChange={f => lt.setDraft(d => ({ ...d, fondo: f }))}
+        fondoOptions={LT_FONDO_OPTIONS}
         dateRange={lt.draft.dates}
         onDateRangeChange={r => lt.setDraft(d => ({ ...d, dates: r }))}
         onConsult={lt.consult}

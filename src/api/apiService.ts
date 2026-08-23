@@ -170,9 +170,10 @@ export async function fetchCuentas(entidad?: string, fondo?: FondoTipo, range?: 
   return transformCuentas(raw)
 }
 
-export async function fetchLibreTransferencia(entidad?: string, range?: DateRange, signal?: AbortSignal): Promise<LibreTransferencia[]> {
+export async function fetchLibreTransferencia(fondo?: FondoTipo, range?: DateRange, signal?: AbortSignal): Promise<LibreTransferencia[]> {
   const qs = buildQueryString({
-    Entidad: entidad,
+    // Nota: /lt ignora Entidad (verificado contra la API real); Fondo y fechas sí filtran.
+    Fondo: fondo,
     ...fechaParams(range),
   })
   const raw = assertArray<RawLibreTransferencia>(await fetchJson<unknown>(`${API_BASE}/lt${qs}`, signal), 'lt')

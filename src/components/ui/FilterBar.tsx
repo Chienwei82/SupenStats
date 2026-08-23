@@ -4,6 +4,8 @@ import type { FondoTipo, DateRange } from '../../types/suppen'
 interface FilterBarProps {
   fondo?: FondoTipo | ''
   onFondoChange?: (fondo: FondoTipo | '') => void
+  /** Lista de fondos alternativa (ej. /lt usa ROP/FCL/VOLCA/VOLCB/VOLDA/VOLDB). */
+  fondoOptions?: { value: FondoTipo | ''; label: string }[]
   dateRange?: DateRange
   onDateRangeChange?: (range: DateRange) => void
   onConsult?: () => void
@@ -21,12 +23,14 @@ const FONDOS: { value: FondoTipo | ''; label: string }[] = [
 export function FilterBar({
   fondo,
   onFondoChange,
+  fondoOptions,
   dateRange,
   onDateRangeChange,
   onConsult,
 }: FilterBarProps) {
   const hasDateFilter = dateRange && onDateRangeChange
   const hasFondoFilter = fondo !== undefined && onFondoChange !== undefined
+  const fondos = fondoOptions ?? FONDOS
   // id único para asociar etiquetas con controles (evita colisiones en la página)
   const uid = useId()
   const fondoId = `${uid}-fondo`
@@ -55,7 +59,7 @@ export function FilterBar({
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onConsult?.() } }}
             className="px-3 py-1.5 text-sm bg-white dark:bg-[#25293c] dark:text-[#eeffff] border border-gray-300 dark:border-[#34324a] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#82aaff] focus:border-blue-500"
           >
-            {FONDOS.map(f => (
+            {fondos.map(f => (
               <option key={f.value} value={f.value}>{f.label}</option>
             ))}
           </select>

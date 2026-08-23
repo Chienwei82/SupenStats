@@ -301,6 +301,7 @@ export function transformLibreTransferencia(raw: RawLibreTransferencia[]): Libre
       const monto = Number(item[`${dest}_M`] ?? 0)
       result.push({
         Entidad: `${normalizeEntityName(item.entidadorigen)} -> ${dest.replace(/_/g, ' ')}`,
+        Fondo: String(item.codigofondo ?? ''),
         FechaCorte: fecha,
         CantidadTransferencias: count,
         MontoTransferido: monto,

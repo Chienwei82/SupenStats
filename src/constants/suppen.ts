@@ -1,3 +1,5 @@
+import type { FondoTipo } from '../types/suppen'
+
 // Claves canónicas de entidad (las que produce normalizeEntityName).
 // Tipar el Record evita que un typo caiga silenciosamente al color fallback.
 export type EntityColorKey =
@@ -89,6 +91,17 @@ export const CHART_COLORS = [
 ]
 
 export const FONDO_DEFAULT = 'ROP' as const
+
+// Fondos válidos para /lt (libre transferencia). Verificado contra la API:
+// ROP/FCL/VOLCA/VOLCB/VOLDA/VOLDB devuelven datos; BASI/OCUP devuelven 0.
+export const LT_FONDO_OPTIONS: { value: FondoTipo | ''; label: string }[] = [
+  { value: 'ROP', label: 'ROP (Obligatorio)' },
+  { value: 'FCL', label: 'FCL (Compensación)' },
+  { value: 'VOLCA', label: 'Voluntario CA' },
+  { value: 'VOLCB', label: 'Voluntario CB' },
+  { value: 'VOLDA', label: 'Voluntario DA' },
+  { value: 'VOLDB', label: 'Voluntario DB' },
+]
 
 function isoDate(offsetYears: number): string {
   const d = new Date()

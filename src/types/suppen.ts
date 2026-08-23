@@ -58,6 +58,7 @@ export interface Cuenta {
 
 export interface LibreTransferencia {
   Entidad: string
+  Fondo: string
   FechaCorte: string
   CantidadTransferencias: number
   MontoTransferido: number
@@ -82,7 +83,7 @@ export interface AfiliadoDemografico {
   CantidadAfiliados: number
 }
 
-export type FondoTipo = 'ROP' | 'FCL' | 'VOL' | 'BASI' | 'OCUP'
+export type FondoTipo = 'ROP' | 'FCL' | 'VOL' | 'BASI' | 'OCUP' | 'VOLCA' | 'VOLCB' | 'VOLDA' | 'VOLDB'
 
 export interface DateRange {
   FechaInicio: string
