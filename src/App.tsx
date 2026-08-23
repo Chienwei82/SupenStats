@@ -43,9 +43,11 @@ function App() {
   const af = useReportFilters<{ fondo: FondoTipo | '' }>({ fondo: FONDO_DEFAULT })
   const ben = useReportFilters<FondoFilters>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
   const cue = useReportFilters<FondoFilters>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
-  const lt = useReportFilters<{ entidad: string; dates: DateRange }>({ entidad: '', dates: DATE_RANGE_DEFAULT })
   const apo = useReportFilters<FondoFilters>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
   const dem = useReportFilters<FondoFilters>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
+  // /lt no soporta filtro de fondo ni entidad (verificado contra la API real);
+  // solo el rango de fechas tiene efecto.
+  const lt = useReportFilters<{ dates: DateRange }>({ dates: DATE_RANGE_DEFAULT })
   const isinFilters = useReportFilters<{ fondo: FondoTipo | '' }>({ fondo: FONDO_DEFAULT })
 
   // Fetchers — wrapped in useCallback with filter dependencies.
@@ -75,8 +77,10 @@ function App() {
     (signal?: AbortSignal) => fetchCuentas(undefined, cue.applied.fondo || undefined, cue.applied.dates, signal),
     [cue.applied]
   )
+  // Nota: /lt ignora el parámetro Entidad (verificado contra la API real);
+  // la matriz ya incluye todos los orígenes/destinos, solo filtran las fechas.
   const fetchLtCb = useCallback(
-    (signal?: AbortSignal) => fetchLibreTransferencia(lt.applied.entidad || undefined, lt.applied.dates, signal),
+    (signal?: AbortSignal) => fetchLibreTransferencia(undefined, lt.applied.dates, signal),
     [lt.applied]
   )
   const fetchAportantesCb = useCallback(
@@ -234,9 +238,6 @@ function App() {
       <FilterBar
         dateRange={lt.draft.dates}
         onDateRangeChange={r => lt.setDraft(d => ({ ...d, dates: r }))}
-        showEntidad
-        entidad={lt.draft.entidad}
-        onEntidadChange={e => lt.setDraft(d => ({ ...d, entidad: e }))}
         onConsult={lt.consult}
       />
       <ReportView loading={loadingLt} error={errorLt} dataCount={transferencias.length} onRetry={refetchLt}>
