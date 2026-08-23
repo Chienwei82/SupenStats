@@ -109,7 +109,7 @@ export function FilterBar({
             value={entidad}
             onChange={(e) => onEntidadChange(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onConsult?.() } }}
-            className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-3 py-1.5 text-sm bg-white dark:bg-[#25293c] dark:text-[#eeffff] border border-gray-300 dark:border-[#34324a] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#82aaff] focus:border-blue-500"
           >
             <option value="">Todas las OPC</option>
             {OPC_LIST.map(opc => (

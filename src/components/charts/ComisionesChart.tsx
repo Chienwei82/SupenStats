@@ -37,6 +37,7 @@ export function ComisionesChart({ data }: Props) {
       valueField="ComisionTotal"
       seriesField="Entidad"
       title="Evolucion de Comisiones de Administracion por OPC"
+      description="Gráfico de líneas: comisión de administración sobre saldo cobrada por cada operadora en el tiempo."
       subtitle={subtitle ?? undefined}
       noteId="comisiones"
     />

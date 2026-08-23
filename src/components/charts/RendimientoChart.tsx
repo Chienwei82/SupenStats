@@ -13,6 +13,7 @@ export function RendimientoChart({ data }: Props) {
       valueField="RendimientoNominal"
       seriesField="Entidad"
       title="Rendimiento Historico por OPC"
+      description="Gráfico de líneas: rentabilidad anual de cada operadora de pensiones a lo largo del tiempo."
       noteId="rendimiento"
     />
   )

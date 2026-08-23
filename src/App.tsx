@@ -1,21 +1,24 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, lazy, Suspense } from 'react'
 import { Header } from './components/layout/Header'
 import { ReportTabs, type ReportId } from './components/layout/ReportTabs'
 import { WelcomeScreen } from './components/layout/WelcomeScreen'
 import { useTheme } from './hooks/useTheme'
-import { RendimientoChart } from './components/charts/RendimientoChart'
-import { ComisionesChart } from './components/charts/ComisionesChart'
-import { PortafolioChart } from './components/charts/PortafolioChart'
-import { AfiliadosChart } from './components/charts/AfiliadosChart'
-import { ActivosChart } from './components/charts/ActivosChart'
-import { BeneficiosChart } from './components/charts/BeneficiosChart'
-import { CuentasChart } from './components/charts/CuentasChart'
-import { TransferenciasChart } from './components/charts/TransferenciasChart'
-import { AportantesChart } from './components/charts/AportantesChart'
-import { DemografiaChart } from './components/charts/DemografiaChart'
-import { PortafolioISINChart } from './components/charts/PortafolioISINChart'
+// Code-splitting: cada vista de reporte se carga bajo demanda. Recharts es
+// pesado (~500kB minificado) y no debe ir en el bundle crítico del Welcome.
+const RendimientoChart = lazy(() => import('./components/charts/RendimientoChart').then(m => ({ default: m.RendimientoChart })))
+const ComisionesChart = lazy(() => import('./components/charts/ComisionesChart').then(m => ({ default: m.ComisionesChart })))
+const PortafolioChart = lazy(() => import('./components/charts/PortafolioChart').then(m => ({ default: m.PortafolioChart })))
+const AfiliadosChart = lazy(() => import('./components/charts/AfiliadosChart').then(m => ({ default: m.AfiliadosChart })))
+const ActivosChart = lazy(() => import('./components/charts/ActivosChart').then(m => ({ default: m.ActivosChart })))
+const BeneficiosChart = lazy(() => import('./components/charts/BeneficiosChart').then(m => ({ default: m.BeneficiosChart })))
+const CuentasChart = lazy(() => import('./components/charts/CuentasChart').then(m => ({ default: m.CuentasChart })))
+const TransferenciasChart = lazy(() => import('./components/charts/TransferenciasChart').then(m => ({ default: m.TransferenciasChart })))
+const AportantesChart = lazy(() => import('./components/charts/AportantesChart').then(m => ({ default: m.AportantesChart })))
+const DemografiaChart = lazy(() => import('./components/charts/DemografiaChart').then(m => ({ default: m.DemografiaChart })))
+const PortafolioISINChart = lazy(() => import('./components/charts/PortafolioISINChart').then(m => ({ default: m.PortafolioISINChart })))
 import { FilterBar } from './components/ui/FilterBar'
 import { ReportView } from './components/ui/ReportView'
+import { ChartSkeleton } from './components/ui/LoadingSkeleton'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { useSupenData } from './hooks/useSupenData'
 import { useReportFilters } from './hooks/useReportFilters'
@@ -119,7 +122,9 @@ function App() {
         onConsult={rend.consult}
       />
       <ReportView loading={loadingRend} error={errorRend} dataCount={rendimientos.length} onRetry={refetchRend}>
-        <RendimientoChart data={rendimientos} />
+        <Suspense fallback={<ChartSkeleton />}>
+          <RendimientoChart data={rendimientos} />
+        </Suspense>
       </ReportView>
     </div>
   )
@@ -134,7 +139,9 @@ function App() {
         onConsult={com.consult}
       />
       <ReportView loading={loadingCom} error={errorCom} dataCount={comisiones.length} onRetry={refetchCom}>
-        <ComisionesChart data={comisiones} />
+        <Suspense fallback={<ChartSkeleton />}>
+          <ComisionesChart data={comisiones} />
+        </Suspense>
       </ReportView>
     </div>
   )
@@ -149,7 +156,9 @@ function App() {
         onConsult={port.consult}
       />
       <ReportView loading={loadingPort} error={errorPort} dataCount={portafolio.length} onRetry={refetchPort}>
-        <PortafolioChart data={portafolio} />
+        <Suspense fallback={<ChartSkeleton />}>
+          <PortafolioChart data={portafolio} />
+        </Suspense>
       </ReportView>
     </div>
   )
@@ -162,7 +171,9 @@ function App() {
         onConsult={af.consult}
       />
       <ReportView loading={loadingAf} error={errorAf} dataCount={afiliados.length} onRetry={refetchAf}>
-        <AfiliadosChart data={afiliados} />
+        <Suspense fallback={<ChartSkeleton />}>
+          <AfiliadosChart data={afiliados} />
+        </Suspense>
       </ReportView>
     </div>
   )
@@ -177,7 +188,9 @@ function App() {
         onConsult={port.consult}
       />
       <ReportView loading={loadingPort} error={errorPort} dataCount={portafolio.length} onRetry={refetchPort}>
-        <ActivosChart data={portafolio} />
+        <Suspense fallback={<ChartSkeleton />}>
+          <ActivosChart data={portafolio} />
+        </Suspense>
       </ReportView>
     </div>
   )
@@ -192,7 +205,9 @@ function App() {
         onConsult={ben.consult}
       />
       <ReportView loading={loadingBen} error={errorBen} dataCount={beneficios.length} onRetry={refetchBen}>
-        <BeneficiosChart data={beneficios} />
+        <Suspense fallback={<ChartSkeleton />}>
+          <BeneficiosChart data={beneficios} />
+        </Suspense>
       </ReportView>
     </div>
   )
@@ -207,7 +222,9 @@ function App() {
         onConsult={cue.consult}
       />
       <ReportView loading={loadingCue} error={errorCue} dataCount={cuentas.length} onRetry={refetchCue}>
-        <CuentasChart data={cuentas} />
+        <Suspense fallback={<ChartSkeleton />}>
+          <CuentasChart data={cuentas} />
+        </Suspense>
       </ReportView>
     </div>
   )
@@ -223,7 +240,9 @@ function App() {
         onConsult={lt.consult}
       />
       <ReportView loading={loadingLt} error={errorLt} dataCount={transferencias.length} onRetry={refetchLt}>
-        <TransferenciasChart data={transferencias} />
+        <Suspense fallback={<ChartSkeleton />}>
+          <TransferenciasChart data={transferencias} />
+        </Suspense>
       </ReportView>
     </div>
   )
@@ -238,7 +257,9 @@ function App() {
         onConsult={apo.consult}
       />
       <ReportView loading={loadingApo} error={errorApo} dataCount={aportantes.length} onRetry={refetchApo}>
-        <AportantesChart data={aportantes} />
+        <Suspense fallback={<ChartSkeleton />}>
+          <AportantesChart data={aportantes} />
+        </Suspense>
       </ReportView>
     </div>
   )
@@ -253,7 +274,9 @@ function App() {
         onConsult={dem.consult}
       />
       <ReportView loading={loadingDem} error={errorDem} dataCount={demografia.length} onRetry={refetchDem}>
-        <DemografiaChart data={demografia} />
+        <Suspense fallback={<ChartSkeleton />}>
+          <DemografiaChart data={demografia} />
+        </Suspense>
       </ReportView>
     </div>
   )
@@ -266,7 +289,9 @@ function App() {
         onConsult={isinFilters.consult}
       />
       <ReportView loading={loadingIsin} error={errorIsin} dataCount={isin.length} onRetry={refetchIsin}>
-        <PortafolioISINChart data={isin} />
+        <Suspense fallback={<ChartSkeleton />}>
+          <PortafolioISINChart data={isin} />
+        </Suspense>
       </ReportView>
     </div>
   )
@@ -298,7 +323,9 @@ function App() {
           tabIndex={0}
           className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
         >
-          {views[activeTab]()}
+          <Suspense fallback={<ChartSkeleton />}>
+            {views[activeTab]()}
+          </Suspense>
         </section>
       </main>
 

@@ -18,6 +18,8 @@ interface TimeSeriesChartProps<T> {
   seriesField: keyof T & string
   title: string
   subtitle?: React.ReactNode
+  /** Descripción accesible para lectores de pantalla. */
+  description?: string
   /** Clave de la nota educativa en CHART_NOTES. */
   noteId: string
   /** Formateador del valor en tooltip y eje Y. */
@@ -36,6 +38,7 @@ export function TimeSeriesChart<T>({
   seriesField,
   title,
   subtitle,
+  description,
   noteId,
   formatValue = v => `${Number(v).toFixed(2)}%`,
 }: TimeSeriesChartProps<T>) {
@@ -72,7 +75,7 @@ export function TimeSeriesChart<T>({
   const entities = getUniqueValues(valid, seriesField)
 
   return (
-    <ChartCard title={title} subtitle={subtitle}>
+    <ChartCard title={title} subtitle={subtitle} description={description}>
       <ResponsiveContainer width="100%" height={350}>
         <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
