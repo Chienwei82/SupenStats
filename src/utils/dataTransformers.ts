@@ -119,7 +119,6 @@ export function transformPortafolio(raw: RawPortafolio): Portafolio {
     FechaCorte: raw.fecha,
     TipoInstrumento: raw.instrumento,
     Monto: raw.montocolones ?? 0,
-    Porcentaje: 0,
   }
 }
 
@@ -138,11 +137,8 @@ export function transformComisiones(raw: RawComision[]): Comision[] {
       Entidad: entidad,
       Fondo: item.codigofondo,
       FechaCorte: item.fecha,
-      ComisionAdministracion: 0,
-      ComisionReserva: 0,
       ComisionTotal: 0,
     }
-    existing.ComisionAdministracion = item['comisión'] ?? 0
     existing.ComisionTotal = item['comisión'] ?? 0
     map.set(key, existing)
   }

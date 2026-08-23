@@ -1,4 +1,23 @@
-export const OPC_COLORS: Record<string, string> = {
+// Claves canónicas de entidad (las que produce normalizeEntityName).
+// Tipar el Record evita que un typo caiga silenciosamente al color fallback.
+export type EntityColorKey =
+  | 'POPULAR PENSIONES'
+  | 'BCR-PENSION'
+  | 'BN-VITAL'
+  | 'CCSS-OPC'
+  | 'VIDA PLENA OPC'
+  | 'BAC SJ PENSIONES'
+  | 'FONDO IVM-CCSS'
+  | 'MAGISTERIO NAL'
+  | 'PODER JUDICIAL'
+  | 'FONDO BOMBEROS'
+  | 'TRANS. MAGIST.'
+  | 'FONDO FBNCR'
+  | 'FONDO FICE'
+  | 'FONDO FRE-CCSS'
+  | 'FONDO VEND LOT'
+
+export const OPC_COLORS: Record<EntityColorKey, string> = {
   'POPULAR PENSIONES': '#3b82f6',
   'BCR-PENSION': '#10b981',
   'BN-VITAL': '#f59e0b',
@@ -16,6 +35,11 @@ export const OPC_COLORS: Record<string, string> = {
   'FONDO FICE': '#84cc16',
   'FONDO FRE-CCSS': '#d946ef',
   'FONDO VEND LOT': '#f43f5e',
+}
+
+/** Color canónico de una entidad, con fallback seguro si no está mapeada. */
+export function entityColor(name: string): string {
+  return (OPC_COLORS as Record<string, string>)[name] ?? '#6b7280'
 }
 
 // Lista de operadoras de pensiones (OPC) para el filtro de entidad.

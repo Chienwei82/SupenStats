@@ -2,8 +2,6 @@ export interface Comision {
   Entidad: string
   Fondo: string
   FechaCorte: string
-  ComisionAdministracion: number
-  ComisionReserva: number
   ComisionTotal: number
 }
 
@@ -22,7 +20,6 @@ export interface Portafolio {
   FechaCorte: string
   TipoInstrumento: string
   Monto: number
-  Porcentaje: number
 }
 
 export interface PortafolioISIN {

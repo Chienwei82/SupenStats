@@ -3,7 +3,7 @@ import {
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { sortByDateAsc, groupBy, getUniqueValues, formatDateShort, formatCurrencyBillions } from '../../utils/dataTransformers'
-import { OPC_COLORS } from '../../constants/suppen'
+import { entityColor } from '../../constants/suppen'
 import { ChartNote } from '../ui/ChartNote'
 import type { Portafolio } from '../../types/suppen'
 
@@ -53,7 +53,7 @@ export function ActivosChart({ data }: Props) {
             <Bar
               key={ent}
               dataKey={ent}
-              fill={OPC_COLORS[ent] || '#6b7280'}
+              fill={entityColor(ent)}
               radius={[2, 2, 0, 0]}
             />
           ))}
