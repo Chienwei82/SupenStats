@@ -15,8 +15,7 @@ import { AportantesChart } from './components/charts/AportantesChart'
 import { DemografiaChart } from './components/charts/DemografiaChart'
 import { PortafolioISINChart } from './components/charts/PortafolioISINChart'
 import { FilterBar } from './components/ui/FilterBar'
-import { ChartSkeleton, LoadingOverlay } from './components/ui/LoadingSkeleton'
-import { ErrorMessage } from './components/ui/ErrorMessage'
+import { ReportView } from './components/ui/ReportView'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { useSupenData } from './hooks/useSupenData'
 import { fetchComisiones, fetchRendimiento, fetchPortafolio, fetchAfiliados, fetchBeneficios, fetchCuentas, fetchLibreTransferencia, fetchAfiliadosAportantes, fetchAfiliadosDemograficos, fetchPortafolioISIN } from './api/apiService'
@@ -153,14 +152,9 @@ function App() {
         onDateRangeChange={setRendDates}
         onConsult={consultRend}
       />
-      <div className="relative">
-        {loadingRend && rendimientos.length === 0 ? <ChartSkeleton /> : !errorRend ? (
-          <ErrorBoundary><RendimientoChart data={rendimientos} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorRend} onRetry={refetchRend} />
-        )}
-        {loadingRend && rendimientos.length > 0 && <LoadingOverlay />}
-      </div>
+      <ReportView loading={loadingRend} error={errorRend} dataCount={rendimientos.length} onRetry={refetchRend}>
+        <RendimientoChart data={rendimientos} />
+      </ReportView>
     </div>
   )
 
@@ -173,14 +167,9 @@ function App() {
         onDateRangeChange={setComDates}
         onConsult={consultCom}
       />
-      <div className="relative">
-        {loadingCom && comisiones.length === 0 ? <ChartSkeleton /> : !errorCom ? (
-          <ErrorBoundary><ComisionesChart data={comisiones} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorCom} onRetry={refetchCom} />
-        )}
-        {loadingCom && comisiones.length > 0 && <LoadingOverlay />}
-      </div>
+      <ReportView loading={loadingCom} error={errorCom} dataCount={comisiones.length} onRetry={refetchCom}>
+        <ComisionesChart data={comisiones} />
+      </ReportView>
     </div>
   )
 
@@ -193,28 +182,18 @@ function App() {
         onDateRangeChange={setPortDates}
         onConsult={consultPort}
       />
-      <div className="relative">
-        {loadingPort && portafolio.length === 0 ? <ChartSkeleton /> : !errorPort ? (
-          <ErrorBoundary><PortafolioChart data={portafolio} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorPort} onRetry={refetchPort} />
-        )}
-        {loadingPort && portafolio.length > 0 && <LoadingOverlay />}
-      </div>
+      <ReportView loading={loadingPort} error={errorPort} dataCount={portafolio.length} onRetry={refetchPort}>
+        <PortafolioChart data={portafolio} />
+      </ReportView>
     </div>
   )
 
   const renderAfiliados = () => (
     <div className="space-y-4">
       <FilterBar fondo={afFondo} onFondoChange={setAfFondo} onConsult={consultAf} />
-      <div className="relative">
-        {loadingAf && afiliados.length === 0 ? <ChartSkeleton /> : !errorAf ? (
-          <ErrorBoundary><AfiliadosChart data={afiliados} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorAf} onRetry={refetchAf} />
-        )}
-        {loadingAf && afiliados.length > 0 && <LoadingOverlay />}
-      </div>
+      <ReportView loading={loadingAf} error={errorAf} dataCount={afiliados.length} onRetry={refetchAf}>
+        <AfiliadosChart data={afiliados} />
+      </ReportView>
     </div>
   )
 
@@ -227,42 +206,27 @@ function App() {
         onDateRangeChange={setPortDates}
         onConsult={consultPort}
       />
-      <div className="relative">
-        {loadingPort && portafolio.length === 0 ? <ChartSkeleton /> : !errorPort ? (
-          <ErrorBoundary><ActivosChart data={portafolio} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorPort} onRetry={refetchPort} />
-        )}
-        {loadingPort && portafolio.length > 0 && <LoadingOverlay />}
-      </div>
+      <ReportView loading={loadingPort} error={errorPort} dataCount={portafolio.length} onRetry={refetchPort}>
+        <ActivosChart data={portafolio} />
+      </ReportView>
     </div>
   )
 
   const renderBeneficios = () => (
     <div className="space-y-4">
       <FilterBar fondo={benFondo} onFondoChange={setBenFondo} dateRange={benDates} onDateRangeChange={setBenDates} onConsult={consultBen} />
-      <div className="relative">
-        {loadingBen && beneficios.length === 0 ? <ChartSkeleton /> : !errorBen ? (
-          <ErrorBoundary><BeneficiosChart data={beneficios} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorBen} onRetry={refetchBen} />
-        )}
-        {loadingBen && beneficios.length > 0 && <LoadingOverlay />}
-      </div>
+      <ReportView loading={loadingBen} error={errorBen} dataCount={beneficios.length} onRetry={refetchBen}>
+        <BeneficiosChart data={beneficios} />
+      </ReportView>
     </div>
   )
 
   const renderCuentas = () => (
     <div className="space-y-4">
       <FilterBar fondo={cueFondo} onFondoChange={setCueFondo} dateRange={cueDates} onDateRangeChange={setCueDates} onConsult={consultCue} />
-      <div className="relative">
-        {loadingCue && cuentas.length === 0 ? <ChartSkeleton /> : !errorCue ? (
-          <ErrorBoundary><CuentasChart data={cuentas} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorCue} onRetry={refetchCue} />
-        )}
-        {loadingCue && cuentas.length > 0 && <LoadingOverlay />}
-      </div>
+      <ReportView loading={loadingCue} error={errorCue} dataCount={cuentas.length} onRetry={refetchCue}>
+        <CuentasChart data={cuentas} />
+      </ReportView>
     </div>
   )
 
@@ -276,56 +240,36 @@ function App() {
         onEntidadChange={setLtEntidad}
         onConsult={consultLt}
       />
-      <div className="relative">
-        {loadingLt && transferencias.length === 0 ? <ChartSkeleton /> : !errorLt ? (
-          <ErrorBoundary><TransferenciasChart data={transferencias} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorLt} onRetry={refetchLt} />
-        )}
-        {loadingLt && transferencias.length > 0 && <LoadingOverlay />}
-      </div>
+      <ReportView loading={loadingLt} error={errorLt} dataCount={transferencias.length} onRetry={refetchLt}>
+        <TransferenciasChart data={transferencias} />
+      </ReportView>
     </div>
   )
 
   const renderAportantes = () => (
     <div className="space-y-4">
       <FilterBar fondo={apoFondo} onFondoChange={setApoFondo} dateRange={apoDates} onDateRangeChange={setApoDates} onConsult={consultApo} />
-      <div className="relative">
-        {loadingApo && aportantes.length === 0 ? <ChartSkeleton /> : !errorApo ? (
-          <ErrorBoundary><AportantesChart data={aportantes} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorApo} onRetry={refetchApo} />
-        )}
-        {loadingApo && aportantes.length > 0 && <LoadingOverlay />}
-      </div>
+      <ReportView loading={loadingApo} error={errorApo} dataCount={aportantes.length} onRetry={refetchApo}>
+        <AportantesChart data={aportantes} />
+      </ReportView>
     </div>
   )
 
   const renderDemografia = () => (
     <div className="space-y-4">
       <FilterBar fondo={demFondo} onFondoChange={setDemFondo} dateRange={demDates} onDateRangeChange={setDemDates} onConsult={consultDem} />
-      <div className="relative">
-        {loadingDem && demografia.length === 0 ? <ChartSkeleton /> : !errorDem ? (
-          <ErrorBoundary><DemografiaChart data={demografia} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorDem} onRetry={refetchDem} />
-        )}
-        {loadingDem && demografia.length > 0 && <LoadingOverlay />}
-      </div>
+      <ReportView loading={loadingDem} error={errorDem} dataCount={demografia.length} onRetry={refetchDem}>
+        <DemografiaChart data={demografia} />
+      </ReportView>
     </div>
   )
 
   const renderIsin = () => (
     <div className="space-y-4">
       <FilterBar fondo={isinFondo} onFondoChange={setIsinFondo} onConsult={consultIsin} />
-      <div className="relative">
-        {loadingIsin && isin.length === 0 ? <ChartSkeleton /> : !errorIsin ? (
-          <ErrorBoundary><PortafolioISINChart data={isin} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorIsin} onRetry={refetchIsin} />
-        )}
-        {loadingIsin && isin.length > 0 && <LoadingOverlay />}
-      </div>
+      <ReportView loading={loadingIsin} error={errorIsin} dataCount={isin.length} onRetry={refetchIsin}>
+        <PortafolioISINChart data={isin} />
+      </ReportView>
     </div>
   )
 
