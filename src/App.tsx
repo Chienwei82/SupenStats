@@ -1,114 +1,97 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, lazy, Suspense } from 'react'
 import { Header } from './components/layout/Header'
 import { ReportTabs, type ReportId } from './components/layout/ReportTabs'
 import { WelcomeScreen } from './components/layout/WelcomeScreen'
 import { useTheme } from './hooks/useTheme'
-import { RendimientoChart } from './components/charts/RendimientoChart'
-import { ComisionesChart } from './components/charts/ComisionesChart'
-import { PortafolioChart } from './components/charts/PortafolioChart'
-import { AfiliadosChart } from './components/charts/AfiliadosChart'
-import { ActivosChart } from './components/charts/ActivosChart'
-import { BeneficiosChart } from './components/charts/BeneficiosChart'
-import { CuentasChart } from './components/charts/CuentasChart'
-import { TransferenciasChart } from './components/charts/TransferenciasChart'
-import { AportantesChart } from './components/charts/AportantesChart'
-import { DemografiaChart } from './components/charts/DemografiaChart'
-import { PortafolioISINChart } from './components/charts/PortafolioISINChart'
+// Code-splitting: cada vista de reporte se carga bajo demanda. Recharts es
+// pesado (~500kB minificado) y no debe ir en el bundle crítico del Welcome.
+const RendimientoChart = lazy(() => import('./components/charts/RendimientoChart').then(m => ({ default: m.RendimientoChart })))
+const ComisionesChart = lazy(() => import('./components/charts/ComisionesChart').then(m => ({ default: m.ComisionesChart })))
+const PortafolioChart = lazy(() => import('./components/charts/PortafolioChart').then(m => ({ default: m.PortafolioChart })))
+const AfiliadosChart = lazy(() => import('./components/charts/AfiliadosChart').then(m => ({ default: m.AfiliadosChart })))
+const ActivosChart = lazy(() => import('./components/charts/ActivosChart').then(m => ({ default: m.ActivosChart })))
+const BeneficiosChart = lazy(() => import('./components/charts/BeneficiosChart').then(m => ({ default: m.BeneficiosChart })))
+const CuentasChart = lazy(() => import('./components/charts/CuentasChart').then(m => ({ default: m.CuentasChart })))
+const TransferenciasChart = lazy(() => import('./components/charts/TransferenciasChart').then(m => ({ default: m.TransferenciasChart })))
+const AportantesChart = lazy(() => import('./components/charts/AportantesChart').then(m => ({ default: m.AportantesChart })))
+const DemografiaChart = lazy(() => import('./components/charts/DemografiaChart').then(m => ({ default: m.DemografiaChart })))
+const PortafolioISINChart = lazy(() => import('./components/charts/PortafolioISINChart').then(m => ({ default: m.PortafolioISINChart })))
 import { FilterBar } from './components/ui/FilterBar'
-import { ChartSkeleton, LoadingOverlay } from './components/ui/LoadingSkeleton'
-import { ErrorMessage } from './components/ui/ErrorMessage'
+import { ReportView } from './components/ui/ReportView'
+import { ChartSkeleton } from './components/ui/LoadingSkeleton'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { useSupenData } from './hooks/useSupenData'
+import { useReportFilters } from './hooks/useReportFilters'
 import { fetchComisiones, fetchRendimiento, fetchPortafolio, fetchAfiliados, fetchBeneficios, fetchCuentas, fetchLibreTransferencia, fetchAfiliadosAportantes, fetchAfiliadosDemograficos, fetchPortafolioISIN } from './api/apiService'
-import { FONDO_DEFAULT, DATE_RANGE_DEFAULT, PORTFOLIO_RANGE, COMISION_RANGE } from './constants/suppen'
+import { FONDO_DEFAULT, DATE_RANGE_DEFAULT, PORTFOLIO_RANGE, COMISION_RANGE, LT_FONDO_OPTIONS } from './constants/suppen'
 import type { FondoTipo, DateRange } from './types/suppen'
+
+interface FondoFilters {
+  fondo: FondoTipo | ''
+  dates: DateRange
+}
 
 function App() {
   const [activeTab, setActiveTab] = useState<ReportId>('inicio')
   const { theme, toggleTheme } = useTheme()
 
-  // Filter states per report — estos son los "draft" (lo que ve el dropdown).
-  const [rendFondo, setRendFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
-  const [rendDates, setRendDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
-  // Estados "aplicados": solo cambian al pulsar el botón Consultar.
-  const [appliedRend, setAppliedRend] = useState<{ fondo: FondoTipo | ''; dates: DateRange }>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
-
-  const [comFondo, setComFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
-  const [comDates, setComDates] = useState<DateRange>(COMISION_RANGE)
-  const [appliedCom, setAppliedCom] = useState<{ fondo: FondoTipo | ''; dates: DateRange }>({ fondo: FONDO_DEFAULT, dates: COMISION_RANGE })
-
-  const [portFondo, setPortFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
-  const [portDates, setPortDates] = useState<DateRange>(PORTFOLIO_RANGE)
-  const [appliedPort, setAppliedPort] = useState<{ fondo: FondoTipo | ''; dates: DateRange }>({ fondo: FONDO_DEFAULT, dates: PORTFOLIO_RANGE })
-
-  const [afFondo, setAfFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
-  const [appliedAf, setAppliedAf] = useState<FondoTipo | ''>(FONDO_DEFAULT)
+  // Patrón draft/applied por reporte: el draft alimenta FilterBar y solo al
+  // pulsar Consultar se copia a applied, que dispara el refetch.
+  const rend = useReportFilters<FondoFilters>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
+  const com = useReportFilters<FondoFilters>({ fondo: FONDO_DEFAULT, dates: COMISION_RANGE })
+  const port = useReportFilters<FondoFilters>({ fondo: FONDO_DEFAULT, dates: PORTFOLIO_RANGE })
+  const af = useReportFilters<{ fondo: FondoTipo | '' }>({ fondo: FONDO_DEFAULT })
+  const ben = useReportFilters<FondoFilters>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
+  const cue = useReportFilters<FondoFilters>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
+  const apo = useReportFilters<FondoFilters>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
+  const dem = useReportFilters<FondoFilters>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
+  // /lt no soporta filtro de entidad (verificado contra la API real);
+  // Fondo (ROP/FCL/VOLCA/VOLCB/VOLDA/VOLDB) y fechas sí filtran.
+  const lt = useReportFilters<{ fondo: FondoTipo | ''; dates: DateRange }>({ fondo: 'ROP', dates: DATE_RANGE_DEFAULT })
+  const isinFilters = useReportFilters<{ fondo: FondoTipo | '' }>({ fondo: FONDO_DEFAULT })
 
   // Fetchers — wrapped in useCallback with filter dependencies.
   // Usan los estados APPLIED (solo cambian al pulsar Consultar), de modo que
   // el dropdown/selector no dispara refetch hasta que se confirma la consulta.
   const fetchRendimientoCb = useCallback(
-    (signal?: AbortSignal) => fetchRendimiento(appliedRend.fondo || undefined, undefined, appliedRend.dates, signal),
-    [appliedRend]
+    (signal?: AbortSignal) => fetchRendimiento(rend.applied.fondo || undefined, undefined, rend.applied.dates, signal),
+    [rend.applied]
   )
   const fetchComisionesCb = useCallback(
-    (signal?: AbortSignal) => fetchComisiones(appliedCom.fondo || undefined, appliedCom.dates, signal),
-    [appliedCom]
+    (signal?: AbortSignal) => fetchComisiones(com.applied.fondo || undefined, com.applied.dates, signal),
+    [com.applied]
   )
   const fetchPortafolioCb = useCallback(
-    (signal?: AbortSignal) => fetchPortafolio(undefined, appliedPort.fondo || undefined, appliedPort.dates, signal),
-    [appliedPort]
+    (signal?: AbortSignal) => fetchPortafolio(undefined, port.applied.fondo || undefined, port.applied.dates, signal),
+    [port.applied]
   )
   const fetchAfiliadosCb = useCallback(
-    (signal?: AbortSignal) => fetchAfiliados(undefined, appliedAf || undefined, undefined, signal),
-    [appliedAf]
+    (signal?: AbortSignal) => fetchAfiliados(undefined, af.applied.fondo || undefined, undefined, signal),
+    [af.applied]
   )
-
-  const [benFondo, setBenFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
-  const [cueFondo, setCueFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
-  const [apoFondo, setApoFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
-  const [demFondo, setDemFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
-  const [isinFondo, setIsinFondo] = useState<FondoTipo | ''>(FONDO_DEFAULT)
-
-  const [ltEntidad, setLtEntidad] = useState<string>('')
-  const [ltDates, setLtDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
-
-  const [benDates, setBenDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
-  const [cueDates, setCueDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
-  const [apoDates, setApoDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
-  const [demDates, setDemDates] = useState<DateRange>(DATE_RANGE_DEFAULT)
-
-  // Estados "aplicados" (solo cambian al pulsar Consultar).
-  const [appliedBen, setAppliedBen] = useState<{ fondo: FondoTipo | ''; dates: DateRange }>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
-  const [appliedCue, setAppliedCue] = useState<{ fondo: FondoTipo | ''; dates: DateRange }>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
-  const [appliedLt, setAppliedLt] = useState<{ entidad: string; dates: DateRange }>({ entidad: '', dates: DATE_RANGE_DEFAULT })
-  const [appliedApo, setAppliedApo] = useState<{ fondo: FondoTipo | ''; dates: DateRange }>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
-  const [appliedDem, setAppliedDem] = useState<{ fondo: FondoTipo | ''; dates: DateRange }>({ fondo: FONDO_DEFAULT, dates: DATE_RANGE_DEFAULT })
-  const [appliedIsin, setAppliedIsin] = useState<FondoTipo | ''>(FONDO_DEFAULT)
-
   const fetchBeneficiosCb = useCallback(
-    (signal?: AbortSignal) => fetchBeneficios(undefined, appliedBen.fondo || undefined, appliedBen.dates, signal),
-    [appliedBen]
+    (signal?: AbortSignal) => fetchBeneficios(undefined, ben.applied.fondo || undefined, ben.applied.dates, signal),
+    [ben.applied]
   )
   const fetchCuentasCb = useCallback(
-    (signal?: AbortSignal) => fetchCuentas(undefined, appliedCue.fondo || undefined, appliedCue.dates, signal),
-    [appliedCue]
+    (signal?: AbortSignal) => fetchCuentas(undefined, cue.applied.fondo || undefined, cue.applied.dates, signal),
+    [cue.applied]
   )
   const fetchLtCb = useCallback(
-    (signal?: AbortSignal) => fetchLibreTransferencia(appliedLt.entidad || undefined, appliedLt.dates, signal),
-    [appliedLt]
+    (signal?: AbortSignal) => fetchLibreTransferencia(lt.applied.fondo || undefined, lt.applied.dates, signal),
+    [lt.applied]
   )
   const fetchAportantesCb = useCallback(
-    (signal?: AbortSignal) => fetchAfiliadosAportantes(undefined, appliedApo.fondo || undefined, appliedApo.dates, signal),
-    [appliedApo]
+    (signal?: AbortSignal) => fetchAfiliadosAportantes(undefined, apo.applied.fondo || undefined, apo.applied.dates, signal),
+    [apo.applied]
   )
   const fetchDemCb = useCallback(
-    (signal?: AbortSignal) => fetchAfiliadosDemograficos(undefined, appliedDem.fondo || undefined, appliedDem.dates, signal),
-    [appliedDem]
+    (signal?: AbortSignal) => fetchAfiliadosDemograficos(undefined, dem.applied.fondo || undefined, dem.applied.dates, signal),
+    [dem.applied]
   )
   const fetchIsinCb = useCallback(
-    (signal?: AbortSignal) => fetchPortafolioISIN(undefined, appliedIsin || undefined, PORTFOLIO_RANGE, signal),
-    [appliedIsin]
+    (signal?: AbortSignal) => fetchPortafolioISIN(undefined, isinFilters.applied.fondo || undefined, PORTFOLIO_RANGE, signal),
+    [isinFilters.applied]
   )
 
   const { data: beneficios, loading: loadingBen, error: errorBen, refetch: refetchBen } = useSupenData(fetchBeneficiosCb, activeTab === 'beneficios')
@@ -123,19 +106,6 @@ function App() {
   const { data: portafolio, loading: loadingPort, error: errorPort, refetch: refetchPort } = useSupenData(fetchPortafolioCb, activeTab === 'portafolio' || activeTab === 'activos')
   const { data: afiliados, loading: loadingAf, error: errorAf, refetch: refetchAf } = useSupenData(fetchAfiliadosCb, activeTab === 'afiliados')
 
-  // Handlers del botón "Consultar": actualizan los estados APPLIED a partir de
-  // los draft. Solo aquí se dispara el refetch (los fetchFn dependen de applied).
-  const consultRend = useCallback(() => setAppliedRend({ fondo: rendFondo, dates: rendDates }), [rendFondo, rendDates])
-  const consultCom = useCallback(() => setAppliedCom({ fondo: comFondo, dates: comDates }), [comFondo, comDates])
-  const consultPort = useCallback(() => setAppliedPort({ fondo: portFondo, dates: portDates }), [portFondo, portDates])
-  const consultAf = useCallback(() => setAppliedAf(afFondo), [afFondo])
-  const consultBen = useCallback(() => setAppliedBen({ fondo: benFondo, dates: benDates }), [benFondo, benDates])
-  const consultCue = useCallback(() => setAppliedCue({ fondo: cueFondo, dates: cueDates }), [cueFondo, cueDates])
-  const consultLt = useCallback(() => setAppliedLt({ entidad: ltEntidad, dates: ltDates }), [ltEntidad, ltDates])
-  const consultApo = useCallback(() => setAppliedApo({ fondo: apoFondo, dates: apoDates }), [apoFondo, apoDates])
-  const consultDem = useCallback(() => setAppliedDem({ fondo: demFondo, dates: demDates }), [demFondo, demDates])
-  const consultIsin = useCallback(() => setAppliedIsin(isinFondo), [isinFondo])
-
   // ---- Pantalla de bienvenida (sin fetch pesado) ----
   const renderInicio = () => (
     <ErrorBoundary>
@@ -147,185 +117,184 @@ function App() {
   const renderRendimiento = () => (
     <div className="space-y-4">
       <FilterBar
-        fondo={rendFondo}
-        onFondoChange={setRendFondo}
-        dateRange={rendDates}
-        onDateRangeChange={setRendDates}
-        onConsult={consultRend}
+        fondo={rend.draft.fondo}
+        onFondoChange={f => rend.setDraft(d => ({ ...d, fondo: f }))}
+        dateRange={rend.draft.dates}
+        onDateRangeChange={r => rend.setDraft(d => ({ ...d, dates: r }))}
+        onConsult={rend.consult}
       />
-      <div className="relative">
-        {loadingRend && rendimientos.length === 0 ? <ChartSkeleton /> : !errorRend ? (
-          <ErrorBoundary><RendimientoChart data={rendimientos} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorRend} onRetry={refetchRend} />
-        )}
-        {loadingRend && rendimientos.length > 0 && <LoadingOverlay />}
-      </div>
+      <ReportView loading={loadingRend} error={errorRend} dataCount={rendimientos.length} onRetry={refetchRend}>
+        <Suspense fallback={<ChartSkeleton />}>
+          <RendimientoChart data={rendimientos} />
+        </Suspense>
+      </ReportView>
     </div>
   )
 
   const renderComisiones = () => (
     <div className="space-y-4">
       <FilterBar
-        fondo={comFondo}
-        onFondoChange={setComFondo}
-        dateRange={comDates}
-        onDateRangeChange={setComDates}
-        onConsult={consultCom}
+        fondo={com.draft.fondo}
+        onFondoChange={f => com.setDraft(d => ({ ...d, fondo: f }))}
+        dateRange={com.draft.dates}
+        onDateRangeChange={r => com.setDraft(d => ({ ...d, dates: r }))}
+        onConsult={com.consult}
       />
-      <div className="relative">
-        {loadingCom && comisiones.length === 0 ? <ChartSkeleton /> : !errorCom ? (
-          <ErrorBoundary><ComisionesChart data={comisiones} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorCom} onRetry={refetchCom} />
-        )}
-        {loadingCom && comisiones.length > 0 && <LoadingOverlay />}
-      </div>
+      <ReportView loading={loadingCom} error={errorCom} dataCount={comisiones.length} onRetry={refetchCom}>
+        <Suspense fallback={<ChartSkeleton />}>
+          <ComisionesChart data={comisiones} />
+        </Suspense>
+      </ReportView>
     </div>
   )
 
   const renderPortafolio = () => (
     <div className="space-y-4">
       <FilterBar
-        fondo={portFondo}
-        onFondoChange={setPortFondo}
-        dateRange={portDates}
-        onDateRangeChange={setPortDates}
-        onConsult={consultPort}
+        fondo={port.draft.fondo}
+        onFondoChange={f => port.setDraft(d => ({ ...d, fondo: f }))}
+        dateRange={port.draft.dates}
+        onDateRangeChange={r => port.setDraft(d => ({ ...d, dates: r }))}
+        onConsult={port.consult}
       />
-      <div className="relative">
-        {loadingPort && portafolio.length === 0 ? <ChartSkeleton /> : !errorPort ? (
-          <ErrorBoundary><PortafolioChart data={portafolio} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorPort} onRetry={refetchPort} />
-        )}
-        {loadingPort && portafolio.length > 0 && <LoadingOverlay />}
-      </div>
+      <ReportView loading={loadingPort} error={errorPort} dataCount={portafolio.length} onRetry={refetchPort}>
+        <Suspense fallback={<ChartSkeleton />}>
+          <PortafolioChart data={portafolio} />
+        </Suspense>
+      </ReportView>
     </div>
   )
 
   const renderAfiliados = () => (
     <div className="space-y-4">
-      <FilterBar fondo={afFondo} onFondoChange={setAfFondo} onConsult={consultAf} />
-      <div className="relative">
-        {loadingAf && afiliados.length === 0 ? <ChartSkeleton /> : !errorAf ? (
-          <ErrorBoundary><AfiliadosChart data={afiliados} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorAf} onRetry={refetchAf} />
-        )}
-        {loadingAf && afiliados.length > 0 && <LoadingOverlay />}
-      </div>
+      <FilterBar
+        fondo={af.draft.fondo}
+        onFondoChange={f => af.setDraft({ fondo: f })}
+        onConsult={af.consult}
+      />
+      <ReportView loading={loadingAf} error={errorAf} dataCount={afiliados.length} onRetry={refetchAf}>
+        <Suspense fallback={<ChartSkeleton />}>
+          <AfiliadosChart data={afiliados} />
+        </Suspense>
+      </ReportView>
     </div>
   )
 
   const renderActivos = () => (
     <div className="space-y-4">
       <FilterBar
-        fondo={portFondo}
-        onFondoChange={setPortFondo}
-        dateRange={portDates}
-        onDateRangeChange={setPortDates}
-        onConsult={consultPort}
+        fondo={port.draft.fondo}
+        onFondoChange={f => port.setDraft(d => ({ ...d, fondo: f }))}
+        dateRange={port.draft.dates}
+        onDateRangeChange={r => port.setDraft(d => ({ ...d, dates: r }))}
+        onConsult={port.consult}
       />
-      <div className="relative">
-        {loadingPort && portafolio.length === 0 ? <ChartSkeleton /> : !errorPort ? (
-          <ErrorBoundary><ActivosChart data={portafolio} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorPort} onRetry={refetchPort} />
-        )}
-        {loadingPort && portafolio.length > 0 && <LoadingOverlay />}
-      </div>
+      <ReportView loading={loadingPort} error={errorPort} dataCount={portafolio.length} onRetry={refetchPort}>
+        <Suspense fallback={<ChartSkeleton />}>
+          <ActivosChart data={portafolio} />
+        </Suspense>
+      </ReportView>
     </div>
   )
 
   const renderBeneficios = () => (
     <div className="space-y-4">
-      <FilterBar fondo={benFondo} onFondoChange={setBenFondo} dateRange={benDates} onDateRangeChange={setBenDates} onConsult={consultBen} />
-      <div className="relative">
-        {loadingBen && beneficios.length === 0 ? <ChartSkeleton /> : !errorBen ? (
-          <ErrorBoundary><BeneficiosChart data={beneficios} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorBen} onRetry={refetchBen} />
-        )}
-        {loadingBen && beneficios.length > 0 && <LoadingOverlay />}
-      </div>
+      <FilterBar
+        fondo={ben.draft.fondo}
+        onFondoChange={f => ben.setDraft(d => ({ ...d, fondo: f }))}
+        dateRange={ben.draft.dates}
+        onDateRangeChange={r => ben.setDraft(d => ({ ...d, dates: r }))}
+        onConsult={ben.consult}
+      />
+      <ReportView loading={loadingBen} error={errorBen} dataCount={beneficios.length} onRetry={refetchBen}>
+        <Suspense fallback={<ChartSkeleton />}>
+          <BeneficiosChart data={beneficios} />
+        </Suspense>
+      </ReportView>
     </div>
   )
 
   const renderCuentas = () => (
     <div className="space-y-4">
-      <FilterBar fondo={cueFondo} onFondoChange={setCueFondo} dateRange={cueDates} onDateRangeChange={setCueDates} onConsult={consultCue} />
-      <div className="relative">
-        {loadingCue && cuentas.length === 0 ? <ChartSkeleton /> : !errorCue ? (
-          <ErrorBoundary><CuentasChart data={cuentas} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorCue} onRetry={refetchCue} />
-        )}
-        {loadingCue && cuentas.length > 0 && <LoadingOverlay />}
-      </div>
+      <FilterBar
+        fondo={cue.draft.fondo}
+        onFondoChange={f => cue.setDraft(d => ({ ...d, fondo: f }))}
+        dateRange={cue.draft.dates}
+        onDateRangeChange={r => cue.setDraft(d => ({ ...d, dates: r }))}
+        onConsult={cue.consult}
+      />
+      <ReportView loading={loadingCue} error={errorCue} dataCount={cuentas.length} onRetry={refetchCue}>
+        <Suspense fallback={<ChartSkeleton />}>
+          <CuentasChart data={cuentas} />
+        </Suspense>
+      </ReportView>
     </div>
   )
 
   const renderTransferencias = () => (
     <div className="space-y-4">
       <FilterBar
-        dateRange={ltDates}
-        onDateRangeChange={setLtDates}
-        showEntidad
-        entidad={ltEntidad}
-        onEntidadChange={setLtEntidad}
-        onConsult={consultLt}
+        fondo={lt.draft.fondo}
+        onFondoChange={f => lt.setDraft(d => ({ ...d, fondo: f }))}
+        fondoOptions={LT_FONDO_OPTIONS}
+        dateRange={lt.draft.dates}
+        onDateRangeChange={r => lt.setDraft(d => ({ ...d, dates: r }))}
+        onConsult={lt.consult}
       />
-      <div className="relative">
-        {loadingLt && transferencias.length === 0 ? <ChartSkeleton /> : !errorLt ? (
-          <ErrorBoundary><TransferenciasChart data={transferencias} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorLt} onRetry={refetchLt} />
-        )}
-        {loadingLt && transferencias.length > 0 && <LoadingOverlay />}
-      </div>
+      <ReportView loading={loadingLt} error={errorLt} dataCount={transferencias.length} onRetry={refetchLt}>
+        <Suspense fallback={<ChartSkeleton />}>
+          <TransferenciasChart data={transferencias} />
+        </Suspense>
+      </ReportView>
     </div>
   )
 
   const renderAportantes = () => (
     <div className="space-y-4">
-      <FilterBar fondo={apoFondo} onFondoChange={setApoFondo} dateRange={apoDates} onDateRangeChange={setApoDates} onConsult={consultApo} />
-      <div className="relative">
-        {loadingApo && aportantes.length === 0 ? <ChartSkeleton /> : !errorApo ? (
-          <ErrorBoundary><AportantesChart data={aportantes} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorApo} onRetry={refetchApo} />
-        )}
-        {loadingApo && aportantes.length > 0 && <LoadingOverlay />}
-      </div>
+      <FilterBar
+        fondo={apo.draft.fondo}
+        onFondoChange={f => apo.setDraft(d => ({ ...d, fondo: f }))}
+        dateRange={apo.draft.dates}
+        onDateRangeChange={r => apo.setDraft(d => ({ ...d, dates: r }))}
+        onConsult={apo.consult}
+      />
+      <ReportView loading={loadingApo} error={errorApo} dataCount={aportantes.length} onRetry={refetchApo}>
+        <Suspense fallback={<ChartSkeleton />}>
+          <AportantesChart data={aportantes} />
+        </Suspense>
+      </ReportView>
     </div>
   )
 
   const renderDemografia = () => (
     <div className="space-y-4">
-      <FilterBar fondo={demFondo} onFondoChange={setDemFondo} dateRange={demDates} onDateRangeChange={setDemDates} onConsult={consultDem} />
-      <div className="relative">
-        {loadingDem && demografia.length === 0 ? <ChartSkeleton /> : !errorDem ? (
-          <ErrorBoundary><DemografiaChart data={demografia} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorDem} onRetry={refetchDem} />
-        )}
-        {loadingDem && demografia.length > 0 && <LoadingOverlay />}
-      </div>
+      <FilterBar
+        fondo={dem.draft.fondo}
+        onFondoChange={f => dem.setDraft(d => ({ ...d, fondo: f }))}
+        dateRange={dem.draft.dates}
+        onDateRangeChange={r => dem.setDraft(d => ({ ...d, dates: r }))}
+        onConsult={dem.consult}
+      />
+      <ReportView loading={loadingDem} error={errorDem} dataCount={demografia.length} onRetry={refetchDem}>
+        <Suspense fallback={<ChartSkeleton />}>
+          <DemografiaChart data={demografia} />
+        </Suspense>
+      </ReportView>
     </div>
   )
 
   const renderIsin = () => (
     <div className="space-y-4">
-      <FilterBar fondo={isinFondo} onFondoChange={setIsinFondo} onConsult={consultIsin} />
-      <div className="relative">
-        {loadingIsin && isin.length === 0 ? <ChartSkeleton /> : !errorIsin ? (
-          <ErrorBoundary><PortafolioISINChart data={isin} /></ErrorBoundary>
-        ) : (
-          <ErrorMessage message={errorIsin} onRetry={refetchIsin} />
-        )}
-        {loadingIsin && isin.length > 0 && <LoadingOverlay />}
-      </div>
+      <FilterBar
+        fondo={isinFilters.draft.fondo}
+        onFondoChange={f => isinFilters.setDraft({ fondo: f })}
+        onConsult={isinFilters.consult}
+      />
+      <ReportView loading={loadingIsin} error={errorIsin} dataCount={isin.length} onRetry={refetchIsin}>
+        <Suspense fallback={<ChartSkeleton />}>
+          <PortafolioISINChart data={isin} />
+        </Suspense>
+      </ReportView>
     </div>
   )
 
@@ -356,7 +325,9 @@ function App() {
           tabIndex={0}
           className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
         >
-          {views[activeTab]()}
+          <Suspense fallback={<ChartSkeleton />}>
+            {views[activeTab]()}
+          </Suspense>
         </section>
       </main>
 

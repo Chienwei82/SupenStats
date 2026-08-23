@@ -1,15 +1,13 @@
 import { useId } from 'react'
 import type { FondoTipo, DateRange } from '../../types/suppen'
-import { OPC_LIST } from '../../constants/suppen'
 
 interface FilterBarProps {
   fondo?: FondoTipo | ''
   onFondoChange?: (fondo: FondoTipo | '') => void
+  /** Lista de fondos alternativa (ej. /lt usa ROP/FCL/VOLCA/VOLCB/VOLDA/VOLDB). */
+  fondoOptions?: { value: FondoTipo | ''; label: string }[]
   dateRange?: DateRange
   onDateRangeChange?: (range: DateRange) => void
-  showEntidad?: boolean
-  entidad?: string
-  onEntidadChange?: (entidad: string) => void
   onConsult?: () => void
 }
 
@@ -25,21 +23,19 @@ const FONDOS: { value: FondoTipo | ''; label: string }[] = [
 export function FilterBar({
   fondo,
   onFondoChange,
+  fondoOptions,
   dateRange,
   onDateRangeChange,
-  showEntidad = false,
-  entidad = '',
-  onEntidadChange,
   onConsult,
 }: FilterBarProps) {
   const hasDateFilter = dateRange && onDateRangeChange
   const hasFondoFilter = fondo !== undefined && onFondoChange !== undefined
+  const fondos = fondoOptions ?? FONDOS
   // id único para asociar etiquetas con controles (evita colisiones en la página)
   const uid = useId()
   const fondoId = `${uid}-fondo`
   const fechaInicioId = `${uid}-inicio`
   const fechaFinId = `${uid}-fin`
-  const entidadId = `${uid}-entidad`
 
   return (
     <form
@@ -63,7 +59,7 @@ export function FilterBar({
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onConsult?.() } }}
             className="px-3 py-1.5 text-sm bg-white dark:bg-[#25293c] dark:text-[#eeffff] border border-gray-300 dark:border-[#34324a] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#82aaff] focus:border-blue-500"
           >
-            {FONDOS.map(f => (
+            {fondos.map(f => (
               <option key={f.value} value={f.value}>{f.label}</option>
             ))}
           </select>
@@ -97,26 +93,6 @@ export function FilterBar({
             />
           </div>
         </>
-      )}
-
-      {showEntidad && onEntidadChange && (
-        <div className="flex items-center gap-2">
-          <label htmlFor={entidadId} className="text-xs font-medium text-gray-600 whitespace-nowrap">
-            Operadora
-          </label>
-          <select
-            id={entidadId}
-            value={entidad}
-            onChange={(e) => onEntidadChange(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onConsult?.() } }}
-            className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">Todas las OPC</option>
-            {OPC_LIST.map(opc => (
-              <option key={opc} value={opc}>{opc}</option>
-            ))}
-          </select>
-        </div>
       )}
 
       {onConsult && (

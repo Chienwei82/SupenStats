@@ -4,8 +4,11 @@ export function parseDate(dateStr: string): Date {
   const parts = dateStr.split(/[/\-\.]/)
   if (parts.length === 3) {
     const [a, b, c] = parts.map(Number)
-    if (a > 12) return new Date(a, b - 1, c)
-    if (c > 31) return new Date(c, a - 1, b)
+    // Formato SUPEN típico: YYYY-MM-DD o DD/MM/YYYY.
+    // - Si el primer número tiene 4 dígitos → YYYY-MM-DD.
+    // - Si el tercero tiene 4 dígitos → DD/MM/YYYY (formato local).
+    if (a > 31 || String(parts[0]).length === 4) return new Date(a, b - 1, c)
+    if (c > 31 || String(parts[2]).length === 4) return new Date(c, b - 1, a)
     return new Date(a, b - 1, c)
   }
   return new Date(dateStr)
@@ -119,7 +122,6 @@ export function transformPortafolio(raw: RawPortafolio): Portafolio {
     FechaCorte: raw.fecha,
     TipoInstrumento: raw.instrumento,
     Monto: raw.montocolones ?? 0,
-    Porcentaje: 0,
   }
 }
 
@@ -138,11 +140,8 @@ export function transformComisiones(raw: RawComision[]): Comision[] {
       Entidad: entidad,
       Fondo: item.codigofondo,
       FechaCorte: item.fecha,
-      ComisionAdministracion: 0,
-      ComisionReserva: 0,
       ComisionTotal: 0,
     }
-    existing.ComisionAdministracion = item['comisión'] ?? 0
     existing.ComisionTotal = item['comisión'] ?? 0
     map.set(key, existing)
   }
@@ -302,6 +301,7 @@ export function transformLibreTransferencia(raw: RawLibreTransferencia[]): Libre
       const monto = Number(item[`${dest}_M`] ?? 0)
       result.push({
         Entidad: `${normalizeEntityName(item.entidadorigen)} -> ${dest.replace(/_/g, ' ')}`,
+        Fondo: String(item.codigofondo ?? ''),
         FechaCorte: fecha,
         CantidadTransferencias: count,
         MontoTransferido: monto,

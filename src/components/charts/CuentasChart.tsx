@@ -3,7 +3,7 @@ import {
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { formatDateShort, formatCurrencyBillions, groupBy, getUniqueValues, sortByDateAsc } from '../../utils/dataTransformers'
-import { OPC_COLORS } from '../../constants/suppen'
+import { entityColor } from '../../constants/suppen'
 import { ChartNote } from '../ui/ChartNote'
 import type { Cuenta } from '../../types/suppen'
 
@@ -57,7 +57,7 @@ export function CuentasChart({ data }: Props) {
               key={ent}
               type="monotone"
               dataKey={ent}
-              stroke={OPC_COLORS[ent] || '#6b7280'}
+              stroke={entityColor(ent)}
               strokeWidth={2}
               dot={false}
               connectNulls

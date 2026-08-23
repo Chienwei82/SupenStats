@@ -3,7 +3,7 @@ import {
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { sortByDateAsc, groupBy, getUniqueValues, formatDateShort, formatNumber } from '../../utils/dataTransformers'
-import { OPC_COLORS } from '../../constants/suppen'
+import { entityColor } from '../../constants/suppen'
 import { ChartNote } from '../ui/ChartNote'
 import type { Afiliado } from '../../types/suppen'
 
@@ -56,8 +56,8 @@ export function AfiliadosChart({ data }: Props) {
               key={ent}
               type="monotone"
               dataKey={ent}
-              stroke={OPC_COLORS[ent] || '#6b7280'}
-              fill={OPC_COLORS[ent] || '#6b7280'}
+              stroke={entityColor(ent)}
+              fill={entityColor(ent)}
               fillOpacity={0.1}
               strokeWidth={2}
               dot={false}

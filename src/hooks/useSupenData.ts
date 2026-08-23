@@ -25,6 +25,7 @@ export function useSupenData<T>(
       })
       .catch(err => {
         if (cancelled) return
+        // Abort por cambio de pestaña/unmount: ignorar silenciosamente.
         if (err instanceof DOMException && err.name === 'AbortError') return
         const message = err instanceof Error ? err.message : 'Error desconocido al conectar con la API de SUPEN'
         setError(message)
