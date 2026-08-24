@@ -31,8 +31,9 @@ async function fetchJson<T>(url: string, signal?: AbortSignal): Promise<T> {
     controller.abort()
   }, REQUEST_TIMEOUT_MS)
 
-  // Si el caller provee su propio signal (ej. desde useSupenData al cambiar
-  // de pestaña), lo encadenamos para también abortar cuando se cancele.
+  // Si el caller provee su propio signal (ej. desde useReportQuery al
+  // desmontar la ruta o cambiar de queryKey), lo encadenamos para también
+  // abortar cuando se cancele.
   const onCallerAbort = () => controller.abort()
   signal?.addEventListener('abort', onCallerAbort, { once: true })
 
@@ -45,7 +46,7 @@ async function fetchJson<T>(url: string, signal?: AbortSignal): Promise<T> {
   } catch (err) {
     // Distinguimos un timeout real de un abort del usuario: si abortamos por
     // timeout, lanzamos TimeoutError para que la UI pueda mostrar un mensaje;
-    // los AbortError ajenos se propagan tal cual (useSupenData los ignora).
+    // los AbortError ajenos se propagan tal cual (React Query los ignora).
     if (timedOut) throw new TimeoutError()
     throw err
   } finally {
