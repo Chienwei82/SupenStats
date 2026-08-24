@@ -90,13 +90,6 @@ export interface DateRange {
   FechaFinal: string
 }
 
-export interface ApiState<T> {
-  data: T[]
-  loading: boolean
-  error: string | null
-  refetch: () => void
-}
-
 // ---------------------------------------------------------------------------
 // Tipos crudos de la API real de SUPEN
 // La API devuelve los campos en minúscula y con tildes, con una estructura

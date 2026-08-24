@@ -1,40 +1,41 @@
 import { useRef, type KeyboardEvent } from 'react'
+import { Link, useMatches } from '@tanstack/react-router'
 
-export type ReportId = 'inicio' | 'rendimiento' | 'comisiones' | 'portafolio' | 'afiliados' | 'activos' | 'beneficios' | 'cuentas' | 'transferencias' | 'aportantes' | 'demografia' | 'isin'
-
-interface ReportTabsProps {
-  active: ReportId
-  onChange: (id: ReportId) => void
-}
-
-const TABS: { id: ReportId; label: string }[] = [
-  { id: 'inicio', label: 'Inicio' },
-  { id: 'rendimiento', label: 'Rendimiento' },
-  { id: 'comisiones', label: 'Comisiones' },
-  { id: 'portafolio', label: 'Portafolio' },
-  { id: 'afiliados', label: 'Afiliados' },
-  { id: 'activos', label: 'Activos' },
-  { id: 'beneficios', label: 'Beneficios' },
-  { id: 'cuentas', label: 'Cuentas' },
-  { id: 'transferencias', label: 'Transferencias' },
-  { id: 'aportantes', label: 'Aportantes' },
-  { id: 'demografia', label: 'Demografia' },
-  { id: 'isin', label: 'Instrumentos' },
+const TABS: { id: string; to: string; label: string }[] = [
+  { id: 'inicio', to: '/', label: 'Inicio' },
+  { id: 'rendimiento', to: '/rendimiento', label: 'Rendimiento' },
+  { id: 'comisiones', to: '/comisiones', label: 'Comisiones' },
+  { id: 'portafolio', to: '/portafolio', label: 'Portafolio' },
+  { id: 'afiliados', to: '/afiliados', label: 'Afiliados' },
+  { id: 'activos', to: '/activos', label: 'Activos' },
+  { id: 'beneficios', to: '/beneficios', label: 'Beneficios' },
+  { id: 'cuentas', to: '/cuentas', label: 'Cuentas' },
+  { id: 'transferencias', to: '/transferencias', label: 'Transferencias' },
+  { id: 'aportantes', to: '/aportantes', label: 'Aportantes' },
+  { id: 'demografia', to: '/demografia', label: 'Demografia' },
+  { id: 'isin', to: '/isin', label: 'Instrumentos' },
 ]
 
-export function ReportTabs({ active, onChange }: ReportTabsProps) {
-  const tabRefs = useRef<Record<ReportId, HTMLButtonElement | null>>({} as Record<ReportId, HTMLButtonElement | null>)
+/**
+ * Tabs de navegación basadas en el router: cada tab es un Link real, así el
+ * estado activo se deriva de la URL y back/forward del navegador funcionan.
+ * Conserva la navegación por teclado WAI-ARIA tabs (roving tabindex).
+ */
+export function ReportTabs() {
+  const matches = useMatches()
+  const activePath = matches.at(-1)?.pathname ?? '/'
+  const activeId = TABS.find(t => t.to === activePath)?.id ?? 'inicio'
+  const tabRefs = useRef<Record<string, HTMLAnchorElement | null>>({})
 
   // Navegación por teclado siguiendo el patrón WAI-ARIA tabs (roving tabindex).
-  const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
-    const currentIndex = TABS.findIndex(t => t.id === active)
+  // El foco se mueve; la activación ocurre con Enter (nativo de los links).
+  const handleKeyDown = (e: KeyboardEvent<HTMLAnchorElement>) => {
+    const currentIndex = TABS.findIndex(t => t.id === activeId)
     const count = TABS.length
 
     const moveTo = (index: number) => {
       const nextIndex = (index + count) % count
-      const next = TABS[nextIndex]
-      tabRefs.current[next.id]?.focus()
-      onChange(next.id)
+      tabRefs.current[TABS[nextIndex].id]?.focus()
     }
 
     let handled = false
@@ -71,17 +72,18 @@ export function ReportTabs({ active, onChange }: ReportTabsProps) {
       aria-label="Reportes"
     >
       {TABS.map(tab => {
-        const isActive = active === tab.id
+        const isActive = activeId === tab.id
         return (
-          <button
+          <Link
             key={tab.id}
             ref={el => { tabRefs.current[tab.id] = el }}
+            to={tab.to}
+            search={{}}
             role="tab"
             id={`tab-${tab.id}`}
             aria-selected={isActive}
             aria-controls={`panel-${tab.id}`}
             tabIndex={isActive ? 0 : -1}
-            onClick={() => onChange(tab.id)}
             onKeyDown={handleKeyDown}
             className={`
               px-4 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap
@@ -93,7 +95,7 @@ export function ReportTabs({ active, onChange }: ReportTabsProps) {
             `}
           >
             {tab.label}
-          </button>
+          </Link>
         )
       })}
     </nav>

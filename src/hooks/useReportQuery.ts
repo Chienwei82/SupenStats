@@ -1,0 +1,68 @@
+import { useCallback, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
+import type { FondoTipo, DateRange } from '../types/suppen'
+
+/**
+ * Search params de filtros compartidos por todas las rutas de reportes.
+ * Validados con zod en el `validateSearch` de cada ruta.
+ */
+export interface ReportSearch {
+  fondo?: FondoTipo | ''
+  fechaInicio?: string
+  fechaFinal?: string
+}
+
+export function filtersToSearch(applied: { fondo: FondoTipo | ''; dates?: DateRange }): ReportSearch {
+  return {
+    fondo: applied.fondo || undefined,
+    fechaInicio: applied.dates?.FechaInicio,
+    fechaFinal: applied.dates?.FechaFinal,
+  }
+}
+
+/**
+ * Reemplaza a useSupenData: un useQuery por reporte. La cancelación es
+ * nativa (los fetchers ya aceptan AbortSignal) y la caché evita refetch
+ * al volver a una pestaña visitada (staleTime 10min configurado globalmente).
+ */
+export function useReportQuery<T>(
+  key: readonly unknown[],
+  fetchFn: (signal?: AbortSignal) => Promise<T[]>,
+) {
+  const query = useQuery({
+    queryKey: key,
+    queryFn: ({ signal }) => fetchFn(signal),
+    // La API de SUPEN no soporta bien reintentos concurrentes en endpoints
+    // pesados; con retry:1 global basta.
+    placeholderData: prev => prev,
+  })
+
+  return {
+    data: query.data ?? [],
+    loading: query.isPending,
+    error: query.error instanceof Error ? query.error.message : null,
+    refetch: () => void query.refetch(),
+  }
+}
+
+/**
+ * Patrón draft/applied sobre search params de la URL: el draft vive en
+ * memoria (lo que ve FilterBar) y consult() navega escribiendo los valores
+ * aplicados en la URL, lo que cambia la queryKey y dispara el refetch.
+ * Ventaja: URLs compartibles y back/forward del navegador funcionan.
+ */
+export function useUrlFilters(defaults: { fondo: FondoTipo | ''; dates?: DateRange }) {
+  const navigate = useNavigate()
+  const [draft, setDraft] = useState(defaults)
+
+  const consult = useCallback(() => {
+    void navigate({
+      to: '.',
+      search: (prev: Record<string, unknown>) => ({ ...prev, ...filtersToSearch(draft) }),
+      replace: false,
+    })
+  }, [draft, navigate])
+
+  return { draft, setDraft, consult } as const
+}
