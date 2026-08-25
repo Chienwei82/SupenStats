@@ -14,12 +14,14 @@ import { Route as ActivosRouteImport } from './routes/activos'
 import { Route as AfiliadosRouteImport } from './routes/afiliados'
 import { Route as AportantesRouteImport } from './routes/aportantes'
 import { Route as BeneficiosRouteImport } from './routes/beneficios'
+import { Route as ComisionRentabilidadRouteImport } from './routes/comision-rentabilidad'
 import { Route as ComisionesRouteImport } from './routes/comisiones'
 import { Route as CuentasRouteImport } from './routes/cuentas'
 import { Route as DemografiaRouteImport } from './routes/demografia'
 import { Route as IsinRouteImport } from './routes/isin'
 import { Route as PortafolioRouteImport } from './routes/portafolio'
 import { Route as RendimientoRouteImport } from './routes/rendimiento'
+import { Route as RendimientoRealRouteImport } from './routes/rendimiento-real'
 import { Route as TransferenciasRouteImport } from './routes/transferencias'
 
 const IndexRoute = IndexRouteImport.update({
@@ -45,6 +47,11 @@ const AportantesRoute = AportantesRouteImport.update({
 const BeneficiosRoute = BeneficiosRouteImport.update({
   id: '/beneficios',
   path: '/beneficios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComisionRentabilidadRoute = ComisionRentabilidadRouteImport.update({
+  id: '/comision-rentabilidad',
+  path: '/comision-rentabilidad',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ComisionesRoute = ComisionesRouteImport.update({
@@ -77,6 +84,11 @@ const RendimientoRoute = RendimientoRouteImport.update({
   path: '/rendimiento',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RendimientoRealRoute = RendimientoRealRouteImport.update({
+  id: '/rendimiento-real',
+  path: '/rendimiento-real',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TransferenciasRoute = TransferenciasRouteImport.update({
   id: '/transferencias',
   path: '/transferencias',
@@ -89,12 +101,14 @@ export interface FileRoutesByFullPath {
   '/afiliados': typeof AfiliadosRoute
   '/aportantes': typeof AportantesRoute
   '/beneficios': typeof BeneficiosRoute
+  '/comision-rentabilidad': typeof ComisionRentabilidadRoute
   '/comisiones': typeof ComisionesRoute
   '/cuentas': typeof CuentasRoute
   '/demografia': typeof DemografiaRoute
   '/isin': typeof IsinRoute
   '/portafolio': typeof PortafolioRoute
   '/rendimiento': typeof RendimientoRoute
+  '/rendimiento-real': typeof RendimientoRealRoute
   '/transferencias': typeof TransferenciasRoute
 }
 export interface FileRoutesByTo {
@@ -103,12 +117,14 @@ export interface FileRoutesByTo {
   '/afiliados': typeof AfiliadosRoute
   '/aportantes': typeof AportantesRoute
   '/beneficios': typeof BeneficiosRoute
+  '/comision-rentabilidad': typeof ComisionRentabilidadRoute
   '/comisiones': typeof ComisionesRoute
   '/cuentas': typeof CuentasRoute
   '/demografia': typeof DemografiaRoute
   '/isin': typeof IsinRoute
   '/portafolio': typeof PortafolioRoute
   '/rendimiento': typeof RendimientoRoute
+  '/rendimiento-real': typeof RendimientoRealRoute
   '/transferencias': typeof TransferenciasRoute
 }
 export interface FileRoutesById {
@@ -118,12 +134,14 @@ export interface FileRoutesById {
   '/afiliados': typeof AfiliadosRoute
   '/aportantes': typeof AportantesRoute
   '/beneficios': typeof BeneficiosRoute
+  '/comision-rentabilidad': typeof ComisionRentabilidadRoute
   '/comisiones': typeof ComisionesRoute
   '/cuentas': typeof CuentasRoute
   '/demografia': typeof DemografiaRoute
   '/isin': typeof IsinRoute
   '/portafolio': typeof PortafolioRoute
   '/rendimiento': typeof RendimientoRoute
+  '/rendimiento-real': typeof RendimientoRealRoute
   '/transferencias': typeof TransferenciasRoute
 }
 export interface FileRouteTypes {
@@ -134,12 +152,14 @@ export interface FileRouteTypes {
     | '/afiliados'
     | '/aportantes'
     | '/beneficios'
+    | '/comision-rentabilidad'
     | '/comisiones'
     | '/cuentas'
     | '/demografia'
     | '/isin'
     | '/portafolio'
     | '/rendimiento'
+    | '/rendimiento-real'
     | '/transferencias'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -148,12 +168,14 @@ export interface FileRouteTypes {
     | '/afiliados'
     | '/aportantes'
     | '/beneficios'
+    | '/comision-rentabilidad'
     | '/comisiones'
     | '/cuentas'
     | '/demografia'
     | '/isin'
     | '/portafolio'
     | '/rendimiento'
+    | '/rendimiento-real'
     | '/transferencias'
   id:
     | '__root__'
@@ -162,12 +184,14 @@ export interface FileRouteTypes {
     | '/afiliados'
     | '/aportantes'
     | '/beneficios'
+    | '/comision-rentabilidad'
     | '/comisiones'
     | '/cuentas'
     | '/demografia'
     | '/isin'
     | '/portafolio'
     | '/rendimiento'
+    | '/rendimiento-real'
     | '/transferencias'
   fileRoutesById: FileRoutesById
 }
@@ -177,12 +201,14 @@ export interface RootRouteChildren {
   AfiliadosRoute: typeof AfiliadosRoute
   AportantesRoute: typeof AportantesRoute
   BeneficiosRoute: typeof BeneficiosRoute
+  ComisionRentabilidadRoute: typeof ComisionRentabilidadRoute
   ComisionesRoute: typeof ComisionesRoute
   CuentasRoute: typeof CuentasRoute
   DemografiaRoute: typeof DemografiaRoute
   IsinRoute: typeof IsinRoute
   PortafolioRoute: typeof PortafolioRoute
   RendimientoRoute: typeof RendimientoRoute
+  RendimientoRealRoute: typeof RendimientoRealRoute
   TransferenciasRoute: typeof TransferenciasRoute
 }
 
@@ -221,6 +247,13 @@ declare module '@tanstack/react-router' {
       path: '/beneficios'
       fullPath: '/beneficios'
       preLoaderRoute: typeof BeneficiosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comision-rentabilidad': {
+      id: '/comision-rentabilidad'
+      path: '/comision-rentabilidad'
+      fullPath: '/comision-rentabilidad'
+      preLoaderRoute: typeof ComisionRentabilidadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/comisiones': {
@@ -265,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RendimientoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rendimiento-real': {
+      id: '/rendimiento-real'
+      path: '/rendimiento-real'
+      fullPath: '/rendimiento-real'
+      preLoaderRoute: typeof RendimientoRealRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/transferencias': {
       id: '/transferencias'
       path: '/transferencias'
@@ -281,12 +321,14 @@ const rootRouteChildren: RootRouteChildren = {
   AfiliadosRoute: AfiliadosRoute,
   AportantesRoute: AportantesRoute,
   BeneficiosRoute: BeneficiosRoute,
+  ComisionRentabilidadRoute: ComisionRentabilidadRoute,
   ComisionesRoute: ComisionesRoute,
   CuentasRoute: CuentasRoute,
   DemografiaRoute: DemografiaRoute,
   IsinRoute: IsinRoute,
   PortafolioRoute: PortafolioRoute,
   RendimientoRoute: RendimientoRoute,
+  RendimientoRealRoute: RendimientoRealRoute,
   TransferenciasRoute: TransferenciasRoute,
 }
 export const routeTree = rootRouteImport

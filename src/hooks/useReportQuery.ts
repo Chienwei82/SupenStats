@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import type { FondoTipo, DateRange } from '../types/suppen'
 
 /**
@@ -71,3 +71,31 @@ export function useUrlFilters(defaults: { fondo: FondoTipo | ''; dates?: DateRan
 
   return { draft, setDraft, consult } as const
 }
+
+/**
+ * Search param suelto con default: lectura validada + escritura vía navigate.
+ * Usado por los selectores de los gráficos (periodicidad, corte, métrica) para
+ * que la vista completa quede reflejada en la URL (compartible/back-navegable).
+ */
+export function useUrlParam<K extends string>(
+  key: K,
+  isValid: (v: string | undefined) => boolean,
+  fallback: string,
+): [string, (v: string) => void] {
+  const search = useSearch({ strict: false }) as Record<string, unknown>
+  const navigate = useNavigate()
+  const raw = search[key]
+  const value = typeof raw === 'string' && isValid(raw) ? raw : fallback
+  const setValue = useCallback(
+    (v: string) => {
+      void navigate({
+        to: '.',
+        search: (prev: Record<string, unknown>) => ({ ...prev, [key]: v }),
+        replace: false,
+      })
+    },
+    [key, navigate],
+  )
+  return [value, setValue]
+}
+

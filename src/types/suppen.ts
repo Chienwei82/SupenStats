@@ -2,7 +2,8 @@ export interface Comision {
   Entidad: string
   Fondo: string
   FechaCorte: string
-  ComisionTotal: number
+  /** null = la API no reporta comisión para este registro; nunca representar como 0. */
+  ComisionTotal: number | null
 }
 
 export interface Rendimiento {
@@ -81,6 +82,51 @@ export interface AfiliadoDemografico {
   Sexo: string
   RangoEdad: string
   CantidadAfiliados: number
+}
+
+// Rendimiento por periodicidad para el reporte 'Rentabilidad nominal vs real'.
+// A diferencia de `Rendimiento` (que fija ANUAL y usa 0), aquí se conserva la
+// periodicidad y los valores ausentes como null: null significa "no disponible"
+// y nunca debe representarse como 0 en la UI.
+export interface RendimientoComparado {
+  Entidad: string
+  Fondo: string
+  FechaCorte: string
+  Periodicidad: string
+  Nominal: number | null
+  Real: number | null
+}
+
+// Dataset combinado para el reporte 'Comisiones vs rentabilidad'. La ruta
+// compone dos endpoints en una sola query y devuelve un único registro con
+// ambas series crudas ya transformadas.
+export interface ComisionRentabilidadDataset {
+  comisiones: Comision[]
+  rendimientos: RendimientoComparado[]
+}
+
+// Un punto del scatter de comisiones vs rentabilidad (solo pares completos).
+export interface PuntoComisionRentabilidad {
+  Entidad: string
+  Comision: number
+  Rentabilidad: number
+}
+
+// OPC que no pudo emparejarse (falta comisión o rentabilidad en el corte común).
+export interface ExcluidoComisionRentabilidad {
+  Entidad: string
+  Motivo: 'sin comisión' | 'sin rentabilidad' | 'sin rentabilidad real'
+}
+
+// Fila del reporte 'Rentabilidad nominal vs real': una por OPC en un
+// (periodicidad, corte). null = no disponible (mostrar explícitamente).
+export interface RentabilidadComparada {
+  Entidad: string
+  Fondo: string
+  FechaCorte: string
+  Periodicidad: string
+  Nominal: number | null
+  Real: number | null
 }
 
 export type FondoTipo = 'ROP' | 'FCL' | 'VOL' | 'BASI' | 'OCUP' | 'VOLCA' | 'VOLCB' | 'VOLDA' | 'VOLDB'

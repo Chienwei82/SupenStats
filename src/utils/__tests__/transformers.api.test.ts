@@ -23,11 +23,11 @@ describe('transformComisiones', () => {
     expect(popular?.ComisionTotal).toBe(0.35)
   })
 
-  it('trata comisión null como 0', () => {
+  it('preserva comisión null (no disponible) sin convertirla a 0', () => {
     const raw: RawComision[] = [
       { entidad: 'BN-VITAL', tipo: 'SALDO', 'comisión': null, fecha: '2024-01-01', codigoregimen: 1, 'régimen': 'ROP', codigofondo: 'ROP', fondo: 'ROP' },
     ]
-    expect(transformComisiones(raw)[0]?.ComisionTotal).toBe(0)
+    expect(transformComisiones(raw)[0]?.ComisionTotal).toBeNull()
   })
 })
 

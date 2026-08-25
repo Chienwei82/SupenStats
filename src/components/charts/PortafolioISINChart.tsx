@@ -2,7 +2,7 @@ import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { formatCurrencyBillions, sortByDateAsc } from '../../utils/dataTransformers'
-import { CHART_COLORS } from '../../constants/suppen'
+import { CHART_COLORS, ISIN_LAST_PUBLICATION } from '../../constants/suppen'
 import { ChartNote } from '../ui/ChartNote'
 import type { PortafolioISIN } from '../../types/suppen'
 
@@ -27,6 +27,11 @@ export function PortafolioISINChart({ data }: Props) {
     .slice(0, 8)
 
   const total = chartData.reduce((sum, d) => sum + d.value, 0)
+
+  // SUPEN congeló la publicación del detalle por ISIN (ver api-notes y
+  // constants/suppen): avisamos cuando el último corte mostrado es anterior
+  // a la última publicación conocida o cuando no hay datos en el rango.
+  const desactualizado = latestDate == null || latestDate.slice(0, 10) < ISIN_LAST_PUBLICATION
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tooltipFormatter = (value: any, name: any) => {
@@ -75,6 +80,14 @@ export function PortafolioISINChart({ data }: Props) {
           />
         </PieChart>
       </ResponsiveContainer>
+      {desactualizado && (
+        <p className="text-xs text-amber-600 dark:text-amber-400 mb-3">
+          {latestDate == null
+            ? 'Sin datos para el rango consultado. '
+            : `Último corte disponible: ${latestDate}. `}
+          SUPEN no publica el detalle por ISIN desde {ISIN_LAST_PUBLICATION}; los demás reportes sí están actualizados.
+        </p>
+      )}
       <ChartNote noteId="isin" />
     </div>
   )

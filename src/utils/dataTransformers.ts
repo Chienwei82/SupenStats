@@ -103,7 +103,7 @@ export function findMin<T>(data: T[], key: keyof T): T | undefined {
 // ---------------------------------------------------------------------------
 
 import type {
-  Comision, Rendimiento, Portafolio, Afiliado,
+  Comision, Rendimiento, RendimientoComparado, Portafolio, Afiliado,
   AfiliadoAportante, AfiliadoDemografico, Beneficio, Cuenta, LibreTransferencia, PortafolioISIN,
   RawComision, RawRendimiento, RawPortafolio, RawAfiliado,
   RawBeneficio, RawCuenta, RawLibreTransferencia, RawPortafolioISIN,
@@ -140,9 +140,11 @@ export function transformComisiones(raw: RawComision[]): Comision[] {
       Entidad: entidad,
       Fondo: item.codigofondo,
       FechaCorte: item.fecha,
-      ComisionTotal: 0,
+      ComisionTotal: null,
     }
-    existing.ComisionTotal = item['comisión'] ?? 0
+    // Preservamos null cuando la API no trae el valor: convertirlo a 0
+    // inventaría un dato (p. ej., APORTE/RENDIMIENTO vienen null en ROP).
+    existing.ComisionTotal = item['comisión'] ?? null
     map.set(key, existing)
   }
   return Array.from(map.values())
@@ -169,6 +171,25 @@ export function transformRendimientos(raw: RawRendimiento[]): Rendimiento[] {
     map.set(key, existing)
   }
   return Array.from(map.values())
+}
+
+export function transformRendimientosComparados(raw: RawRendimiento[]): RendimientoComparado[] {
+  // Igual que transformRendimientos pero: (1) conserva TODAS las periodicidades
+  // y (2) preserva null cuando la API no trae el valor. El reporte necesita
+  // distinguir "no disponible" de 0 para poder mostrarlo explícitamente.
+  return raw.map(item => {
+    // Normalizamos tipo (uppercase-trim): la API podría devolver variaciones
+    // de casing/espacios y una comparación cruda perdería el dato silenciosamente.
+    const tipo = item.tipo?.trim().toUpperCase()
+    return {
+      Entidad: normalizeEntityName(item.entidad),
+      Fondo: item.codigofondo,
+      FechaCorte: item.fecha,
+      Periodicidad: item.periodicidad.trim(),
+      Nominal: tipo === 'NOMINAL' ? item.rentabilidad : null,
+      Real: tipo === 'REAL' ? item.rentabilidad : null,
+    }
+  })
 }
 
 export function transformPortafolios(raw: RawPortafolio[]): Portafolio[] {
