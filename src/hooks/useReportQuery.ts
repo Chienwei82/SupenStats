@@ -40,7 +40,12 @@ export function useReportQuery<T>(
 
   return {
     data: query.data ?? [],
-    loading: query.isPending,
+    // Usamos isFetching (no isPending): con placeholderData los datos previos
+    // se conservan al cambiar de filtros, lo que pone el status en 'success'
+    // y hace que isPending sea false aunque se esté descargando. isFetching
+    // es true tanto en la primera carga como en los refetch con datos previos,
+    // así ReportView puede mostrar skeleton (sin datos) u overlay (con datos).
+    loading: query.isFetching,
     error: query.error instanceof Error ? query.error.message : null,
     refetch: () => void query.refetch(),
   }
