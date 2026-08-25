@@ -173,8 +173,11 @@ export interface RawPortafolioISIN {
   fecha: string
   codigofondo: string
   fondo: string
-  codigoisin: string
-  descripcion: string
-  monto: number | null
-  porcentaje: number | null
+  /** Código ISIN del título (campo real de la API). */
+  isin: string
+  /** Emisor/gestor legible del título (campo real de la API). */
+  emisor_gestor: string
+  /** 'EMISOR' | 'GESTOR' — la misma posición se repite en ambos tipos. */
+  tipo: string
+  montocolones: number | null
 }
