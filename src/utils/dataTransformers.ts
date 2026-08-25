@@ -312,13 +312,27 @@ export function transformLibreTransferencia(raw: RawLibreTransferencia[]): Libre
 }
 
 export function transformPortafolioISIN(raw: RawPortafolioISIN[]): PortafolioISIN[] {
-  return raw.map(item => ({
-    Entidad: normalizeEntityName(item.entidad),
-    Fondo: item.codigofondo,
-    FechaCorte: item.fecha,
-    CodigoISIN: item.codigoisin,
-    Descripcion: item.descripcion,
-    Monto: item.monto ?? 0,
-    Porcentaje: item.porcentaje ?? 0,
-  }))
+  // La API devuelve un registro por (entidad, fecha, ISIN) con dos tipos:
+  // 'EMISOR' y 'GESTOR', que representan la MISMA posición (el monto se
+  // repite en ambos). Para no duplicar el total, conservamos solo 'EMISOR'.
+  // Además, el campo de descripción legible es `emisor_gestor` (el emisor
+  // real del título), no `isin` (código técnico).
+  const seen = new Set<string>()
+  const result: PortafolioISIN[] = []
+  for (const item of raw) {
+    if (item.tipo !== 'EMISOR') continue
+    const key = `${item.entidad}|${item.fecha}|${item.isin}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    result.push({
+      Entidad: normalizeEntityName(item.entidad),
+      Fondo: item.codigofondo,
+      FechaCorte: item.fecha,
+      CodigoISIN: item.isin,
+      Descripcion: item.emisor_gestor || item.isin,
+      Monto: item.montocolones ?? 0,
+      Porcentaje: 0,
+    })
+  }
+  return result
 }

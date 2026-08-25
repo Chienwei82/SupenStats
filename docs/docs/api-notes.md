@@ -88,11 +88,28 @@ Claves OPC destino: `BN_VITAL`, `INS_PENSIONES`, `POPULAR`, `VIDA_PLENA`,
 ## `GET /api/portafolioisin`
 
 - Devuelve el detalle por ISIN.
-- **Tiempo de espera**: igual que `portafolio`, devuelve data desde 2010 y es muy pesado.
-  Con `Fondo=ROP&Entidad=POPULAR` y con rangos de fecha se agota el tiempo.
-  Requiere igual restricción de rango que `portafolio` (`PORTFOLIO_RANGE`).
-- Shape probable análogo a `portafolio` + campos `codigoisin`/`descripcion` (PENDIENTE de
-  confirmar — requiere probar con respuesta completa, no se pudo extraer por timeout).
+- **Tiempo de espera**: igual que `portafolio`, devuelve data desde 2010 y es muy pesado
+  (sin filtro de fechas son ~200k registros / 144MB). Requiere la misma restricción de
+  rango que `portafolio` (`PORTFOLIO_RANGE`).
+- **Shape real confirmado** (verificado contra la API): análogo a `portafolio` pero con
+  campos `isin` (código del título) y `emisor_gestor` (emisor legible). NO existen los
+  campos `codigoisin`/`descripcion`/`monto`/`porcentaje`.
+- **Doble conteo**: cada posición aparece dos veces con `tipo` = `EMISOR` y `GESTOR`
+  (mismo monto repetido). El transformador conserva solo `EMISOR`.
+- `Entidad` NO filtra (igual que en el resto de endpoints).
+
+```json
+{
+  "entidad": "BN-VITAL",
+  "isin": "CRBCCR0C3628",
+  "tipo": "EMISOR",
+  "emisor_gestor": "BANCO POPULAR DESARROLLO COMUNAL",
+  "montocolones": 40536816905,
+  "fecha": "2026-01-31T00:00:00",
+  "codigofondo": "ROP",
+  "fondo": "PENSIÓN OBLIGATORIA COMPLEMENTARIA"
+}
+```
 
 ## `GET /api/afiliado` — preservación existente
 

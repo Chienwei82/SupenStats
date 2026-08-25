@@ -135,14 +135,29 @@ describe('transformLibreTransferencia', () => {
 })
 
 describe('transformPortafolioISIN', () => {
-  it('mapea campos crudos a dominio', () => {
+  it('mapea campos reales y conserva solo tipo EMISOR (evita doble conteo)', () => {
     const raw = {
       entidad: 'POPULAR', codigofondo: 'ROP', fecha: '2024-06-01',
-      codigoisin: 'CRP00001011', descripcion: 'Bono Gobierno', monto: 1000, porcentaje: null,
+      isin: 'CRP00001011', emisor_gestor: 'BANCO POPULAR', tipo: 'EMISOR', montocolones: 1000,
     } as unknown as RawPortafolioISIN
     const [r] = transformPortafolioISIN([raw])
     expect(r).toMatchObject({
-      Entidad: 'POPULAR PENSIONES', CodigoISIN: 'CRP00001011', Porcentaje: 0,
+      Entidad: 'POPULAR PENSIONES', CodigoISIN: 'CRP00001011',
+      Descripcion: 'BANCO POPULAR', Monto: 1000,
     })
+  })
+
+  it('descarta registros GESTOR (misma posición duplicada)', () => {
+    const base = {
+      entidad: 'POPULAR', codigofondo: 'ROP', fecha: '2024-06-01',
+      isin: 'CRP00001011', emisor_gestor: 'BANCO POPULAR', montocolones: 1000,
+    }
+    const raw = [
+      { ...base, tipo: 'EMISOR' },
+      { ...base, tipo: 'GESTOR' },
+    ] as unknown as RawPortafolioISIN[]
+    const result = transformPortafolioISIN(raw)
+    expect(result).toHaveLength(1)
+    expect(result[0]?.Monto).toBe(1000)
   })
 })
