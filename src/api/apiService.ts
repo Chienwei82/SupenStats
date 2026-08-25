@@ -1,5 +1,5 @@
-import type { Comision, Rendimiento, Portafolio, PortafolioISIN, Afiliado, AfiliadoAportante, AfiliadoDemografico, Beneficio, Cuenta, LibreTransferencia, FondoTipo, DateRange, RawComision, RawRendimiento, RawPortafolio, RawAfiliado, RawBeneficio, RawCuenta, RawLibreTransferencia, RawPortafolioISIN } from '../types/suppen'
-import { transformComisiones, transformRendimientos, transformPortafolios, transformAfiliados, transformAfiliadosAportantes, transformAfiliadosDemograficos, transformBeneficios, transformCuentas, transformLibreTransferencia, transformPortafolioISIN } from '../utils/dataTransformers'
+import type { Comision, Rendimiento, RendimientoComparado, Portafolio, PortafolioISIN, Afiliado, AfiliadoAportante, AfiliadoDemografico, Beneficio, Cuenta, LibreTransferencia, FondoTipo, DateRange, RawComision, RawRendimiento, RawPortafolio, RawAfiliado, RawBeneficio, RawCuenta, RawLibreTransferencia, RawPortafolioISIN } from '../types/suppen'
+import { transformComisiones, transformRendimientos, transformRendimientosComparados, transformPortafolios, transformAfiliados, transformAfiliadosAportantes, transformAfiliadosDemograficos, transformBeneficios, transformCuentas, transformLibreTransferencia, transformPortafolioISIN } from '../utils/dataTransformers'
 
 const API_BASE = '/estadisticas/api'
 
@@ -99,6 +99,17 @@ export async function fetchRendimiento(fondo?: FondoTipo, entidad?: string, rang
   })
   const raw = assertArray<RawRendimiento>(await fetchJson<unknown>(`${API_BASE}/rendimiento${qs}`, signal), 'rendimiento')
   return transformRendimientos(raw)
+}
+
+/**
+ * Rendimientos conservando periodicidad y valores null (para el reporte de
+ * rentabilidad nominal vs real). A diferencia de fetchRendimiento, no fija
+ * ANUAL ni convierte ausencias a 0.
+ */
+export async function fetchRendimientosComparados(fondo?: FondoTipo, range?: DateRange, signal?: AbortSignal): Promise<RendimientoComparado[]> {
+  const qs = buildQueryString({ Fondo: fondo, ...fechaParams(range) })
+  const raw = assertArray<RawRendimiento>(await fetchJson<unknown>(`${API_BASE}/rendimiento${qs}`, signal), 'rendimiento')
+  return transformRendimientosComparados(raw)
 }
 
 export async function fetchPortafolio(entidad?: string, fondo?: FondoTipo, range?: DateRange, signal?: AbortSignal): Promise<Portafolio[]> {

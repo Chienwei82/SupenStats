@@ -27,6 +27,9 @@ export function validateReportSearch(search: Record<string, unknown>): ReportSea
     fondo: typeof search.fondo === 'string' ? search.fondo : undefined,
     fechaInicio: typeof search.fechaInicio === 'string' ? search.fechaInicio : undefined,
     fechaFinal: typeof search.fechaFinal === 'string' ? search.fechaFinal : undefined,
+    periodicidad: typeof search.periodicidad === 'string' ? search.periodicidad : undefined,
+    corte: typeof search.corte === 'string' ? search.corte : undefined,
+    metrica: search.metrica === 'real' ? 'real' : search.metrica === 'nominal' ? 'nominal' : undefined,
   }
 }
 

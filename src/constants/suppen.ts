@@ -136,3 +136,14 @@ export const PORTFOLIO_RANGE = {
   FechaInicio: isoDateMonthsOffset(3),
   FechaFinal: new Date().toISOString().split('T')[0],
 }
+
+// El endpoint de portafolioISIN está desactualizado en la fuente: SUPEN
+// congeló el detalle por ISIN el 2026-01-31 (verificado el 2026-08-25),
+// mientras /portafolio sigue al día. Un rango corto reciente devuelve vacío,
+// así que pedimos 12 meses para que el último corte publicado entre en
+// ventana. Si SUPEN retoma la publicación esto sigue funcionando.
+export const ISIN_LAST_PUBLICATION = '2026-01-31'
+export const ISIN_RANGE = {
+  FechaInicio: isoDateMonthsOffset(12),
+  FechaFinal: new Date().toISOString().split('T')[0],
+}

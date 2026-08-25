@@ -4,7 +4,9 @@ import { Link, useMatches } from '@tanstack/react-router'
 const TABS: { id: string; to: string; label: string }[] = [
   { id: 'inicio', to: '/', label: 'Inicio' },
   { id: 'rendimiento', to: '/rendimiento', label: 'Rendimiento' },
+  { id: 'rendimiento-real', to: '/rendimiento-real', label: 'Rend. Real' },
   { id: 'comisiones', to: '/comisiones', label: 'Comisiones' },
+  { id: 'comision-rentabilidad', to: '/comision-rentabilidad', label: 'Comisión vs Rend.' },
   { id: 'portafolio', to: '/portafolio', label: 'Portafolio' },
   { id: 'afiliados', to: '/afiliados', label: 'Afiliados' },
   { id: 'activos', to: '/activos', label: 'Activos' },
