@@ -154,6 +154,43 @@ export interface RentabilidadComparada {
   Real: number | null
 }
 
+// ---------------------------------------------------------------------------
+// Reporte 'Traslados entre operadoras'
+// ---------------------------------------------------------------------------
+
+/** Una observación mensual del total de afiliados de una OPC. */
+export interface AfiliadoMensual {
+  Entidad: string
+  Fondo: string
+  FechaCorte: string
+  /** null = la API no reportó el conteo para esa celda (ej. periodos
+   *  históricos donde `afiliados` viene null). Nunca se representa como 0. */
+  CantidadAfiliados: number | null
+}
+
+/** Punto de la serie de variación neta: { fecha, [opc]: delta | null }. */
+export interface VariacionPunto {
+  fecha: string
+  [entidad: string]: string | number | null
+}
+
+/** Balance mensual de traslados por OPC (vista B1). */
+export interface TrasladoBalance {
+  fecha: string
+  Entidad: string
+  Ingresos: number
+  Salidas: number
+  Neto: number
+}
+
+/** Flujo agregado origen→destino en el rango (vista B2). */
+export interface TrasladoFlujo {
+  Origen: string
+  Destino: string
+  Cantidad: number
+  Monto: number
+}
+
 export type FondoTipo = 'ROP' | 'FCL' | 'VOL' | 'BASI' | 'OCUP' | 'VOLCA' | 'VOLCB' | 'VOLDA' | 'VOLDB'
 
 export interface DateRange {

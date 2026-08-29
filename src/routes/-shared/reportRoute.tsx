@@ -31,6 +31,7 @@ export function validateReportSearch(search: Record<string, unknown>): ReportSea
     corte: typeof search.corte === 'string' ? search.corte : undefined,
     metrica: search.metrica === 'real' ? 'real' : search.metrica === 'nominal' ? 'nominal' : undefined,
     entidad: typeof search.entidad === 'string' ? search.entidad : undefined,
+    vista: search.vista === 'traslados' ? 'traslados' : search.vista === 'neto' ? 'neto' : undefined,
   }
 }
 

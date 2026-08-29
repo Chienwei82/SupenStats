@@ -136,4 +136,31 @@ export const CHART_NOTES: Record<string, ChartNote> = {
       { label: 'SUPEN — ¿Cómo se compone su pensión?', url: 'https://www.supen.fi.cr/como-se-compone' },
     ],
   },
+  'traslados-variacion': {
+    title: '¿Cómo leer este gráfico?',
+    body:
+      'Este gráfico muestra la variación neta mensual de afiliados por operadora (OPC): la diferencia entre el total de afiliados de un mes y el del mes anterior. Es un ESTIMADO DERIVADO: la cifra no distingue entre traslados entre OPCs, nuevas afiliaciones (trabajadores que entran por primera vez al sistema) y bajas (pensionados, fallecidos, retiros). Una línea ascendente puede deberse a que la operadora atrae traslados netos, a que el empleo formal creció, o a una combinación de ambos. Las operadoras con datos faltantes para algún mes se muestran con un hueco en la serie, no con un valor inventado.',
+    references: [
+      { label: 'SUPEN — Estadísticas del sistema de pensiones', url: 'https://www.supen.fi.cr/estadisticas' },
+      { label: 'Manual de uso del API de SUPEN', url: 'https://www.supen.fi.cr/documents/20121/107570/GuiaAPISUPEN.pdf' },
+    ],
+  },
+  'traslados-b1': {
+    title: '¿Cómo leer este gráfico?',
+    body:
+      'Este gráfico muestra el balance neto de traslados (libre transferencia) por operadora y mes: la diferencia entre las personas que llegaron a la OPC y las que salieron, según los datos publicados por SUPEN. Una barra positiva indica que la OPC recibió más traslados de los que emitió; una barra negativa, lo contrario. Importante: este conteo refleja únicamente movimientos ENTRE OPCs, no altas ni bajas del sistema. Para entender la tendencia completa de afiliados, mira también la vista de "Variación neta".',
+    references: [
+      { label: 'SUPEN — Estadísticas del sistema de pensiones', url: 'https://www.supen.fi.cr/estadisticas' },
+      { label: 'SUPEN — ¿Cuál es mi operadora de pensiones?', url: 'https://www.supen.fi.cr/cual-es-mi-operadora-de-pensiones' },
+    ],
+  },
+  'traslados-b2': {
+    title: '¿Cómo leer este gráfico?',
+    body:
+      'Esta tabla muestra los principales flujos de traslados entre pares de operadoras en el rango seleccionado, ordenados por cantidad (o por monto si lo prefieres). Cada fila representa un par origen→destino, con el total de personas trasladadas y el monto total movilizado. Sirve para identificar los corredores más activos del sistema: de dónde salen más afiliados y hacia dónde llegan. Recuerda que /lt solo cuenta movimientos entre OPCs (no altas ni bajas).',
+    references: [
+      { label: 'SUPEN — Estadísticas del sistema de pensiones', url: 'https://www.supen.fi.cr/estadisticas' },
+      { label: 'SUPEN — ¿Cuál es mi operadora de pensiones?', url: 'https://www.supen.fi.cr/cual-es-mi-operadora-de-pensiones' },
+    ],
+  },
 }

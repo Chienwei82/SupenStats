@@ -18,6 +18,8 @@ export const reportSearchSchema = z.object({
   metrica: z.enum(['nominal', 'real']).optional(),
   // OPC de referencia del simulador (selector propio, no es filtro de API).
   entidad: z.string().optional(),
+  // Selector de vista del reporte de traslados entre operadoras.
+  vista: z.enum(['neto', 'traslados']).optional(),
 })
 
 export type ReportSearchInput = z.infer<typeof reportSearchSchema>

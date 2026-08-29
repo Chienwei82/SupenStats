@@ -142,6 +142,20 @@ export async function fetchAfiliados(entidad?: string, fondo?: FondoTipo, range?
   return transformAfiliados(raw)
 }
 
+/**
+ * Devuelve los registros crudos de /afiliado sin pasar por `transformAfiliados`
+ * (que colapsa null → 0). Usado por el reporte de traslados, donde la
+ * variación neta entre meses necesita distinguir "no disponible" de 0. El
+ * reporte de Afiliados existente sigue usando `fetchAfiliados`.
+ */
+export async function fetchAfiliadosRaw(fondo?: FondoTipo, range?: DateRange, signal?: AbortSignal): Promise<RawAfiliado[]> {
+  const qs = buildQueryString({
+    Fondo: fondo,
+    ...fechaParams(range),
+  })
+  return assertArray<RawAfiliado>(await fetchJson<unknown>(`${API_BASE}/afiliado${qs}`, signal), 'afiliado')
+}
+
 export async function fetchAfiliadosAportantes(entidad?: string, fondo?: FondoTipo, range?: DateRange, signal?: AbortSignal): Promise<AfiliadoAportante[]> {
   const qs = buildQueryString({
     Entidad: entidad,
@@ -220,4 +234,20 @@ export async function fetchLibreTransferencia(fondo?: FondoTipo, range?: DateRan
   })
   const raw = assertArray<RawLibreTransferencia>(await fetchJson<unknown>(`${API_BASE}/lt${qs}`, signal), 'lt')
   return transformLibreTransferencia(raw)
+}
+
+/**
+ * Devuelve la matriz cruda de /lt (fila por origen, columnas {DEST}_C/{DEST}_M)
+ * sin pasar por `transformLibreTransferencia` (que aplana los pares
+ * origen→destino y pierde la diagonal). Usado por el reporte de traslados
+ * para calcular balance (ingresos vs. salidas) por OPC, algo que requiere la
+ * estructura matricial. El reporte de "Transferencias" existente sigue
+ * usando `fetchLibreTransferencia`.
+ */
+export async function fetchLibreTransferenciaMatriz(fondo?: FondoTipo, range?: DateRange, signal?: AbortSignal): Promise<RawLibreTransferencia[]> {
+  const qs = buildQueryString({
+    Fondo: fondo,
+    ...fechaParams(range),
+  })
+  return assertArray<RawLibreTransferencia>(await fetchJson<unknown>(`${API_BASE}/lt${qs}`, signal), 'lt')
 }
