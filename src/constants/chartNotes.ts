@@ -127,4 +127,13 @@ export const CHART_NOTES: Record<string, ChartNote> = {
       { label: 'SUPEN — Estadísticas del sistema de pensiones', url: 'https://www.supen.fi.cr/estadisticas' },
     ],
   },
+  piramide: {
+    title: '¿Cómo leer este gráfico?',
+    body:
+      'Esta pirámide poblacional muestra cómo se distribuyen los afiliados (o los pensionados) del sistema de pensiones por rango de edad y por sexo, en la fecha más reciente disponible. Cada barra representa la cantidad de personas en ese rango: los hombres se muestran hacia la izquierda y las mujeres hacia la derecha. Permite ver la estructura de edad del sistema —por ejemplo, si hay muchas personas jóvenes (más años de aportes por delante) o muchas cerca de la edad de retiro. Puedes alternar entre afiliados activos y pensionados, y filtrar por operadora (OPC). Los rangos sin información para algún sexo se indican como “no disponible” y no se rellenan con cero.',
+    references: [
+      { label: 'SUPEN — Estadísticas del sistema de pensiones', url: 'https://www.supen.fi.cr/estadisticas' },
+      { label: 'SUPEN — ¿Cómo se compone su pensión?', url: 'https://www.supen.fi.cr/como-se-compone' },
+    ],
+  },
 }
