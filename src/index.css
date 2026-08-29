@@ -10,6 +10,11 @@
       transform: translateX(100%);
     }
   }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  --animate-fade-in: fadeIn 120ms ease-out;
 }
 
 /* Base: color de fondo según el tema para evitar destellos */
