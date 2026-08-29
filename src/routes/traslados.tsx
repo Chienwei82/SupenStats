@@ -9,14 +9,27 @@ import { ReportView } from '../components/ui/ReportView'
 import { transformAfiliadosMensual } from '../utils/dataTransformers'
 import type { AfiliadoMensual, RawAfiliado, RawLibreTransferencia } from '../types/suppen'
 
+/**
+ * validateSearch propio de /traslados: extiende el compartido con `vista`,
+ * que solo aplica a este reporte. Mantenerlo acá (en vez de en
+ * `reportSearchSchema`) evita acoplar `vista` al resto de rutas, donde
+ * no significa nada.
+ */
+function validateTrasladosSearch(input: Record<string, unknown>) {
+  const base = validateReportSearch(input)
+  return {
+    ...base,
+    vista: input.vista === 'traslados' || input.vista === 'neto' ? input.vista : undefined,
+  }
+}
+
 export const Route = createFileRoute('/traslados')({
-  validateSearch: validateReportSearch,
+  validateSearch: validateTrasladosSearch,
   component: TrasladosPage,
 })
 
 function TrasladosPage() {
-  const search = validateReportSearch({})
-  const applied = resolveFilters(search, FILTER_DEFAULTS.standard)
+  const applied = resolveFilters(validateReportSearch({}), FILTER_DEFAULTS.standard)
   const filters = useUrlFilters(applied)
 
   // /afiliado devuelve el desglose demográfico; lo agrupamos por

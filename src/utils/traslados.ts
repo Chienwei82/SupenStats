@@ -314,13 +314,16 @@ export function calcularKpisBalance(balances: TrasladoBalance[]): BalanceKpis {
     totalIngresos += b.Ingresos
     porOpc.set(b.Entidad, (porOpc.get(b.Entidad) ?? 0) + b.Neto)
   }
+  // topPos = OPC con mayor neto estrictamente positivo. Si todas son
+  // perdedoras, queda null (y la UI muestra "Ninguna OPC con balance
+  // positivo" en el subtítulo del KPI). topNeg es el simétrico.
   let topPos: string | null = null
   let topNeg: string | null = null
-  let maxN = -Infinity
-  let minN = Infinity
+  let maxPos: number | null = null
+  let minNeg: number | null = null
   for (const [opc, n] of porOpc) {
-    if (n > maxN) { maxN = n; topPos = opc }
-    if (n < minN) { minN = n; topNeg = opc }
+    if (n > 0 && (maxPos === null || n > maxPos)) { maxPos = n; topPos = opc }
+    if (n < 0 && (minNeg === null || n < minNeg)) { minNeg = n; topNeg = opc }
   }
   return { totalIngresos, topPos, topNeg }
 }
