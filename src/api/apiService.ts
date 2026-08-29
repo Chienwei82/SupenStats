@@ -221,3 +221,19 @@ export async function fetchLibreTransferencia(fondo?: FondoTipo, range?: DateRan
   const raw = assertArray<RawLibreTransferencia>(await fetchJson<unknown>(`${API_BASE}/lt${qs}`, signal), 'lt')
   return transformLibreTransferencia(raw)
 }
+
+/**
+ * Devuelve la matriz cruda de /lt (fila por origen, columnas {DEST}_C/{DEST}_M)
+ * sin pasar por `transformLibreTransferencia` (que aplana los pares
+ * origen→destino y pierde la diagonal). Usado por el reporte de traslados
+ * para calcular balance (ingresos vs. salidas) por OPC, algo que requiere la
+ * estructura matricial. El reporte de "Transferencias" existente sigue
+ * usando `fetchLibreTransferencia`.
+ */
+export async function fetchLibreTransferenciaMatriz(fondo?: FondoTipo, range?: DateRange, signal?: AbortSignal): Promise<RawLibreTransferencia[]> {
+  const qs = buildQueryString({
+    Fondo: fondo,
+    ...fechaParams(range),
+  })
+  return assertArray<RawLibreTransferencia>(await fetchJson<unknown>(`${API_BASE}/lt${qs}`, signal), 'lt')
+}

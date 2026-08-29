@@ -103,7 +103,7 @@ export function findMin<T>(data: T[], key: keyof T): T | undefined {
 // ---------------------------------------------------------------------------
 
 import type {
-  Comision, Rendimiento, RendimientoComparado, RentabilidadSerie, Portafolio, Afiliado,
+  Comision, Rendimiento, RendimientoComparado, RentabilidadSerie, Portafolio, Afiliado, AfiliadoMensual,
   AfiliadoAportante, AfiliadoDemografico, Beneficio, BeneficioDemografico, Cuenta, LibreTransferencia, PortafolioISIN,
   RawComision, RawRendimiento, RawPortafolio, RawAfiliado,
   RawBeneficio, RawCuenta, RawLibreTransferencia, RawPortafolioISIN,
@@ -214,6 +214,38 @@ export function transformAfiliados(raw: RawAfiliado[]): Afiliado[] {
     map.set(key, existing)
   }
   return Array.from(map.values())
+}
+
+/**
+ * Igual que `transformAfiliados` pero preserva null: si TODOS los registros
+ * de un (entidad, fecha, fondo) vienen con `afiliados` null, la celda queda
+ * null; si solo alguno es null, se suman los no-null. Nunca se representa
+ * null como 0. Usado por el reporte de traslados, donde la variación neta
+ * entre meses necesita distinguir "no disponible" de 0 para no inventar
+ * datos. No muta el comportamiento de los demás reportes.
+ */
+export function transformAfiliadosMensual(raw: RawAfiliado[]): AfiliadoMensual[] {
+  interface Acc { entidad: string; fondo: string; fecha: string; sum: number; allNull: boolean }
+  const map = new Map<string, Acc>()
+  for (const item of raw) {
+    const entidad = normalizeEntityName(item.entidad)
+    const fecha = String(item.fecha ?? '')
+    const key = `${entidad}|${fecha}|${item.codigofondo}`
+    const existing = map.get(key) ?? {
+      entidad, fondo: item.codigofondo, fecha, sum: 0, allNull: true,
+    }
+    if (item.afiliados != null) {
+      existing.sum += item.afiliados
+      existing.allNull = false
+    }
+    map.set(key, existing)
+  }
+  return Array.from(map.values()).map(a => ({
+    Entidad: a.entidad,
+    Fondo: a.fondo,
+    FechaCorte: a.fecha,
+    CantidadAfiliados: a.allNull ? null : a.sum,
+  }))
 }
 
 export function transformAfiliadosAportantes(raw: RawAfiliado[]): AfiliadoAportante[] {
