@@ -92,16 +92,42 @@ export const CHART_COLORS = [
 
 export const FONDO_DEFAULT = 'ROP' as const
 
-// Fondos válidos para /lt (libre transferencia). Verificado contra la API:
-// ROP/FCL/VOLCA/VOLCB/VOLDA/VOLDB devuelven datos; BASI/OCUP devuelven 0.
-export const LT_FONDO_OPTIONS: { value: FondoTipo | ''; label: string }[] = [
-  { value: 'ROP', label: 'ROP (Obligatorio)' },
-  { value: 'FCL', label: 'FCL (Compensación)' },
+/** Opción de un dropdown de fondo de la app. `''` = "Todos los fondos" (sin
+ *  filtro) y se envía como `undefined` a la API. */
+export interface FondoOption {
+  value: FondoTipo | ''
+  label: string
+}
+
+/**
+ * Catálogo completo de fondos consultables, en orden de UI. Fuente única:
+ * un código nuevo se agrega acá y queda disponible en todos los dropdowns
+ * (el de /lt se deriva como subconjunto más abajo).
+ */
+export const FONDO_OPTIONS: FondoOption[] = [
+  { value: '', label: 'Todos los fondos' },
+  { value: 'ROP', label: 'ROP' },
+  { value: 'FCL', label: 'FCL' },
+  { value: 'VOL', label: 'Voluntario' },
+  { value: 'BASI', label: 'Básico' },
+  { value: 'OCUP', label: 'Ocupacional' },
   { value: 'VOLCA', label: 'Voluntario CA' },
   { value: 'VOLCB', label: 'Voluntario CB' },
   { value: 'VOLDA', label: 'Voluntario DA' },
   { value: 'VOLDB', label: 'Voluntario DB' },
 ]
+
+/** Códigos que /lt acepta (verificado contra la API): ROP/FCL/VOLCA/VOLCB/
+ *  VOLDA/VOLDB devuelven datos; BASI/OCUP devuelven 0; 'VOL' no existe en /lt.
+ *  Derivado de FONDO_OPTIONS para que un código nuevo no requiera tocarlo. */
+export const LT_FONDO_OPTIONS: FondoOption[] = FONDO_OPTIONS.filter(o =>
+  o.value === 'ROP'
+  || o.value === 'FCL'
+  || o.value === 'VOLCA'
+  || o.value === 'VOLCB'
+  || o.value === 'VOLDA'
+  || o.value === 'VOLDB',
+)
 
 /**
  * Claves canónicas de las columnas destino en /lt, en el orden que las expone
