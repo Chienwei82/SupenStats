@@ -314,6 +314,7 @@ SupenStats/
 - **BeneficiosChart**: Pensionados por OPC
 - **CuentasChart**: Activo neto del fondo por OPC
 - **TransferenciasChart**: Libre transferencia saliente por OPC
+- **Traslados** (`src/components/Traslados.tsx`): dos vistas — variación neta de afiliados (estimado derivado) y traslados reales desde /lt (balance neto por OPC + top flujos origen→destino)
 - **AportantesChart**: Afiliados vs Aportantes por OPC
 - **DemografiaChart**: Distribución por rango de edad y sexo
 - **Simulador** (`src/components/Simulador.tsx`): Proyección del saldo al retiro a partir de saldo/aporte/edad del usuario y la rentabilidad histórica promedio de la OPC
