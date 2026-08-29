@@ -103,8 +103,8 @@ export function findMin<T>(data: T[], key: keyof T): T | undefined {
 // ---------------------------------------------------------------------------
 
 import type {
-  Comision, Rendimiento, RendimientoComparado, Portafolio, Afiliado,
-  AfiliadoAportante, AfiliadoDemografico, Beneficio, Cuenta, LibreTransferencia, PortafolioISIN,
+  Comision, Rendimiento, RendimientoComparado, RentabilidadSerie, Portafolio, Afiliado,
+  AfiliadoAportante, AfiliadoDemografico, Beneficio, BeneficioDemografico, Cuenta, LibreTransferencia, PortafolioISIN,
   RawComision, RawRendimiento, RawPortafolio, RawAfiliado,
   RawBeneficio, RawCuenta, RawLibreTransferencia, RawPortafolioISIN,
 } from '../types/suppen'
@@ -286,6 +286,79 @@ export function transformBeneficios(raw: RawBeneficio[]): Beneficio[] {
     map.set(key, existing)
   }
   return Array.from(map.values())
+}
+
+/**
+ * Beneficios (pensionados) conservando sexo y rango de edad, que
+ * transformBeneficios descarta al sumar por (entidad, fecha, tipo). Agrupa por
+ * (entidad, sexo, rangoedad, fecha, fondo) sumando `beneficio` (cantidad de
+ * pensionados) a través de todos los `tipobeneficio`.
+ *
+ * Regla de nulos: si TODOS los registros de una celda vienen con `beneficio`
+ * null, la celda queda `null` ("no disponible"); si solo alguno es null, se
+ * suma el resto (no se inventa el faltante). Nunca se presenta un null como 0.
+ */
+export function transformBeneficiosDemograficos(raw: RawBeneficio[]): BeneficioDemografico[] {
+  interface Acc {
+    entidad: string
+    fondo: string
+    fecha: string
+    sexo: string
+    rango: string
+    tipo: string
+    sum: number
+    allNull: boolean
+  }
+  const map = new Map<string, Acc>()
+  for (const item of raw) {
+    const entidad = normalizeEntityName(item.entidad)
+    const sexo = normalizeSexo(item.sexo, item.codigosexo)
+    const rango = (item.rangoedad ?? '').trim()
+    const key = `${entidad}|${sexo}|${rango}|${item.fecha}|${item.codigofondo}`
+    const existing = map.get(key) ?? {
+      entidad,
+      fondo: item.codigofondo,
+      fecha: item.fecha,
+      sexo,
+      rango,
+      tipo: item.tipobeneficio,
+      sum: 0,
+      allNull: true,
+    }
+    if (item.beneficio != null) {
+      existing.sum += item.beneficio
+      existing.allNull = false
+    }
+    map.set(key, existing)
+  }
+  return Array.from(map.values()).map(a => ({
+    Entidad: a.entidad,
+    Fondo: a.fondo,
+    FechaCorte: a.fecha,
+    Sexo: a.sexo,
+    RangoEdad: a.rango,
+    TipoBeneficio: a.tipo,
+    CantidadPensionados: a.allNull ? null : a.sum,
+  }))
+}
+
+/**
+ * Serie de rentabilidad sin pérdida: conserva periodicidad, tipo (NOMINAL/
+ * REAL) y el valor `rentabilidad` tal cual (null incluido). El simulador la
+ * usa para promediar la rentabilidad histórica por OPC sin sustituir ausencias.
+ */
+export function transformRendimientosSerie(raw: RawRendimiento[]): RentabilidadSerie[] {
+  return raw.map(item => {
+    const tipo = item.tipo?.trim().toUpperCase()
+    return {
+      Entidad: normalizeEntityName(item.entidad),
+      Fondo: item.codigofondo,
+      FechaCorte: item.fecha,
+      Tipo: tipo === 'REAL' ? 'REAL' : 'NOMINAL',
+      Periodicidad: item.periodicidad.trim(),
+      Rentabilidad: item.rentabilidad ?? null,
+    }
+  })
 }
 
 export function transformCuentas(raw: RawCuenta[]): Cuenta[] {

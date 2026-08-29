@@ -1,5 +1,5 @@
-import type { Comision, Rendimiento, RendimientoComparado, Portafolio, PortafolioISIN, Afiliado, AfiliadoAportante, AfiliadoDemografico, Beneficio, Cuenta, LibreTransferencia, FondoTipo, DateRange, RawComision, RawRendimiento, RawPortafolio, RawAfiliado, RawBeneficio, RawCuenta, RawLibreTransferencia, RawPortafolioISIN } from '../types/suppen'
-import { transformComisiones, transformRendimientos, transformRendimientosComparados, transformPortafolios, transformAfiliados, transformAfiliadosAportantes, transformAfiliadosDemograficos, transformBeneficios, transformCuentas, transformLibreTransferencia, transformPortafolioISIN } from '../utils/dataTransformers'
+import type { Comision, Rendimiento, RendimientoComparado, RentabilidadSerie, Portafolio, PortafolioISIN, Afiliado, AfiliadoAportante, AfiliadoDemografico, Beneficio, BeneficioDemografico, Cuenta, LibreTransferencia, FondoTipo, DateRange, RawComision, RawRendimiento, RawPortafolio, RawAfiliado, RawBeneficio, RawCuenta, RawLibreTransferencia, RawPortafolioISIN } from '../types/suppen'
+import { transformComisiones, transformRendimientos, transformRendimientosComparados, transformRendimientosSerie, transformPortafolios, transformAfiliados, transformAfiliadosAportantes, transformAfiliadosDemograficos, transformBeneficios, transformBeneficiosDemograficos, transformCuentas, transformLibreTransferencia, transformPortafolioISIN } from '../utils/dataTransformers'
 
 const API_BASE = '/estadisticas/api'
 
@@ -170,6 +170,36 @@ export async function fetchBeneficios(entidad?: string, fondo?: FondoTipo, range
   })
   const raw = assertArray<RawBeneficio>(await fetchJson<unknown>(`${API_BASE}/beneficio${qs}`, signal), 'beneficio')
   return transformBeneficios(raw)
+}
+
+/**
+ * Beneficios (pensionados) conservando sexo y rango de edad, para la pirámide
+ * poblacional. Espejo de fetchAfiliadosDemograficos pero sobre /beneficio.
+ */
+export async function fetchBeneficiosDemograficos(entidad?: string, fondo?: FondoTipo, range?: DateRange, signal?: AbortSignal): Promise<BeneficioDemografico[]> {
+  const qs = buildQueryString({
+    Entidad: entidad,
+    Fondo: fondo,
+    ...fechaParams(range),
+  })
+  const raw = assertArray<RawBeneficio>(await fetchJson<unknown>(`${API_BASE}/beneficio${qs}`, signal), 'beneficio')
+  return transformBeneficiosDemograficos(raw)
+}
+
+/**
+ * Serie completa de rentabilidad (todas las periodicidades y tipos, con nulls
+ * preservados) para que el simulador promedie la rentabilidad histórica por
+ * OPC. A diferencia de fetchRendimiento, no fija ANUAL ni convierte ausencias
+ * a 0.
+ */
+export async function fetchRendimientoSerie(fondo?: FondoTipo, entidad?: string, range?: DateRange, signal?: AbortSignal): Promise<RentabilidadSerie[]> {
+  const qs = buildQueryString({
+    Fondo: fondo,
+    Entidad: entidad,
+    ...fechaParams(range),
+  })
+  const raw = assertArray<RawRendimiento>(await fetchJson<unknown>(`${API_BASE}/rendimiento${qs}`, signal), 'rendimiento')
+  return transformRendimientosSerie(raw)
 }
 
 export async function fetchCuentas(entidad?: string, fondo?: FondoTipo, range?: DateRange, signal?: AbortSignal): Promise<Cuenta[]> {

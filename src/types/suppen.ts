@@ -97,6 +97,31 @@ export interface RendimientoComparado {
   Real: number | null
 }
 
+// Serie cruda de rentabilidad conservando periodicidad, tipo y valores null.
+// Usada por el simulador para calcular la rentabilidad histórica promedio por
+// OPC (sin sustituir ausencias por 0).
+export interface RentabilidadSerie {
+  Entidad: string
+  Fondo: string
+  FechaCorte: string
+  Tipo: 'NOMINAL' | 'REAL'
+  Periodicidad: string
+  Rentabilidad: number | null
+}
+
+// Beneficios (pensionados) preservando la dimensión demográfica sexo/rango de
+// edad, que transformBeneficios descarta. Usada por la pirámide poblacional.
+export interface BeneficioDemografico {
+  Entidad: string
+  Fondo: string
+  FechaCorte: string
+  Sexo: string
+  RangoEdad: string
+  TipoBeneficio: string
+  /** null = la API no reporta pensionados para esa celda; no representar como 0. */
+  CantidadPensionados: number | null
+}
+
 // Dataset combinado para el reporte 'Comisiones vs rentabilidad'. La ruta
 // compone dos endpoints en una sola query y devuelve un único registro con
 // ambas series crudas ya transformadas.
@@ -190,6 +215,7 @@ export interface RawAfiliado {
 
 export interface RawBeneficio {
   entidad: string
+  codigosexo: string
   sexo: string
   rangoedad: string
   tipobeneficio: string

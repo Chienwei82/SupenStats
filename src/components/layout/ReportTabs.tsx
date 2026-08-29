@@ -15,6 +15,8 @@ const TABS: { id: string; to: string; label: string }[] = [
   { id: 'transferencias', to: '/transferencias', label: 'Transferencias' },
   { id: 'aportantes', to: '/aportantes', label: 'Aportantes' },
   { id: 'demografia', to: '/demografia', label: 'Demografia' },
+  { id: 'simulador', to: '/simulador', label: 'Simulador' },
+  { id: 'piramide', to: '/piramide', label: 'Pirámide' },
   { id: 'isin', to: '/isin', label: 'Instrumentos' },
 ]
 

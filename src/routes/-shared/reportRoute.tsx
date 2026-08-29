@@ -30,6 +30,7 @@ export function validateReportSearch(search: Record<string, unknown>): ReportSea
     periodicidad: typeof search.periodicidad === 'string' ? search.periodicidad : undefined,
     corte: typeof search.corte === 'string' ? search.corte : undefined,
     metrica: search.metrica === 'real' ? 'real' : search.metrica === 'nominal' ? 'nominal' : undefined,
+    entidad: typeof search.entidad === 'string' ? search.entidad : undefined,
   }
 }
 

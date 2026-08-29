@@ -87,7 +87,7 @@ src/
 │   └── chartNotes.ts            # Notas educativas y referencias por gráfico
 ├── components/
 │   ├── layout/                  # Header, ReportTabs, WelcomeScreen, ThemeToggle
-│   ├── charts/                  # 11 gráficos (Recharts)
+│   ├── charts/                  # gráficos (Recharts)
 │   └── ui/                      # FilterBar, skeletons, errores, boundary, ChartNote
 ├── App.tsx                      # Orquesta pestañas + hooks + vistas
 └── main.tsx                     # Punto de entrada
@@ -284,7 +284,7 @@ SupenStats/
 │   │   └── supen.ts
 │   ├── components/
 │   │   ├── layout/            # Header, ReportTabs, WelcomeScreen
-│   │   ├── charts/            # 11 gráficos de Recharts
+│   │   ├── charts/            # gráficos de Recharts
 │   │   └── ui/                # FilterBar, skeletons, errores
 │   ├── App.tsx                # Orquestador: pestañas + hooks + vistas
 │   └── main.tsx               # Punto de entrada
@@ -301,7 +301,7 @@ SupenStats/
 ### Layout
 
 - **Header**: Cabecera con gradiente azul, título y enlace al código fuente en GitHub
-- **ReportTabs**: Navegación horizontal entre los 12 reportes (Inicio + 11 pestañas)
+- **ReportTabs**: Navegación horizontal entre los reportes (Inicio + pestañas: rendimiento, rendimiento-real, comisiones, comisión-rentabilidad, portafolio, afiliados, activos, beneficios, cuentas, transferencias, aportantes, demografía, simulador, pirámide, instrumentos)
 - **WelcomeScreen**: Pantalla de bienvenida con la lista de APIs de datos usadas
 
 ### Charts
@@ -316,6 +316,8 @@ SupenStats/
 - **TransferenciasChart**: Libre transferencia saliente por OPC
 - **AportantesChart**: Afiliados vs Aportantes por OPC
 - **DemografiaChart**: Distribución por rango de edad y sexo
+- **Simulador** (`src/components/Simulador.tsx`): Proyección del saldo al retiro a partir de saldo/aporte/edad del usuario y la rentabilidad histórica promedio de la OPC
+- **PiramideChart** (`src/components/charts/PiramideChart.tsx`): Pirámide poblacional de afiliados/pensionados por sexo y rango de edad (barras opuestas)
 - **PortafolioISINChart**: Portafolio por instrumento (código ISIN)
 
 ### UI

@@ -2,6 +2,7 @@ import type {
   Comision,
   RendimientoComparado,
   RentabilidadComparada,
+  RentabilidadSerie,
   PuntoComisionRentabilidad,
   ExcluidoComisionRentabilidad,
 } from '../types/suppen'
@@ -150,4 +151,102 @@ export function regresionLineal(
   if (syy === 0) return null
   const r = sxy / Math.sqrt(sxx * syy)
   return { pendiente, intercepto, r }
+}
+
+// ---------------------------------------------------------------------------
+// Simulador de pensión
+// ---------------------------------------------------------------------------
+
+/**
+ * Cortes mínimos con rentabilidad no nula para considerar el promedio
+ * "confiable". Por debajo de esto se devuelve `promedio = null` y la UI debe
+ * mostrar "histórico insuficiente" en vez de usar un valor supuesto.
+ */
+export const MIN_CORTES_RENTABILIDAD = 12
+
+export interface RentabilidadPromedio {
+  /** null = histórico insuficiente (ver MIN_CORTES_RENTABILIDAD). */
+  promedio: number | null
+  /** Cantidad de cortes con rentabilidad no nula usados en el promedio. */
+  nCortes: number
+  primerCorte: string | null
+  ultimoCorte: string | null
+}
+
+/**
+ * Promedia la rentabilidad ANUAL de una OPC a lo largo del histórico para usarla
+ * como tasa de crecimiento proyectada del simulador. Solo considera registros
+ * `periodicidad === 'ANUAL'` y del tipo elegido (nominal por defecto, o real).
+ * No inventa: si hay menos de `MIN_CORTES_RENTABILIDAD` cortes con dato, el
+ * promedio es `null`.
+ */
+export function calcularRentabilidadPromedio(
+  serie: RentabilidadSerie[],
+  opc: string,
+  metrica: 'nominal' | 'real' = 'nominal',
+): RentabilidadPromedio {
+  const tipo = metrica === 'real' ? 'REAL' : 'NOMINAL'
+  const valores = serie
+    .filter(r => r.Entidad === opc && r.Tipo === tipo && r.Periodicidad === 'ANUAL' && r.Rentabilidad != null)
+    .map(r => ({ rent: r.Rentabilidad as number, fecha: r.FechaCorte }))
+
+  const nCortes = valores.length
+  if (nCortes < MIN_CORTES_RENTABILIDAD) {
+    return { promedio: null, nCortes, primerCorte: null, ultimoCorte: null }
+  }
+  const promedio = valores.reduce((s, v) => s + v.rent, 0) / nCortes
+  const fechas = valores.map(v => v.fecha).sort()
+  return {
+    promedio,
+    nCortes,
+    primerCorte: fechas[0],
+    ultimoCorte: fechas[fechas.length - 1],
+  }
+}
+
+export interface ProyeccionPensionParams {
+  saldoInicial: number
+  aporteMensual: number
+  /** Años a proyectar (edadRetiro − edadActual). */
+  anios: number
+  /** Tasa anual en forma decimal (ej. 0.07 = 7%). */
+  tasaAnual: number
+  edadActual: number
+}
+
+export interface PuntoProyeccion {
+  /** Año de la proyección (1 = primer año hasta el retiro). */
+  anio: number
+  edad: number
+  saldo: number
+}
+
+export interface ProyeccionPension {
+  montoFinal: number
+  curva: PuntoProyeccion[]
+}
+
+/**
+ * Proyección de saldo acumulado con aportes mensuales a fin de mes y
+ * capitalización mensual derivada de la tasa anual. Función pura: mismo
+ * input ⇒ mismo output. La tasa es la rentabilidad histórica promedio; la UI
+ * debe dejar claro que es una proyección, no una garantía.
+ */
+export function proyeccionPension({
+  saldoInicial,
+  aporteMensual,
+  anios,
+  tasaAnual,
+  edadActual,
+}: ProyeccionPensionParams): ProyeccionPension {
+  const i = Math.pow(1 + tasaAnual, 1 / 12) - 1
+  let saldo = saldoInicial
+  const curva: PuntoProyeccion[] = []
+  for (let t = 1; t <= anios; t++) {
+    for (let m = 0; m < 12; m++) {
+      saldo = saldo * (1 + i) + aporteMensual
+    }
+    curva.push({ anio: t, edad: edadActual + t, saldo })
+  }
+  return { montoFinal: curva.length > 0 ? curva[curva.length - 1].saldo : saldoInicial, curva }
 }

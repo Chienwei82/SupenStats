@@ -19,9 +19,11 @@ import { Route as ComisionesRouteImport } from './routes/comisiones'
 import { Route as CuentasRouteImport } from './routes/cuentas'
 import { Route as DemografiaRouteImport } from './routes/demografia'
 import { Route as IsinRouteImport } from './routes/isin'
+import { Route as PiramideRouteImport } from './routes/piramide'
 import { Route as PortafolioRouteImport } from './routes/portafolio'
 import { Route as RendimientoRouteImport } from './routes/rendimiento'
 import { Route as RendimientoRealRouteImport } from './routes/rendimiento-real'
+import { Route as SimuladorRouteImport } from './routes/simulador'
 import { Route as TransferenciasRouteImport } from './routes/transferencias'
 
 const IndexRoute = IndexRouteImport.update({
@@ -74,6 +76,11 @@ const IsinRoute = IsinRouteImport.update({
   path: '/isin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PiramideRoute = PiramideRouteImport.update({
+  id: '/piramide',
+  path: '/piramide',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortafolioRoute = PortafolioRouteImport.update({
   id: '/portafolio',
   path: '/portafolio',
@@ -87,6 +94,11 @@ const RendimientoRoute = RendimientoRouteImport.update({
 const RendimientoRealRoute = RendimientoRealRouteImport.update({
   id: '/rendimiento-real',
   path: '/rendimiento-real',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SimuladorRoute = SimuladorRouteImport.update({
+  id: '/simulador',
+  path: '/simulador',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TransferenciasRoute = TransferenciasRouteImport.update({
@@ -106,9 +118,11 @@ export interface FileRoutesByFullPath {
   '/cuentas': typeof CuentasRoute
   '/demografia': typeof DemografiaRoute
   '/isin': typeof IsinRoute
+  '/piramide': typeof PiramideRoute
   '/portafolio': typeof PortafolioRoute
   '/rendimiento': typeof RendimientoRoute
   '/rendimiento-real': typeof RendimientoRealRoute
+  '/simulador': typeof SimuladorRoute
   '/transferencias': typeof TransferenciasRoute
 }
 export interface FileRoutesByTo {
@@ -122,9 +136,11 @@ export interface FileRoutesByTo {
   '/cuentas': typeof CuentasRoute
   '/demografia': typeof DemografiaRoute
   '/isin': typeof IsinRoute
+  '/piramide': typeof PiramideRoute
   '/portafolio': typeof PortafolioRoute
   '/rendimiento': typeof RendimientoRoute
   '/rendimiento-real': typeof RendimientoRealRoute
+  '/simulador': typeof SimuladorRoute
   '/transferencias': typeof TransferenciasRoute
 }
 export interface FileRoutesById {
@@ -139,9 +155,11 @@ export interface FileRoutesById {
   '/cuentas': typeof CuentasRoute
   '/demografia': typeof DemografiaRoute
   '/isin': typeof IsinRoute
+  '/piramide': typeof PiramideRoute
   '/portafolio': typeof PortafolioRoute
   '/rendimiento': typeof RendimientoRoute
   '/rendimiento-real': typeof RendimientoRealRoute
+  '/simulador': typeof SimuladorRoute
   '/transferencias': typeof TransferenciasRoute
 }
 export interface FileRouteTypes {
@@ -157,9 +175,11 @@ export interface FileRouteTypes {
     | '/cuentas'
     | '/demografia'
     | '/isin'
+    | '/piramide'
     | '/portafolio'
     | '/rendimiento'
     | '/rendimiento-real'
+    | '/simulador'
     | '/transferencias'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -173,9 +193,11 @@ export interface FileRouteTypes {
     | '/cuentas'
     | '/demografia'
     | '/isin'
+    | '/piramide'
     | '/portafolio'
     | '/rendimiento'
     | '/rendimiento-real'
+    | '/simulador'
     | '/transferencias'
   id:
     | '__root__'
@@ -189,9 +211,11 @@ export interface FileRouteTypes {
     | '/cuentas'
     | '/demografia'
     | '/isin'
+    | '/piramide'
     | '/portafolio'
     | '/rendimiento'
     | '/rendimiento-real'
+    | '/simulador'
     | '/transferencias'
   fileRoutesById: FileRoutesById
 }
@@ -206,9 +230,11 @@ export interface RootRouteChildren {
   CuentasRoute: typeof CuentasRoute
   DemografiaRoute: typeof DemografiaRoute
   IsinRoute: typeof IsinRoute
+  PiramideRoute: typeof PiramideRoute
   PortafolioRoute: typeof PortafolioRoute
   RendimientoRoute: typeof RendimientoRoute
   RendimientoRealRoute: typeof RendimientoRealRoute
+  SimuladorRoute: typeof SimuladorRoute
   TransferenciasRoute: typeof TransferenciasRoute
 }
 
@@ -284,6 +310,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IsinRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/piramide': {
+      id: '/piramide'
+      path: '/piramide'
+      fullPath: '/piramide'
+      preLoaderRoute: typeof PiramideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portafolio': {
       id: '/portafolio'
       path: '/portafolio'
@@ -303,6 +336,13 @@ declare module '@tanstack/react-router' {
       path: '/rendimiento-real'
       fullPath: '/rendimiento-real'
       preLoaderRoute: typeof RendimientoRealRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/simulador': {
+      id: '/simulador'
+      path: '/simulador'
+      fullPath: '/simulador'
+      preLoaderRoute: typeof SimuladorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/transferencias': {
@@ -326,9 +366,11 @@ const rootRouteChildren: RootRouteChildren = {
   CuentasRoute: CuentasRoute,
   DemografiaRoute: DemografiaRoute,
   IsinRoute: IsinRoute,
+  PiramideRoute: PiramideRoute,
   PortafolioRoute: PortafolioRoute,
   RendimientoRoute: RendimientoRoute,
   RendimientoRealRoute: RendimientoRealRoute,
+  SimuladorRoute: SimuladorRoute,
   TransferenciasRoute: TransferenciasRoute,
 }
 export const routeTree = rootRouteImport

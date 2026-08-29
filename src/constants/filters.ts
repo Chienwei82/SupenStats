@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { FondoTipo, DateRange } from '../types/suppen'
-import { FONDO_DEFAULT, DATE_RANGE_DEFAULT, PORTFOLIO_RANGE, COMISION_RANGE, ISIN_RANGE } from './suppen'
+import { FONDO_DEFAULT, DATE_RANGE_DEFAULT, PORTFOLIO_RANGE, COMISION_RANGE, ISIN_RANGE, SIMULADOR_RANGE } from './suppen'
 
 /**
  * Esquema de search params de filtros para las rutas de reportes.
@@ -16,6 +16,8 @@ export const reportSearchSchema = z.object({
   periodicidad: z.string().optional(),
   corte: z.string().optional(),
   metrica: z.enum(['nominal', 'real']).optional(),
+  // OPC de referencia del simulador (selector propio, no es filtro de API).
+  entidad: z.string().optional(),
 })
 
 export type ReportSearchInput = z.infer<typeof reportSearchSchema>
@@ -27,6 +29,7 @@ export const FILTER_DEFAULTS = {
   portafolio: { fondo: FONDO_DEFAULT as FondoTipo | '', dates: PORTFOLIO_RANGE as DateRange },
   isin: { fondo: FONDO_DEFAULT as FondoTipo | '', dates: ISIN_RANGE as DateRange },
   lt: { fondo: 'ROP' as FondoTipo | '', dates: DATE_RANGE_DEFAULT as DateRange },
+  simulador: { fondo: 'ROP' as FondoTipo | '', dates: SIMULADOR_RANGE as DateRange },
   noDates: { fondo: FONDO_DEFAULT as FondoTipo | '' },
 }
 
