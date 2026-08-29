@@ -25,6 +25,7 @@ import { Route as RendimientoRouteImport } from './routes/rendimiento'
 import { Route as RendimientoRealRouteImport } from './routes/rendimiento-real'
 import { Route as SimuladorRouteImport } from './routes/simulador'
 import { Route as TransferenciasRouteImport } from './routes/transferencias'
+import { Route as TrasladosRouteImport } from './routes/traslados'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -106,6 +107,11 @@ const TransferenciasRoute = TransferenciasRouteImport.update({
   path: '/transferencias',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrasladosRoute = TrasladosRouteImport.update({
+  id: '/traslados',
+  path: '/traslados',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/rendimiento-real': typeof RendimientoRealRoute
   '/simulador': typeof SimuladorRoute
   '/transferencias': typeof TransferenciasRoute
+  '/traslados': typeof TrasladosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/rendimiento-real': typeof RendimientoRealRoute
   '/simulador': typeof SimuladorRoute
   '/transferencias': typeof TransferenciasRoute
+  '/traslados': typeof TrasladosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/rendimiento-real': typeof RendimientoRealRoute
   '/simulador': typeof SimuladorRoute
   '/transferencias': typeof TransferenciasRoute
+  '/traslados': typeof TrasladosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/rendimiento-real'
     | '/simulador'
     | '/transferencias'
+    | '/traslados'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/rendimiento-real'
     | '/simulador'
     | '/transferencias'
+    | '/traslados'
   id:
     | '__root__'
     | '/'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/rendimiento-real'
     | '/simulador'
     | '/transferencias'
+    | '/traslados'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -236,6 +248,7 @@ export interface RootRouteChildren {
   RendimientoRealRoute: typeof RendimientoRealRoute
   SimuladorRoute: typeof SimuladorRoute
   TransferenciasRoute: typeof TransferenciasRoute
+  TrasladosRoute: typeof TrasladosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -352,6 +365,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TransferenciasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/traslados': {
+      id: '/traslados'
+      path: '/traslados'
+      fullPath: '/traslados'
+      preLoaderRoute: typeof TrasladosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -372,6 +392,7 @@ const rootRouteChildren: RootRouteChildren = {
   RendimientoRealRoute: RendimientoRealRoute,
   SimuladorRoute: SimuladorRoute,
   TransferenciasRoute: TransferenciasRoute,
+  TrasladosRoute: TrasladosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

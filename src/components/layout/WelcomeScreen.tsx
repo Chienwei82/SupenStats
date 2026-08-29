@@ -6,7 +6,7 @@ const API_ENDPOINTS: { path: string; descripcion: string }[] = [
   { path: '/estadisticas/api/afiliado', descripcion: 'Afiliados y aportantes, con desglose por sexo y rango de edad' },
   { path: '/estadisticas/api/beneficio', descripcion: 'Pensionados y beneficios pagados' },
   { path: '/estadisticas/api/cuenta', descripcion: 'Desglose contable del fondo (activo neto, patrimonio, etc.)' },
-  { path: '/estadisticas/api/lt', descripcion: 'Libre transferencia de afiliados entre operadoras' },
+  { path: '/estadisticas/api/lt', descripcion: 'Libre transferencia de afiliados entre operadoras (matriz origen→destino por mes)' },
 ]
 
 export function WelcomeScreen() {

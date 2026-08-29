@@ -13,6 +13,7 @@ const TABS: { id: string; to: string; label: string }[] = [
   { id: 'beneficios', to: '/beneficios', label: 'Beneficios' },
   { id: 'cuentas', to: '/cuentas', label: 'Cuentas' },
   { id: 'transferencias', to: '/transferencias', label: 'Transferencias' },
+  { id: 'traslados', to: '/traslados', label: 'Traslados' },
   { id: 'aportantes', to: '/aportantes', label: 'Aportantes' },
   { id: 'demografia', to: '/demografia', label: 'Demografia' },
   { id: 'simulador', to: '/simulador', label: 'Simulador' },

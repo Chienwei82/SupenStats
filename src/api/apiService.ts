@@ -142,6 +142,20 @@ export async function fetchAfiliados(entidad?: string, fondo?: FondoTipo, range?
   return transformAfiliados(raw)
 }
 
+/**
+ * Devuelve los registros crudos de /afiliado sin pasar por `transformAfiliados`
+ * (que colapsa null → 0). Usado por el reporte de traslados, donde la
+ * variación neta entre meses necesita distinguir "no disponible" de 0. El
+ * reporte de Afiliados existente sigue usando `fetchAfiliados`.
+ */
+export async function fetchAfiliadosRaw(fondo?: FondoTipo, range?: DateRange, signal?: AbortSignal): Promise<RawAfiliado[]> {
+  const qs = buildQueryString({
+    Fondo: fondo,
+    ...fechaParams(range),
+  })
+  return assertArray<RawAfiliado>(await fetchJson<unknown>(`${API_BASE}/afiliado${qs}`, signal), 'afiliado')
+}
+
 export async function fetchAfiliadosAportantes(entidad?: string, fondo?: FondoTipo, range?: DateRange, signal?: AbortSignal): Promise<AfiliadoAportante[]> {
   const qs = buildQueryString({
     Entidad: entidad,
