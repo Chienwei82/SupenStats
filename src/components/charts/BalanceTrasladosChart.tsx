@@ -3,11 +3,12 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
-import { construirBalanceTraslados } from '../../utils/traslados'
+import { calcularKpisBalance, construirBalanceTraslados } from '../../utils/traslados'
 import { formatDateShort, formatNumber } from '../../utils/dataTransformers'
 import { entityColor } from '../../constants/suppen'
 import { ChartCard } from '../ui/ChartCard'
 import { ChartNote } from '../ui/ChartNote'
+import { KpiCard } from '../ui/KpiCard'
 import type { RawLibreTransferencia } from '../../types/suppen'
 
 interface Props {
@@ -28,32 +29,38 @@ export function BalanceTrasladosChart({ data }: Props) {
     for (const b of balances) ents.add(b.Entidad)
     const entsList = [...ents].sort()
     const fechas = [...new Set(balances.map(b => b.fecha))].sort()
+    // Precomputar Map<fecha, Map<ent, balance>> en una sola pasada: el render
+    // queda O(F·E) en vez de O(F·E·B) (antes hacía balances.find por celda).
+    const porFechaEnt = new Map<string, Map<string, number>>()
+    for (const b of balances) {
+      let m = porFechaEnt.get(b.fecha)
+      if (!m) { m = new Map(); porFechaEnt.set(b.fecha, m) }
+      m.set(b.Entidad, b.Neto)
+    }
     const pts = fechas.map(fecha => {
       const point: Record<string, string | number> = { fecha }
-      for (const ent of entsList) {
-        const b = balances.find(x => x.fecha === fecha && x.Entidad === ent)
-        if (b) point[ent] = b.Neto
+      const m = porFechaEnt.get(fecha)
+      if (m) {
+        for (const ent of entsList) {
+          const v = m.get(ent)
+          if (v !== undefined) point[ent] = v
+        }
       }
       return point
     })
     return { puntos: pts, entidades: entsList }
   }, [balances])
 
-  const kpis = useMemo(() => {
-    if (balances.length === 0) return { total: 0, topPos: null as string | null, topNeg: null as string | null }
-    const total = balances.reduce((s, b) => s + b.Ingresos, 0)
-    const porOpc = new Map<string, number>()
-    for (const b of balances) {
-      porOpc.set(b.Entidad, (porOpc.get(b.Entidad) ?? 0) + b.Neto)
-    }
-    let topPos: string | null = null, topNeg: string | null = null
-    let maxN = -Infinity, minN = Infinity
-    for (const [opc, n] of porOpc) {
-      if (n > maxN) { maxN = n; topPos = opc }
-      if (n < minN) { minN = n; topNeg = opc }
-    }
-    return { total, topPos, topNeg }
-  }, [balances])
+  const kpis = useMemo(() => calcularKpisBalance(balances), [balances])
+
+  // Subtítulos que aclaran el caso "no hay OPC ganadora" o "no hay perdedora".
+  // Sin esto, un "—" en el KPI se lee como dato faltante.
+  const topPosSubtitle = kpis.topPos
+    ? 'Atrayente neta'
+    : (balances.length > 0 ? 'Ninguna OPC con balance positivo' : undefined)
+  const topNegSubtitle = kpis.topNeg
+    ? 'Perdedora neta'
+    : (balances.length > 0 ? 'Ninguna OPC con balance negativo' : undefined)
 
   return (
     <ChartCard
@@ -61,9 +68,9 @@ export function BalanceTrasladosChart({ data }: Props) {
       description="Barras agrupadas por mes: ingresos menos salidas en cantidad de traslados, según /lt."
     >
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-        <KpiCard label="Traslados totales (ingresos)" value={formatNumber(kpis.total)} />
-        <KpiCard label="Mayor balance positivo" value={kpis.topPos ?? '—'} subtitle={kpis.topPos ? 'Atrayente neta' : undefined} />
-        <KpiCard label="Mayor balance negativo" value={kpis.topNeg ?? '—'} subtitle={kpis.topNeg ? 'Perdedora neta' : undefined} />
+        <KpiCard label="Traslados totales (ingresos)" value={formatNumber(kpis.totalIngresos)} />
+        <KpiCard label="Mayor balance positivo" value={kpis.topPos ?? '—'} subtitle={topPosSubtitle} />
+        <KpiCard label="Mayor balance negativo" value={kpis.topNeg ?? '—'} subtitle={topNegSubtitle} />
       </div>
 
       {puntos.length === 0 ? (
@@ -96,15 +103,5 @@ export function BalanceTrasladosChart({ data }: Props) {
 
       <ChartNote noteId="traslados-b1" />
     </ChartCard>
-  )
-}
-
-function KpiCard({ label, value, subtitle }: { label: string; value: string; subtitle?: string }) {
-  return (
-    <div className="rounded-lg border border-gray-200 dark:border-[#34324a] bg-gray-50 dark:bg-[#262a3a] p-3">
-      <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-[#a6accd]">{label}</p>
-      <p className="text-lg font-semibold text-gray-800 dark:text-[#eeffff] mt-1">{value}</p>
-      {subtitle && <p className="text-[11px] text-gray-500 dark:text-[#a6accd] mt-0.5">{subtitle}</p>}
-    </div>
   )
 }

@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import {
-  construirSerieAfiliadosPorOpc,
   calcularVariacionNeta,
   construirBalanceTraslados,
   agregarFlujosPorOrigenDestino,
 } from '../traslados'
+import { transformAfiliadosMensual } from '../dataTransformers'
 import type { RawAfiliado, RawLibreTransferencia } from '../../types/suppen'
 
 const af = (parcial: Partial<RawAfiliado>): RawAfiliado => ({
@@ -44,9 +44,9 @@ const ltRow = (parcial: LtRowSpec): RawLibreTransferencia => {
   return row
 }
 
-describe('construirSerieAfiliadosPorOpc', () => {
+describe('transformAfiliadosMensual (vía helper de producción)', () => {
   it('suma las filas demográficas por (entidad, fecha, fondo)', () => {
-    const serie = construirSerieAfiliadosPorOpc([
+    const serie = transformAfiliadosMensual([
       af({ entidad: 'POPULAR', afiliados: 50, rangoedad: '< 30' }),
       af({ entidad: 'POPULAR', afiliados: 70, rangoedad: '30-44' }),
       af({ entidad: 'BCR-PENSION', afiliados: 30, fecha: '2024-06-30T00:00:00' }),
@@ -56,7 +56,7 @@ describe('construirSerieAfiliadosPorOpc', () => {
   })
 
   it('preserva null cuando TODAS las filas de la celda son null', () => {
-    const serie = construirSerieAfiliadosPorOpc([
+    const serie = transformAfiliadosMensual([
       af({ afiliados: null, rangoedad: '< 30' }),
       af({ afiliados: null, rangoedad: '30-44' }),
     ])
@@ -64,7 +64,7 @@ describe('construirSerieAfiliadosPorOpc', () => {
   })
 
   it('suma los no-null y descarta los null cuando hay mezcla', () => {
-    const serie = construirSerieAfiliadosPorOpc([
+    const serie = transformAfiliadosMensual([
       af({ afiliados: 10, rangoedad: '< 30' }),
       af({ afiliados: null, rangoedad: '30-44' }),
     ])
@@ -72,7 +72,7 @@ describe('construirSerieAfiliadosPorOpc', () => {
   })
 
   it('normaliza los nombres de entidad', () => {
-    const serie = construirSerieAfiliadosPorOpc([
+    const serie = transformAfiliadosMensual([
       af({ entidad: 'POPULAR', afiliados: 100 }),
       af({ entidad: 'BACSJ PENSIONES', afiliados: 80 }),
     ])

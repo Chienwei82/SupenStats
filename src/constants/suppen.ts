@@ -103,6 +103,40 @@ export const LT_FONDO_OPTIONS: { value: FondoTipo | ''; label: string }[] = [
   { value: 'VOLDB', label: 'Voluntario DB' },
 ]
 
+/**
+ * Claves canónicas de las columnas destino en /lt, en el orden que las expone
+ * la API (ver docs/docs/api-notes.md). Usadas por `transformLibreTransferencia`
+ * (en `dataTransformers`) y por las utilidades de traslados (matriz cruda).
+ * Centralizadas acá para que una columna nueva se actualice en un solo lugar.
+ */
+export const LT_DEST_KEYS = [
+  'BN_VITAL',
+  'INS_PENSIONES',
+  'POPULAR',
+  'VIDA_PLENA',
+  'IBP_PENSIONES',
+  'BACSJ_PENSIONES',
+  'BCR_PENSION',
+  'CCSS_OPC',
+] as const
+
+export type LtDestKey = (typeof LT_DEST_KEYS)[number]
+
+/** Mapea cada clave de destino en /lt al nombre canónico de la OPC que la
+ *  app usa en la UI (gráficos, KPIs, tablas). El inverso (canónico→clave) se
+ *  computa por iteración en `utils/traslados` para evitar un `as` cast que
+ *  oculte typos. */
+export const LT_DEST_KEY_TO_CANONICAL: Record<LtDestKey, string> = {
+  BN_VITAL: 'BN-VITAL',
+  INS_PENSIONES: 'INS PENSIONES',
+  POPULAR: 'POPULAR PENSIONES',
+  VIDA_PLENA: 'VIDA PLENA OPC',
+  IBP_PENSIONES: 'IBP PENSIONES',
+  BACSJ_PENSIONES: 'BAC SJ PENSIONES',
+  BCR_PENSION: 'BCR-PENSION',
+  CCSS_OPC: 'CCSS-OPC',
+}
+
 function isoDate(offsetYears: number): string {
   const d = new Date()
   d.setFullYear(d.getFullYear() - offsetYears)

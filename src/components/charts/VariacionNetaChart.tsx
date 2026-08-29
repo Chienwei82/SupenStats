@@ -3,9 +3,10 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
-import { calcularVariacionNeta } from '../../utils/traslados'
+import { agregarVariacionPorOpc, calcularVariacionNeta, type VariacionPorOpc } from '../../utils/traslados'
 import { formatDateShort, formatNumber, formatPercent } from '../../utils/dataTransformers'
 import { entityColor } from '../../constants/suppen'
+import { useUrlParam } from '../../hooks/useReportQuery'
 import { ChartCard } from '../ui/ChartCard'
 import { ChartNote } from '../ui/ChartNote'
 import type { AfiliadoMensual } from '../../types/suppen'
@@ -27,7 +28,13 @@ type SortDir = 'asc' | 'desc'
  * se representa como null y la línea muestra un hueco (connectNulls=false).
  */
 export function VariacionNetaChart({ data }: Props) {
-  const [metrica, setMetrica] = useState<'abs' | 'pct'>('abs')
+  // La métrica vive en la URL (`?variacion=abs|pct`) para que la vista quede
+  // reflejada en la URL y sea compartible, igual que los demás selectores.
+  const [metrica, setMetrica] = useUrlParam(
+    'variacion',
+    v => v === 'abs' || v === 'pct',
+    'abs',
+  ) as ['abs' | 'pct', (v: string) => void]
 
   const puntos = useMemo(() => calcularVariacionNeta(data, metrica), [data, metrica])
   const entidades = useMemo(() => {
@@ -36,32 +43,15 @@ export function VariacionNetaChart({ data }: Props) {
     return [...set].sort()
   }, [data])
 
-  // Tabla complementaria (R3.5): agregados por OPC en todo el rango.
-  const tabla = useMemo(() => {
-    return entidades.map(ent => {
-      const serieEnt = data
-        .filter(s => s.Entidad === ent)
-        .sort((a, b) => Date.parse(a.FechaCorte) - Date.parse(b.FechaCorte))
-      const primero = serieEnt[0]?.CantidadAfiliados ?? null
-      const ultimo = serieEnt[serieEnt.length - 1]?.CantidadAfiliados ?? null
-      const variacionTotal = primero != null && ultimo != null ? ultimo - primero : null
-      const variacionPctTotal =
-        primero != null && ultimo != null && primero !== 0
-          ? ((ultimo - primero) / primero) * 100
-          : null
-      const deltas = puntos
-        .map(p => p[ent])
-        .filter((v): v is number => typeof v === 'number')
-      const best = deltas.length > 0 ? Math.max(...deltas) : null
-      const worst = deltas.length > 0 ? Math.min(...deltas) : null
-      return { entidad: ent, variacionTotal, variacionPctTotal, best, worst }
-    })
-  }, [data, entidades, puntos])
+  const tabla = useMemo<VariacionPorOpc[]>(
+    () => agregarVariacionPorOpc(data, puntos),
+    [data, puntos],
+  )
 
   const [sortKey, setSortKey] = useState<SortKey>('entidad')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const tablaOrdenada = useMemo(() => {
-    const cmp = (a: typeof tabla[number], b: typeof tabla[number]): number => {
+    const cmp = (a: VariacionPorOpc, b: VariacionPorOpc): number => {
       const dir = sortDir === 'asc' ? 1 : -1
       switch (sortKey) {
         case 'entidad': return dir * a.entidad.localeCompare(b.entidad)
@@ -101,10 +91,6 @@ export function VariacionNetaChart({ data }: Props) {
           </button>
         ))}
       </div>
-
-      <p className="text-xs text-amber-600 dark:text-amber-400 mb-3">
-        Estimado derivado: incluye traslados entre OPCs, nuevas afiliaciones y bajas (pensionados, fallecidos, retiros). No es conteo directo de traslados.
-      </p>
 
       {puntos.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-[#a6accd] py-8 text-center">
