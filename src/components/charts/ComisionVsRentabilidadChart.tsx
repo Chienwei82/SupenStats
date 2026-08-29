@@ -3,7 +3,7 @@ import {
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid,
   Tooltip, ReferenceLine, ResponsiveContainer, ZAxis,
 } from 'recharts'
-import type { ComisionRentabilidadDataset } from '../../types/suppen'
+import type { ComisionRentabilidadDataset } from '../../types/supen'
 import { PERIODICIDADES, joinComisionConRentabilidad, regresionLineal } from '../../utils/reportes'
 import { useUrlParam } from '../../hooks/useReportQuery'
 import { ChartCard } from '../ui/ChartCard'

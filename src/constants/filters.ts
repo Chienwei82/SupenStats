@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import type { FondoTipo, DateRange } from '../types/suppen'
-import { FONDO_DEFAULT, DATE_RANGE_DEFAULT, PORTFOLIO_RANGE, COMISION_RANGE, ISIN_RANGE, SIMULADOR_RANGE } from './suppen'
+import type { FondoTipo, DateRange } from '../types/supen'
+import { FONDO_DEFAULT, DATE_RANGE_DEFAULT, PORTFOLIO_RANGE, COMISION_RANGE, ISIN_RANGE, SIMULADOR_RANGE } from './supen'
 
 /**
  * Esquema de search params de filtros para las rutas de reportes.

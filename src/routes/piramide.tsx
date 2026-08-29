@@ -6,7 +6,7 @@ import { FILTER_DEFAULTS, resolveFilters } from '../constants/filters'
 import { useReportQuery, useUrlFilters } from '../hooks/useReportQuery'
 import { FilterBar } from '../components/ui/FilterBar'
 import { ReportView } from '../components/ui/ReportView'
-import type { AfiliadoDemografico, BeneficioDemografico } from '../types/suppen'
+import type { AfiliadoDemografico, BeneficioDemografico } from '../types/supen'
 
 export const Route = createFileRoute('/piramide')({
   validateSearch: validateReportSearch,

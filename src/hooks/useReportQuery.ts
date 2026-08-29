@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import type { FondoTipo, DateRange } from '../types/suppen'
+import type { FondoTipo, DateRange } from '../types/supen'
 
 /**
  * Search params de filtros compartidos por todas las rutas de reportes.

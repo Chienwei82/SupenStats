@@ -2,7 +2,7 @@ import { VariacionNetaChart } from './charts/VariacionNetaChart'
 import { BalanceTrasladosChart } from './charts/BalanceTrasladosChart'
 import { TopFlujosTable } from './charts/TopFlujosTable'
 import { useUrlParam } from '../hooks/useReportQuery'
-import type { AfiliadoMensual, RawLibreTransferencia } from '../types/suppen'
+import type { AfiliadoMensual, RawLibreTransferencia } from '../types/supen'
 
 interface Props {
   afiliados: AfiliadoMensual[]

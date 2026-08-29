@@ -1,6 +1,6 @@
 import { useId } from 'react'
-import { FONDO_OPTIONS } from '../../constants/suppen'
-import type { FondoTipo, DateRange } from '../../types/suppen'
+import { FONDO_OPTIONS } from '../../constants/supen'
+import type { FondoTipo, DateRange } from '../../types/supen'
 
 interface FilterBarProps {
   fondo?: FondoTipo | ''

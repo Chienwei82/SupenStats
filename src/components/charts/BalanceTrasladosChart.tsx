@@ -5,11 +5,11 @@ import {
 } from 'recharts'
 import { calcularKpisBalance, construirBalanceTraslados } from '../../utils/traslados'
 import { formatDateShort, formatNumber } from '../../utils/dataTransformers'
-import { entityColor } from '../../constants/suppen'
+import { entityColor } from '../../constants/supen'
 import { ChartCard } from '../ui/ChartCard'
 import { ChartNote } from '../ui/ChartNote'
 import { KpiCard } from '../ui/KpiCard'
-import type { RawLibreTransferencia } from '../../types/suppen'
+import type { RawLibreTransferencia } from '../../types/supen'
 
 interface Props {
   data: RawLibreTransferencia[]

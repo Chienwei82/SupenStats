@@ -3,7 +3,7 @@ import { agregarFlujosPorOrigenDestino } from '../../utils/traslados'
 import { formatNumber, formatCurrencyMillions } from '../../utils/dataTransformers'
 import { ChartCard } from '../ui/ChartCard'
 import { ChartNote } from '../ui/ChartNote'
-import type { RawLibreTransferencia } from '../../types/suppen'
+import type { RawLibreTransferencia } from '../../types/supen'
 
 interface Props {
   data: RawLibreTransferencia[]

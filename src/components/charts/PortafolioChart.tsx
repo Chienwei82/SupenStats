@@ -1,10 +1,10 @@
 import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
-import { CHART_COLORS } from '../../constants/suppen'
+import { CHART_COLORS } from '../../constants/supen'
 import { ChartNote } from '../ui/ChartNote'
 import { sortByDateAsc } from '../../utils/dataTransformers'
-import type { Portafolio } from '../../types/suppen'
+import type { Portafolio } from '../../types/supen'
 
 interface Props {
   data: Portafolio[]

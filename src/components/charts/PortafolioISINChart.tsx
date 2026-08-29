@@ -2,9 +2,9 @@ import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { formatCurrencyBillions, sortByDateAsc } from '../../utils/dataTransformers'
-import { CHART_COLORS, ISIN_LAST_PUBLICATION } from '../../constants/suppen'
+import { CHART_COLORS, ISIN_LAST_PUBLICATION } from '../../constants/supen'
 import { ChartNote } from '../ui/ChartNote'
-import type { PortafolioISIN } from '../../types/suppen'
+import type { PortafolioISIN } from '../../types/supen'
 
 interface Props {
   data: PortafolioISIN[]
@@ -29,7 +29,7 @@ export function PortafolioISINChart({ data }: Props) {
   const total = chartData.reduce((sum, d) => sum + d.value, 0)
 
   // SUPEN congeló la publicación del detalle por ISIN (ver api-notes y
-  // constants/suppen): avisamos cuando el último corte mostrado es anterior
+  // constants/supen): avisamos cuando el último corte mostrado es anterior
   // a la última publicación conocida o cuando no hay datos en el rango.
   const desactualizado = latestDate == null || latestDate.slice(0, 10) < ISIN_LAST_PUBLICATION
 

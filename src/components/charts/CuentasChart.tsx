@@ -3,9 +3,9 @@ import {
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { formatDateShort, formatCurrencyBillions, groupBy, getUniqueValues, sortByDateAsc } from '../../utils/dataTransformers'
-import { entityColor } from '../../constants/suppen'
+import { entityColor } from '../../constants/supen'
 import { ChartNote } from '../ui/ChartNote'
-import type { Cuenta } from '../../types/suppen'
+import type { Cuenta } from '../../types/supen'
 
 interface Props {
   data: Cuenta[]

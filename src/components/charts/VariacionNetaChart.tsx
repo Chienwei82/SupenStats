@@ -5,11 +5,11 @@ import {
 } from 'recharts'
 import { agregarVariacionPorOpc, calcularVariacionNeta, type VariacionPorOpc } from '../../utils/traslados'
 import { formatDateShort, formatNumber, formatPercent } from '../../utils/dataTransformers'
-import { entityColor } from '../../constants/suppen'
+import { entityColor } from '../../constants/supen'
 import { useUrlParam } from '../../hooks/useReportQuery'
 import { ChartCard } from '../ui/ChartCard'
 import { ChartNote } from '../ui/ChartNote'
-import type { AfiliadoMensual } from '../../types/suppen'
+import type { AfiliadoMensual } from '../../types/supen'
 
 interface Props {
   data: AfiliadoMensual[]

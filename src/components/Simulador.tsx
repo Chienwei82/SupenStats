@@ -8,8 +8,8 @@ import { formatCurrency, formatCurrencyMillions, getUniqueValues } from '../util
 import { useUrlParam } from '../hooks/useReportQuery'
 import { ChartCard } from './ui/ChartCard'
 import { ChartNote } from './ui/ChartNote'
-import { OPC_LIST } from '../constants/suppen'
-import type { RentabilidadSerie } from '../types/suppen'
+import { OPC_LIST } from '../constants/supen'
+import type { RentabilidadSerie } from '../types/supen'
 
 interface Props {
   data: RentabilidadSerie[]

@@ -7,7 +7,7 @@ import { formatNumber, sortByDateAsc } from '../../utils/dataTransformers'
 import { useUrlParam } from '../../hooks/useReportQuery'
 import { ChartCard } from '../ui/ChartCard'
 import { ChartNote } from '../ui/ChartNote'
-import type { AfiliadoDemografico, BeneficioDemografico } from '../../types/suppen'
+import type { AfiliadoDemografico, BeneficioDemografico } from '../../types/supen'
 
 interface Props {
   afiliados: AfiliadoDemografico[]

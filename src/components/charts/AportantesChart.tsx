@@ -3,9 +3,9 @@ import {
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { formatNumber, sortByDateAsc } from '../../utils/dataTransformers'
-import { OPC_COLORS } from '../../constants/suppen'
+import { OPC_COLORS } from '../../constants/supen'
 import { ChartNote } from '../ui/ChartNote'
-import type { AfiliadoAportante } from '../../types/suppen'
+import type { AfiliadoAportante } from '../../types/supen'
 
 interface Props {
   data: AfiliadoAportante[]

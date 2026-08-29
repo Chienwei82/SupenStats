@@ -3,7 +3,7 @@ import { createReportRoute, validateReportSearch } from './-shared/reportRoute'
 import { ComisionVsRentabilidadChart } from '../components/charts/ComisionVsRentabilidadChart'
 import { fetchComisiones, fetchRendimientosComparados } from '../api/apiService'
 import { FILTER_DEFAULTS } from '../constants/filters'
-import type { ComisionRentabilidadDataset } from '../types/suppen'
+import type { ComisionRentabilidadDataset } from '../types/supen'
 
 export const Route = createFileRoute('/comision-rentabilidad')({
   validateSearch: validateReportSearch,

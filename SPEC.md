@@ -269,4 +269,4 @@ Los datos se agrupan por `Entidad` (OPC) para crear series separadas en cada gr�
 
 ### Colores por Defecto
 
-Cada OPC tiene un color asignado en `constants/suppen.ts` para mantener consistencia visual en todos los gráficos.
+Cada OPC tiene un color asignado en `constants/supen.ts` para mantener consistencia visual en todos los gráficos.

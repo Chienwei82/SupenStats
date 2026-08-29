@@ -7,7 +7,7 @@ import {
   construirBalanceTraslados,
 } from '../traslados'
 import { transformAfiliadosMensual } from '../dataTransformers'
-import type { RawAfiliado, RawLibreTransferencia, TrasladoBalance } from '../../types/suppen'
+import type { RawAfiliado, RawLibreTransferencia, TrasladoBalance } from '../../types/supen'
 
 const af = (parcial: Partial<RawAfiliado>): RawAfiliado => ({
   entidad: 'POPULAR PENSIONES',

@@ -1,5 +1,5 @@
-import type { AfiliadoMensual, RawLibreTransferencia, TrasladoBalance, TrasladoFlujo, VariacionPunto } from '../types/suppen'
-import { LT_DEST_KEYS, LT_DEST_KEY_TO_CANONICAL } from '../constants/suppen'
+import type { AfiliadoMensual, RawLibreTransferencia, TrasladoBalance, TrasladoFlujo, VariacionPunto } from '../types/supen'
+import { LT_DEST_KEYS, LT_DEST_KEY_TO_CANONICAL } from '../constants/supen'
 
 /**
  * Calcula la variación mes a mes por OPC a partir de la serie de afiliados.

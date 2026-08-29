@@ -40,7 +40,7 @@ export async function fetchComisionesSaldo(fondo?: FondoTipo, range?: DateRange,
   en cliente (la API no filtra por tipo).
 
 ### Tipos y transformadores
-`src/types/suppen.ts` — tipos nuevos:
+`src/types/supen.ts` — tipos nuevos:
 
 ```ts
 interface Rendimiento {

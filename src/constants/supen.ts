@@ -1,4 +1,4 @@
-import type { FondoTipo } from '../types/suppen'
+import type { FondoTipo } from '../types/supen'
 
 // Claves canónicas de entidad (las que produce normalizeEntityName).
 // Tipar el Record evita que un typo caiga silenciosamente al color fallback.

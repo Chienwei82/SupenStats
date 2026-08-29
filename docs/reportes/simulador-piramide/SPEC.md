@@ -20,7 +20,7 @@ Se consultó la especificación OpenAPI publicada por SUPEN en
 Forma de acceso en la app: `API_BASE = '/estadisticas/api'` con proxy Vite en dev y
 rewrite de Vercel en prod (sin cambios). `Fondo ∈ {ROP, FCL, VOL, BASI, OCUP, ...}`.
 
-### Forma de los datos crudos (campos reales de SUPEN, ya modelados en `src/types/suppen.ts`)
+### Forma de los datos crudos (campos reales de SUPEN, ya modelados en `src/types/supen.ts`)
 
 - **rendimiento** (`RawRendimiento`): `entidad`, `tipo` (`'NOMINAL' | 'REAL'`),
   `periodicidad` (`'ANUAL' | '3 AÑOS' | '5 AÑOS' | '10 AÑOS' | 'HISTÓRICA'`),

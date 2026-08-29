@@ -3,7 +3,7 @@ import { createReportRoute, validateReportSearch } from './-shared/reportRoute'
 import { TransferenciasChart } from '../components/charts/TransferenciasChart'
 import { fetchLibreTransferencia } from '../api/apiService'
 import { FILTER_DEFAULTS } from '../constants/filters'
-import { LT_FONDO_OPTIONS } from '../constants/suppen'
+import { LT_FONDO_OPTIONS } from '../constants/supen'
 
 // /lt no soporta filtro de entidad (verificado contra la API real);
 // Fondo (ROP/FCL/VOLCA/VOLCB/VOLDA/VOLDB) y fechas sí filtran.

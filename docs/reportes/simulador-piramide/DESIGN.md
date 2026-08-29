@@ -64,7 +64,7 @@ routes/piramide.tsx           # createReportRoute o custom
     agrupando por `entidad|sexo|rangoedad|tipobeneficio|fecha|fondo` y conservando
     `CantidadPensionados = beneficio ?? null` (NO acumular a 0).
   - Nuevo tipo `BeneficioDemografico { Entidad, Fondo, FechaCorte, Sexo, RangoEdad,
-    TipoBeneficio, CantidadPensionados: number | null }` en `types/suppen.ts`.
+    TipoBeneficio, CantidadPensionados: number | null }` en `types/supen.ts`.
 - **Pendiente verificar contra API real:** los valores concretos de `tipobeneficio`
   (p. ej. si existe uno que signifique "pensionado total" o si hay que sumar varios como
   "JUBILACION", "INVALIDEZ", etc.). No se asume de memoria; se confirma antes de

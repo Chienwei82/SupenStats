@@ -3,7 +3,7 @@ import { createReportRoute, validateReportSearch } from './-shared/reportRoute'
 import { Simulador } from '../components/Simulador'
 import { fetchRendimientoSerie } from '../api/apiService'
 import { FILTER_DEFAULTS } from '../constants/filters'
-import type { RentabilidadSerie } from '../types/suppen'
+import type { RentabilidadSerie } from '../types/supen'
 
 export const Route = createFileRoute('/simulador')({
   validateSearch: validateReportSearch,

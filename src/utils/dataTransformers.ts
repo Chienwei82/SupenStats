@@ -107,8 +107,8 @@ import type {
   AfiliadoAportante, AfiliadoDemografico, Beneficio, BeneficioDemografico, Cuenta, LibreTransferencia, PortafolioISIN,
   RawComision, RawRendimiento, RawPortafolio, RawAfiliado,
   RawBeneficio, RawCuenta, RawLibreTransferencia, RawPortafolioISIN,
-} from '../types/suppen'
-import { LT_DEST_KEYS, normalizeEntityName } from '../constants/suppen'
+} from '../types/supen'
+import { LT_DEST_KEYS, normalizeEntityName } from '../constants/supen'
 
 // Periodicidad por defecto para el rendimiento. La API devuelve varias
 // periodicidades (ANUAL, 3 AÑOS, 5 AÑOS, 10 AÑOS, HISTÓRICA). Usamos ANUAL

@@ -7,7 +7,7 @@ import {
   calcularRentabilidadPromedio,
   proyeccionPension,
 } from '../reportes'
-import type { RendimientoComparado, Comision, RentabilidadSerie } from '../../types/suppen'
+import type { RendimientoComparado, Comision, RentabilidadSerie } from '../../types/supen'
 
 function rend(parcial: Partial<RendimientoComparado>): RendimientoComparado {
   return {

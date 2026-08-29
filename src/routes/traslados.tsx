@@ -7,7 +7,7 @@ import { useReportQuery, useUrlFilters } from '../hooks/useReportQuery'
 import { FilterBar } from '../components/ui/FilterBar'
 import { ReportView } from '../components/ui/ReportView'
 import { transformAfiliadosMensual } from '../utils/dataTransformers'
-import type { AfiliadoMensual, RawAfiliado, RawLibreTransferencia } from '../types/suppen'
+import type { AfiliadoMensual, RawAfiliado, RawLibreTransferencia } from '../types/supen'
 
 /**
  * validateSearch propio de /traslados: extiende el compartido con `vista`,
