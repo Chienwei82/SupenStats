@@ -77,13 +77,13 @@ src/components/charts/*.tsx    Componentes de Recharts (líneas, barras, donut)
 ```
 src/
 ├── api/apiService.ts            # Fetchers por endpoint + query builder
-├── types/suppen.ts              # Interfaces de dominio y Raw de la API
+├── types/supen.ts              # Interfaces de dominio y Raw de la API
 ├── utils/dataTransformers.ts    # parseDate/formatters y transformers
 ├── hooks/
 │   ├── useSupenData.ts          # Hook de fetching con enabled / lazy
 │   └── useTheme.ts              # Hook de tema claro/oscuro (localStorage + sistema)
 ├── constants/
-│   ├── suppen.ts                # Colores OPC, rangos por defecto, mapas
+│   ├── supen.ts                # Colores OPC, rangos por defecto, mapas
 │   └── chartNotes.ts            # Notas educativas y referencias por gráfico
 ├── components/
 │   ├── layout/                  # Header, ReportTabs, WelcomeScreen, ThemeToggle
@@ -153,7 +153,7 @@ Para producción, configurar un proxy inverso (Nginx, Apache, etc.) o consumir l
 ### Cambiar Período de Datos
 
 El rango por defecto de los reportes históricos son los **últimos 5 años**,
-calculado dinámicamente en `src/constants/suppen.ts`:
+calculado dinámicamente en `src/constants/supen.ts`:
 
 ```typescript
 export const DATE_RANGE_DEFAULT = {
@@ -172,7 +172,7 @@ export const FONDO_DEFAULT = 'ROP' as const  // O 'FCL', 'VOL', etc.
 
 ### Personalizar Colores de OPCs
 
-Editar `src/constants/suppen.ts`:
+Editar `src/constants/supen.ts`:
 
 ```typescript
 export const OPC_COLORS: Record<string, string> = {
@@ -399,7 +399,7 @@ npm run lint     # Verificación de código
 
 ### Agregar Nuevo Endpoint
 
-1. Definir la interfaz de dominio **y** el tipo `Raw*` en `src/types/suppen.ts`
+1. Definir la interfaz de dominio **y** el tipo `Raw*` en `src/types/supen.ts`
    (verificar la forma real con la API antes)
 2. Agregar función fetch en `src/api/apiService.ts`
 3. Agregar la transformación en `src/utils/dataTransformers.ts`

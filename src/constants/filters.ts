@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import type { FondoTipo, DateRange } from '../types/suppen'
-import { FONDO_DEFAULT, DATE_RANGE_DEFAULT, PORTFOLIO_RANGE, COMISION_RANGE, ISIN_RANGE, SIMULADOR_RANGE } from './suppen'
+import type { FondoTipo, DateRange } from '../types/supen'
+import { FONDO_DEFAULT, DATE_RANGE_DEFAULT, PORTFOLIO_RANGE, COMISION_RANGE, ISIN_RANGE, SIMULADOR_RANGE } from './supen'
 
 /**
  * Esquema de search params de filtros para las rutas de reportes.
@@ -18,9 +18,6 @@ export const reportSearchSchema = z.object({
   metrica: z.enum(['nominal', 'real']).optional(),
   // OPC de referencia del simulador (selector propio, no es filtro de API).
   entidad: z.string().optional(),
-  // Selector de vista del reporte de traslados entre operadoras.
-  // Validado por la ruta /traslados en su propio validateSearch; no lo
-  // incluimos en el esquema compartido para no acoplar al resto.
 })
 
 export type ReportSearchInput = z.infer<typeof reportSearchSchema>

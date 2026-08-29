@@ -3,9 +3,9 @@ import {
   Tooltip, Legend, ResponsiveContainer, Cell,
 } from 'recharts'
 import { formatNumber } from '../../utils/dataTransformers'
-import { CHART_COLORS } from '../../constants/suppen'
+import { CHART_COLORS } from '../../constants/supen'
 import { ChartNote } from '../ui/ChartNote'
-import type { LibreTransferencia } from '../../types/suppen'
+import type { LibreTransferencia } from '../../types/supen'
 
 interface Props {
   data: LibreTransferencia[]

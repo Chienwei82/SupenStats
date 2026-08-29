@@ -3,9 +3,9 @@ import {
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { sortByDateAsc, groupBy, getUniqueValues, formatDateShort, formatNumber } from '../../utils/dataTransformers'
-import { entityColor } from '../../constants/suppen'
+import { entityColor } from '../../constants/supen'
 import { ChartNote } from '../ui/ChartNote'
-import type { Afiliado } from '../../types/suppen'
+import type { Afiliado } from '../../types/supen'
 
 interface Props {
   data: Afiliado[]

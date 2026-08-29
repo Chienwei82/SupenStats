@@ -3,7 +3,7 @@ import {
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid,
   Tooltip, ReferenceLine, ResponsiveContainer, ZAxis,
 } from 'recharts'
-import type { ComisionRentabilidadDataset } from '../../types/suppen'
+import type { ComisionRentabilidadDataset } from '../../types/supen'
 import { PERIODICIDADES, joinComisionConRentabilidad, regresionLineal } from '../../utils/reportes'
 import { useUrlParam } from '../../hooks/useReportQuery'
 import { ChartCard } from '../ui/ChartCard'
@@ -49,16 +49,15 @@ export function ComisionVsRentabilidadChart({ data }: Props) {
     v => v !== undefined && (PERIODICIDADES as readonly string[]).includes(v),
     'ANUAL',
   )
-  const [metrica, setMetrica] = useUrlParam(
+  const [metrica, setMetrica] = useUrlParam<'nominal' | 'real'>(
     'metrica',
-    v => v === 'nominal' || v === 'real',
+    (v): v is 'nominal' | 'real' => v === 'nominal' || v === 'real',
     'nominal',
   )
-  const metricaTipada = metrica as 'nominal' | 'real'
 
   const join = useMemo(
     () => dataset
-      ? joinComisionConRentabilidad(dataset.comisiones, dataset.rendimientos, periodicidad, metricaTipada)
+      ? joinComisionConRentabilidad(dataset.comisiones, dataset.rendimientos, periodicidad, metrica)
       : { corte: null, puntos: [], excluidos: [] },
     [dataset, periodicidad, metrica],
   )

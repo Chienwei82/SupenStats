@@ -5,7 +5,7 @@ import type {
   RentabilidadSerie,
   PuntoComisionRentabilidad,
   ExcluidoComisionRentabilidad,
-} from '../types/suppen'
+} from '../types/supen'
 
 // Periodicidades que expone la API de rendimiento, en orden de presentación.
 export const PERIODICIDADES = ['ANUAL', '3 AÑOS', '5 AÑOS', '10 AÑOS', 'HISTÓRICA'] as const

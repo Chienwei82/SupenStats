@@ -200,7 +200,7 @@ Estructura:
 
 ## 5. Plan de implementación
 1. Crear rama `feature/traslados-entre-operadoras` desde `main` actualizado.
-2. Tipos en `src/types/suppen.ts`.
+2. Tipos en `src/types/supen.ts`.
 3. `transformAfiliadosMensual(raw)` en `dataTransformers.ts` (no muta el
    existente).
 4. `fetchLibreTransferenciaMatriz(...)` en `apiService.ts`.

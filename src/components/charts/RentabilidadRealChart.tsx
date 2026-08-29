@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
-import type { RendimientoComparado } from '../../types/suppen'
+import type { RendimientoComparado } from '../../types/supen'
 import { PERIODICIDADES, cortesDisponibles, compararRendimientos } from '../../utils/reportes'
 import { useUrlParam } from '../../hooks/useReportQuery'
 import { ChartCard } from '../ui/ChartCard'

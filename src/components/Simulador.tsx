@@ -8,8 +8,8 @@ import { formatCurrency, formatCurrencyMillions, getUniqueValues } from '../util
 import { useUrlParam } from '../hooks/useReportQuery'
 import { ChartCard } from './ui/ChartCard'
 import { ChartNote } from './ui/ChartNote'
-import { OPC_LIST } from '../constants/suppen'
-import type { RentabilidadSerie } from '../types/suppen'
+import { OPC_LIST } from '../constants/supen'
+import type { RentabilidadSerie } from '../types/supen'
 
 interface Props {
   data: RentabilidadSerie[]
@@ -34,9 +34,9 @@ export function Simulador({ data }: Props) {
   const opcEfectiva = opcDisponibles.includes(opc) ? opc : opcDisponibles[0]
 
   // Métrica de rentabilidad en URL (compartible/back-navegable).
-  const [metrica, setMetrica] = useUrlParam(
+  const [metrica, setMetrica] = useUrlParam<'nominal' | 'real'>(
     'metrica',
-    v => v === 'real' || v === 'nominal',
+    (v): v is 'nominal' | 'real' => v === 'real' || v === 'nominal',
     'nominal',
   )
 
@@ -58,7 +58,7 @@ export function Simulador({ data }: Props) {
     Number.isFinite(edadRetiroN) && edadRetiroN > edadActualN && edadRetiroN <= 99
 
   const rentabilidad = useMemo(
-    () => calcularRentabilidadPromedio(data, opcEfectiva, metrica as 'nominal' | 'real'),
+    () => calcularRentabilidadPromedio(data, opcEfectiva, metrica),
     [data, opcEfectiva, metrica],
   )
 

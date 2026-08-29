@@ -1,5 +1,5 @@
 import { TimeSeriesChart } from './TimeSeriesChart'
-import type { Rendimiento } from '../../types/suppen'
+import type { Rendimiento } from '../../types/supen'
 
 interface Props {
   data: Rendimiento[]

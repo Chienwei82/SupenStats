@@ -5,7 +5,7 @@ import { ReportView } from '../../components/ui/ReportView'
 import { useReportQuery, useUrlFilters } from '../../hooks/useReportQuery'
 import { resolveFilters } from '../../constants/filters'
 import type { ReportSearchInput } from '../../constants/filters'
-import type { FondoTipo, DateRange } from '../../types/suppen'
+import type { FondoTipo, DateRange } from '../../types/supen'
 
 interface ReportRouteConfig {
   /** Nombre del endpoint para la queryKey. */

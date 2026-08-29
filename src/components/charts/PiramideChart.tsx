@@ -7,7 +7,7 @@ import { formatNumber, sortByDateAsc } from '../../utils/dataTransformers'
 import { useUrlParam } from '../../hooks/useReportQuery'
 import { ChartCard } from '../ui/ChartCard'
 import { ChartNote } from '../ui/ChartNote'
-import type { AfiliadoDemografico, BeneficioDemografico } from '../../types/suppen'
+import type { AfiliadoDemografico, BeneficioDemografico } from '../../types/supen'
 
 interface Props {
   afiliados: AfiliadoDemografico[]
@@ -28,9 +28,9 @@ function sortRangos(rangos: string[]): string[] {
 }
 
 export function PiramideChart({ afiliados, beneficios }: Props) {
-  const [dataset, setDataset] = useUrlParam(
+  const [dataset, setDataset] = useUrlParam<'afiliados' | 'pensionados'>(
     'dataset',
-    v => v === 'afiliados' || v === 'pensionados',
+    (v): v is 'afiliados' | 'pensionados' => v === 'afiliados' || v === 'pensionados',
     'afiliados',
   )
   const [opc, setOpc] = useUrlParam(

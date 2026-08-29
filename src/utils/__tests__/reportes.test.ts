@@ -7,7 +7,7 @@ import {
   calcularRentabilidadPromedio,
   proyeccionPension,
 } from '../reportes'
-import type { RendimientoComparado, Comision, RentabilidadSerie } from '../../types/suppen'
+import type { RendimientoComparado, Comision, RentabilidadSerie } from '../../types/supen'
 
 function rend(parcial: Partial<RendimientoComparado>): RendimientoComparado {
   return {
@@ -106,6 +106,14 @@ describe('joinComisionConRentabilidad', () => {
     const { puntos, excluidos } = joinComisionConRentabilidad(comisiones, rends, 'ANUAL', 'real')
     expect(puntos).toEqual([{ Entidad: 'B', Comision: 0.35, Rentabilidad: 6 }])
     expect(excluidos).toContainEqual({ Entidad: 'A', Motivo: 'sin rentabilidad real' })
+  })
+
+  it('con métrica real NO excluye una rentabilidad real de 0 (es un dato válido)', () => {
+    const comisiones = [comision('A', '2026-05-31', 0.35)]
+    const rends = [rend({ Entidad: 'A', Nominal: 4, Real: 0 })] // Real=0 es legítimo
+    const { puntos, excluidos } = joinComisionConRentabilidad(comisiones, rends, 'ANUAL', 'real')
+    expect(puntos).toEqual([{ Entidad: 'A', Comision: 0.35, Rentabilidad: 0 }])
+    expect(excluidos).toHaveLength(0)
   })
 
   it('no mezcla fondos distintos bajo la misma entidad', () => {

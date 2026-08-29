@@ -3,7 +3,7 @@
 Fecha de verificación: probados a través del proxy Vite (dev server puerto 3000).
 
 > Advertencia: estos shapes **difieren de los documentados en SPEC.md**. Las
-> interfaces `Beneficio`, `Cuenta` y `LibreTransferencia` de `types/suppen.ts`
+> interfaces `Beneficio`, `Cuenta` y `LibreTransferencia` de `types/supen.ts`
 > NO coinciden con la respuesta cruda real. Los tipos Raw se definieron desde
 > la respuesta real verificada abajo.
 

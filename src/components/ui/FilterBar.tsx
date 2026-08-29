@@ -1,5 +1,6 @@
 import { useId } from 'react'
-import type { FondoTipo, DateRange } from '../../types/suppen'
+import { FONDO_OPTIONS } from '../../constants/supen'
+import type { FondoTipo, DateRange } from '../../types/supen'
 
 interface FilterBarProps {
   fondo?: FondoTipo | ''
@@ -11,15 +12,6 @@ interface FilterBarProps {
   onConsult?: () => void
 }
 
-const FONDOS: { value: FondoTipo | ''; label: string }[] = [
-  { value: '', label: 'Todos los fondos' },
-  { value: 'ROP', label: 'ROP' },
-  { value: 'FCL', label: 'FCL' },
-  { value: 'VOL', label: 'Voluntario' },
-  { value: 'BASI', label: 'Basico' },
-  { value: 'OCUP', label: 'Ocupacional' },
-]
-
 export function FilterBar({
   fondo,
   onFondoChange,
@@ -30,7 +22,7 @@ export function FilterBar({
 }: FilterBarProps) {
   const hasDateFilter = dateRange && onDateRangeChange
   const hasFondoFilter = fondo !== undefined && onFondoChange !== undefined
-  const fondos = fondoOptions ?? FONDOS
+  const fondos = fondoOptions ?? FONDO_OPTIONS
   // id único para asociar etiquetas con controles (evita colisiones en la página)
   const uid = useId()
   const fondoId = `${uid}-fondo`

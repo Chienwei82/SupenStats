@@ -4,7 +4,7 @@ import {
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { sortByDateAsc, getUniqueValues, formatDateShort } from '../../utils/dataTransformers'
-import { entityColor } from '../../constants/suppen'
+import { entityColor } from '../../constants/supen'
 import { ChartCard, truncateLegend } from '../ui/ChartCard'
 import { ChartNote } from '../ui/ChartNote'
 

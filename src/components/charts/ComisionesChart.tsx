@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { TimeSeriesChart } from './TimeSeriesChart'
-import type { Comision } from '../../types/suppen'
+import type { Comision } from '../../types/supen'
 
 interface Props {
   data: Comision[]

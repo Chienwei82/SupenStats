@@ -3,9 +3,9 @@ import {
   Tooltip, Legend, ResponsiveContainer, Cell,
 } from 'recharts'
 import { formatDateShort, formatNumber, sortByDateAsc } from '../../utils/dataTransformers'
-import { CHART_COLORS } from '../../constants/suppen'
+import { CHART_COLORS } from '../../constants/supen'
 import { ChartNote } from '../ui/ChartNote'
-import type { Beneficio } from '../../types/suppen'
+import type { Beneficio } from '../../types/supen'
 
 interface Props {
   data: Beneficio[]

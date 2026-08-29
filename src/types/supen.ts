@@ -168,10 +168,11 @@ export interface AfiliadoMensual {
   CantidadAfiliados: number | null
 }
 
-/** Punto de la serie de variación neta: { fecha, [opc]: delta | null }. */
+/** Punto de la serie de variación neta: { fecha, deltas: { [opc]: delta | null } }. */
 export interface VariacionPunto {
   fecha: string
-  [entidad: string]: string | number | null
+  /** Delta de variación por OPC. null = no hubo datos en t o t-1 (hueco). */
+  deltas: Record<string, number | null>
 }
 
 /** Balance mensual de traslados por OPC (vista B1). */

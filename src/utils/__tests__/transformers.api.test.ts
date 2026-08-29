@@ -9,7 +9,7 @@ import {
 import type {
   RawComision, RawRendimiento, RawPortafolio, RawAfiliado,
   RawBeneficio, RawCuenta, RawLibreTransferencia, RawPortafolioISIN,
-} from '../../types/suppen'
+} from '../../types/supen'
 
 describe('transformComisiones', () => {
   it('filtra solo tipo SALDO y agrega por entidad+fecha', () => {
