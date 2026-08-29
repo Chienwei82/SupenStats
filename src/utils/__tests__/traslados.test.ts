@@ -95,9 +95,9 @@ describe('calcularVariacionNeta', () => {
       s('A', '2024-03-31', 115),
     ], 'abs')
     expect(out).toEqual([
-      { fecha: '2024-01-31', A: null },
-      { fecha: '2024-02-29', A: 10 },
-      { fecha: '2024-03-31', A: 5 },
+      { fecha: '2024-01-31', deltas: { A: null } },
+      { fecha: '2024-02-29', deltas: { A: 10 } },
+      { fecha: '2024-03-31', deltas: { A: 5 } },
     ])
   })
 
@@ -106,7 +106,7 @@ describe('calcularVariacionNeta', () => {
       s('A', '2024-01-31', 100),
       s('A', '2024-02-29', 110),
     ], 'pct')
-    expect(out[1]?.A).toBeCloseTo(10)
+    expect(out[1]?.deltas.A).toBeCloseTo(10)
   })
 
   it('devuelve null si falta el dato en t o t-1', () => {
@@ -115,8 +115,8 @@ describe('calcularVariacionNeta', () => {
       s('A', '2024-02-29', null),
       s('A', '2024-03-31', 130),
     ], 'abs')
-    expect(out[1]?.A).toBeNull() // falta t
-    expect(out[2]?.A).toBeNull() // falta t-1
+    expect(out[1]?.deltas.A).toBeNull() // falta t
+    expect(out[2]?.deltas.A).toBeNull() // falta t-1
   })
 
   it('calcula delta por cada OPC en el mismo punto de fecha', () => {
@@ -126,7 +126,7 @@ describe('calcularVariacionNeta', () => {
       s('A', '2024-02-29', 120),
       s('B', '2024-02-29', 180),
     ], 'abs')
-    expect(out[1]).toEqual({ fecha: '2024-02-29', A: 20, B: -20 })
+    expect(out[1]).toEqual({ fecha: '2024-02-29', deltas: { A: 20, B: -20 } })
   })
 
   it('no inventa % cuando el denominador es 0', () => {
@@ -134,7 +134,7 @@ describe('calcularVariacionNeta', () => {
       s('A', '2024-01-31', 0),
       s('A', '2024-02-29', 5),
     ], 'pct')
-    expect(out[1]?.A).toBeNull()
+    expect(out[1]?.deltas.A).toBeNull()
   })
 })
 
@@ -228,6 +228,35 @@ describe('agregarFlujosPorOrigenDestino', () => {
     ])
     expect(out).toHaveLength(1)
     expect(out[0]).toMatchObject({ Origen: 'INS PENSIONES', Destino: 'BCR-PENSION', Cantidad: 7 })
+  })
+
+  it('no rompe el total cuando la API manda monto NaN (lo trata como 0)', () => {
+    // La matriz viene de JSON: un monto mal formado llega como null/string/
+    // NaN tras Number(). El guard Number.isFinite debe descartarlo, no sumar.
+    const row = ltRow({
+      origen: 'POPULAR', fecha: '2024-01-31T00:00:00',
+      cells: { BCR_PENSION: [3, 100] },
+    })
+    ;(row as unknown as Record<string, unknown>)['BCR_PENSION_M'] = NaN
+    const out = agregarFlujosPorOrigenDestino([row])
+    expect(out[0]).toMatchObject({ Origen: 'POPULAR PENSIONES', Destino: 'BCR-PENSION', Cantidad: 3, Monto: 0 })
+  })
+
+  it('ordena estable ante empates de Cantidad', () => {
+    // Dos flujos con la misma Cantidad: el orden debe ser determinista.
+    const out = agregarFlujosPorOrigenDestino([
+      ltRow({
+        origen: 'POPULAR', fecha: '2024-01-31T00:00:00',
+        cells: { BCR_PENSION: [5, 100] },
+      }),
+      ltRow({
+        origen: 'POPULAR', fecha: '2024-02-29T00:00:00',
+        cells: { BN_VITAL: [5, 200] },
+      }),
+    ])
+    // Ambos con 5: el orden entre BCR y BN no debe depender del motor JS.
+    expect(out).toHaveLength(2)
+    expect(out.map(f => f.Cantidad)).toEqual([5, 5])
   })
 })
 

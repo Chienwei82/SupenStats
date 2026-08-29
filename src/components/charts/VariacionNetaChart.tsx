@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
@@ -7,8 +7,10 @@ import { agregarVariacionPorOpc, calcularVariacionNeta, type VariacionPorOpc } f
 import { formatDateShort, formatNumber, formatPercent } from '../../utils/dataTransformers'
 import { entityColor } from '../../constants/supen'
 import { useUrlParam } from '../../hooks/useReportQuery'
+import { useSortableTable } from '../../hooks/useSortableTable'
 import { ChartCard } from '../ui/ChartCard'
 import { ChartNote } from '../ui/ChartNote'
+import { SortHeader } from '../ui/SortHeader'
 import type { AfiliadoMensual } from '../../types/supen'
 
 interface Props {
@@ -16,7 +18,6 @@ interface Props {
 }
 
 type SortKey = 'entidad' | 'total' | 'pctTotal' | 'best' | 'worst'
-type SortDir = 'asc' | 'desc'
 
 /**
  * Vista A del reporte: variación neta de afiliados por OPC a lo largo del
@@ -30,11 +31,11 @@ type SortDir = 'asc' | 'desc'
 export function VariacionNetaChart({ data }: Props) {
   // La métrica vive en la URL (`?variacion=abs|pct`) para que la vista quede
   // reflejada en la URL y sea compartible, igual que los demás selectores.
-  const [metrica, setMetrica] = useUrlParam(
+  const [metrica, setMetrica] = useUrlParam<'abs' | 'pct'>(
     'variacion',
-    v => v === 'abs' || v === 'pct',
+    (v): v is 'abs' | 'pct' => v === 'abs' || v === 'pct',
     'abs',
-  ) as ['abs' | 'pct', (v: string) => void]
+  )
 
   const puntos = useMemo(() => calcularVariacionNeta(data, metrica), [data, metrica])
   const entidades = useMemo(() => {
@@ -48,8 +49,10 @@ export function VariacionNetaChart({ data }: Props) {
     [data, puntos],
   )
 
-  const [sortKey, setSortKey] = useState<SortKey>('entidad')
-  const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const { sortKey, sortDir, onSort } = useSortableTable<SortKey>({
+    defaultKey: 'entidad',
+    isTextKey: k => k === 'entidad',
+  })
   const tablaOrdenada = useMemo(() => {
     const cmp = (a: VariacionPorOpc, b: VariacionPorOpc): number => {
       const dir = sortDir === 'asc' ? 1 : -1
@@ -63,11 +66,6 @@ export function VariacionNetaChart({ data }: Props) {
     }
     return [...tabla].sort(cmp)
   }, [tabla, sortKey, sortDir])
-
-  const onSort = (k: SortKey) => {
-    if (sortKey === k) setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
-    else { setSortKey(k); setSortDir(k === 'entidad' ? 'asc' : 'desc') }
-  }
 
   return (
     <ChartCard
@@ -119,7 +117,7 @@ export function VariacionNetaChart({ data }: Props) {
               <Line
                 key={ent}
                 type="monotone"
-                dataKey={ent}
+                dataKey={(d) => d.deltas?.[ent] ?? null}
                 name={ent}
                 stroke={entityColor(ent)}
                 strokeWidth={2}
@@ -175,41 +173,4 @@ function fmtDelta(v: number | null, kind: 'abs' | 'pct'): string {
   if (v == null) return '—'
   if (kind === 'pct') return formatPercent(v)
   return formatNumber(v)
-}
-
-interface SortHeaderProps {
-  sortKey: SortKey
-  current: SortKey
-  dir: SortDir
-  onSort: (k: SortKey) => void
-  align?: 'left' | 'right'
-  children: ReactNode
-}
-
-/**
- * Celda de encabezado ordenable accesible. Usa un <button> dentro del <th> para
- * que el comportamiento de teclado (Enter/Space), foco y roles de screen reader
- * sean nativos sin reinventarlos a mano.
- */
-function SortHeader({ sortKey, current, dir, onSort, align = 'left', children }: SortHeaderProps) {
-  const isActive = current === sortKey
-  const ariaSort = isActive ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'
-  return (
-    <th
-      scope="col"
-      aria-sort={ariaSort}
-      className={`px-2 py-2 ${align === 'right' ? 'text-right' : ''}`}
-    >
-      <button
-        type="button"
-        onClick={() => onSort(sortKey)}
-        className={`inline-flex items-center gap-1 select-none hover:text-gray-800 dark:hover:text-[#eeffff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#89ddff] focus-visible:rounded ${
-          align === 'right' ? 'flex-row-reverse' : ''
-        }`}
-      >
-        {children}
-        {isActive && <span aria-hidden="true">{dir === 'asc' ? '▲' : '▼'}</span>}
-      </button>
-    </th>
-  )
 }

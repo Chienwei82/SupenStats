@@ -28,9 +28,9 @@ function sortRangos(rangos: string[]): string[] {
 }
 
 export function PiramideChart({ afiliados, beneficios }: Props) {
-  const [dataset, setDataset] = useUrlParam(
+  const [dataset, setDataset] = useUrlParam<'afiliados' | 'pensionados'>(
     'dataset',
-    v => v === 'afiliados' || v === 'pensionados',
+    (v): v is 'afiliados' | 'pensionados' => v === 'afiliados' || v === 'pensionados',
     'afiliados',
   )
   const [opc, setOpc] = useUrlParam(

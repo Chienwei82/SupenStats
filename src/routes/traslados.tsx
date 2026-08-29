@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useSearch } from '@tanstack/react-router'
 import { validateReportSearch } from './-shared/reportRoute'
 import { Traslados } from '../components/Traslados'
 import { fetchAfiliadosRaw, fetchLibreTransferenciaMatriz } from '../api/apiService'
@@ -13,13 +13,14 @@ import type { AfiliadoMensual, RawAfiliado, RawLibreTransferencia } from '../typ
  * validateSearch propio de /traslados: extiende el compartido con `vista`,
  * que solo aplica a este reporte. Mantenerlo acá (en vez de en
  * `reportSearchSchema`) evita acoplar `vista` al resto de rutas, donde
- * no significa nada.
+ * no significa nada. `variacion` se lee vía `useUrlParam` en el gráfico.
  */
 function validateTrasladosSearch(input: Record<string, unknown>) {
   const base = validateReportSearch(input)
   return {
     ...base,
     vista: input.vista === 'traslados' || input.vista === 'neto' ? input.vista : undefined,
+    variacion: input.variacion === 'pct' || input.variacion === 'abs' ? input.variacion : undefined,
   }
 }
 
@@ -29,7 +30,8 @@ export const Route = createFileRoute('/traslados')({
 })
 
 function TrasladosPage() {
-  const applied = resolveFilters(validateReportSearch({}), FILTER_DEFAULTS.standard)
+  const search = useSearch({ strict: false })
+  const applied = resolveFilters(validateReportSearch(search), FILTER_DEFAULTS.standard)
   const filters = useUrlFilters(applied)
 
   // /afiliado devuelve el desglose demográfico; lo agrupamos por

@@ -153,7 +153,10 @@ export function ReportTabs() {
             return (
               <Link
                 key={tab.id}
-                ref={el => { itemRefs.current[tab.id] = el }}
+                ref={el => {
+                  itemRefs.current[tab.id] = el
+                  return () => { delete itemRefs.current[tab.id] }
+                }}
                 to={tab.to}
                 search={{}}
                 role="menuitem"

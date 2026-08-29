@@ -28,9 +28,9 @@ const chipClass = (activa: boolean) => `
  * en los demás selectores de la app.
  */
 export function Traslados({ afiliados, trasladosMatriz }: Props) {
-  const [vista, setVista] = useUrlParam(
+  const [vista, setVista] = useUrlParam<'neto' | 'traslados'>(
     'vista',
-    v => v === 'neto' || v === 'traslados',
+    (v): v is 'neto' | 'traslados' => v === 'neto' || v === 'traslados',
     'neto',
   )
 

@@ -42,26 +42,32 @@ export function calcularVariacionNeta(
     porEntidadFecha.set(ent, m)
   }
 
-  const puntos: VariacionPunto[] = fechas.map(fecha => {
-    const idx = fechas.indexOf(fecha)
+  const puntos: VariacionPunto[] = []
+  // forEach con índice: la fecha anterior sale de fechas[idx-1] sin hacer
+  // una búsqueda indexOf dentro de un .map (O(N²) con muchas fechas).
+  fechas.forEach((fecha, idx) => {
     const fechaPrev = idx > 0 ? fechas[idx - 1]! : null
-    const punto: VariacionPunto = { fecha }
+    const deltas: Record<string, number | null> = {}
     for (const ent of porEntidad.keys()) {
       const m = porEntidadFecha.get(ent)!
       const actual = m.get(fecha) ?? null
       const prev = fechaPrev ? (m.get(fechaPrev) ?? null) : null
-      punto[ent] = calcularDelta(actual, prev, metrica)
+      deltas[ent] = calcularDelta(actual, prev, metrica)
     }
-    return punto
+    puntos.push({ fecha, deltas })
   })
   return puntos
 }
 
+/**
+ * Milisegundos para ordenar fechas de forma determinista. Las fechas vacías o
+ * no parseables van al FINAL (MAX_SAFE_INTEGER) en vez de colapsar al índice
+ * 0, para que una fecha malformada no se trate como la más antigua.
+ */
 function parseDateMs(dateStr: string): number {
-  if (!dateStr) return 0
-  // La API usa 'YYYY-MM-DDTHH:MM:SS' o 'YYYY-MM-DD'.
+  if (!dateStr) return Number.MAX_SAFE_INTEGER
   const ms = Date.parse(dateStr)
-  return Number.isNaN(ms) ? 0 : ms
+  return Number.isNaN(ms) ? Number.MAX_SAFE_INTEGER : ms
 }
 
 function calcularDelta(
@@ -130,28 +136,23 @@ export function construirBalanceTraslados(
     // diagonal (verificado contra la API).
     const origenKey = origenToKey(origen)
 
-    // Salidas del origen: suma de todas las celdas {DEST}_C de la fila.
+    // Salidas del origen: suma de todas las celdas {DEST}_C de la fila,
+    // excluyendo la diagonal. En la misma pasada, los destinos que reciben
+    // algo suman ingresos (una sola lectura de cada celda, no dos).
     let salidasOrig = 0
     for (const dest of LT_DEST_KEYS) {
       const v = Number(item[`${dest}_C`] ?? 0)
       if (!Number.isFinite(v)) continue
       // Excluir la diagonal para que "salidas" no incluya auto-traslados.
-      if (origenKey != null && dest === origenKey) continue
-      salidasOrig += v
+      const esDiagonal = origenKey != null && dest === origenKey
+      if (!esDiagonal) salidasOrig += v
+      if (!esDiagonal && v > 0) {
+        const destino = LT_DEST_KEY_TO_CANONICAL[dest]
+        acc.ingresos.set(destino, (acc.ingresos.get(destino) ?? 0) + v)
+      }
     }
     if (salidasOrig > 0) {
       acc.salidas.set(origen, (acc.salidas.get(origen) ?? 0) + salidasOrig)
-    }
-
-    // Ingresos: para cada columna {DEST}_C en esta fila, el DEST recibe `v`
-    // ingresos (siempre que sea > 0). Excluimos la diagonal si la podemos
-    // detectar.
-    for (const dest of LT_DEST_KEYS) {
-      const v = Number(item[`${dest}_C`] ?? 0)
-      if (!Number.isFinite(v) || v === 0) continue
-      if (origenKey != null && dest === origenKey) continue
-      const destino = LT_DEST_KEY_TO_CANONICAL[dest]
-      acc.ingresos.set(destino, (acc.ingresos.get(destino) ?? 0) + v)
     }
   }
 
@@ -286,7 +287,7 @@ export function agregarVariacionPorOpc(
     let best: number | null = null
     let worst: number | null = null
     for (const p of puntos) {
-      const v = p[ent]
+      const v = p.deltas[ent]
       if (typeof v !== 'number') continue
       if (best === null || v > best) best = v
       if (worst === null || v < worst) worst = v
@@ -331,12 +332,13 @@ export function calcularKpisBalance(balances: TrasladoBalance[]): BalanceKpis {
 /** Normaliza la `entidadorigen` de /lt a su nombre canónico, o devuelve
  *  el original si no hay mapeo. Las variantes con guion bajo o sin
  *  "PENSIONES" se resuelven acá; el resto pasa por `normalizeEntityName`. */
+const ORIGEN_NAME_MAP: Record<string, string> = {
+  POPULAR: 'POPULAR PENSIONES',
+  VIDA_PLENA: 'VIDA PLENA OPC',
+  'VIDA PLENA': 'VIDA PLENA OPC',
+  'BACSJ PENSIONES': 'BAC SJ PENSIONES',
+}
+
 function normalizarOrigen(origenRaw: string): string {
-  const M: Record<string, string> = {
-    POPULAR: 'POPULAR PENSIONES',
-    VIDA_PLENA: 'VIDA PLENA OPC',
-    'VIDA PLENA': 'VIDA PLENA OPC',
-    'BACSJ PENSIONES': 'BAC SJ PENSIONES',
-  }
-  return M[origenRaw] ?? origenRaw
+  return ORIGEN_NAME_MAP[origenRaw] ?? origenRaw
 }
