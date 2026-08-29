@@ -180,6 +180,12 @@ export function construirBalanceTraslados(
     if (!fecha) continue
     const acc = ensure(fecha)
     const origen = normalizarOrigen(String(item.entidadorigen ?? ''))
+    // origenKey es la clave de columna en /lt que corresponde al origen.
+    // Devuelve null cuando la entidad origen no está mapeada (ej. INS PENSIONES
+    // o IBP PENSIONES, que aparecen en algunas filas de la API pero no son
+    // OPCs "destino" en la matriz). En ese caso no podemos detectar la
+    // diagonal: la dejamos pasar y confiamos en que /lt traiga 0 en la celda
+    // diagonal (verificado contra la API).
     const origenKey = origenToKey(origen)
 
     // Salidas del origen: suma de todas las celdas {DEST}_C de la fila.
@@ -188,7 +194,7 @@ export function construirBalanceTraslados(
       const v = Number(item[`${dest}_C`] ?? 0)
       if (!Number.isFinite(v)) continue
       // Excluir la diagonal para que "salidas" no incluya auto-traslados.
-      if (dest === origenKey) continue
+      if (origenKey != null && dest === origenKey) continue
       salidasOrig += v
     }
     if (salidasOrig > 0) {
@@ -196,11 +202,12 @@ export function construirBalanceTraslados(
     }
 
     // Ingresos: para cada columna {DEST}_C en esta fila, el DEST recibe `v`
-    // ingresos (siempre que sea > 0). Excluimos la diagonal.
+    // ingresos (siempre que sea > 0). Excluimos la diagonal si la podemos
+    // detectar.
     for (const dest of LT_DEST_KEYS) {
       const v = Number(item[`${dest}_C`] ?? 0)
       if (!Number.isFinite(v) || v === 0) continue
-      if (dest === origenKey) continue
+      if (origenKey != null && dest === origenKey) continue
       const destino = LT_DEST_KEY_TO_CANONICAL[dest]
       acc.ingresos.set(destino, (acc.ingresos.get(destino) ?? 0) + v)
     }
@@ -256,7 +263,10 @@ export function agregarFlujosPorOrigenDestino(
       const cantidad = Number(item[`${dest}_C`] ?? 0)
       const monto = Number(item[`${dest}_M`] ?? 0)
       if (!Number.isFinite(cantidad) || cantidad === 0) continue
-      if (dest === origenKey) continue
+      // Diagonal: solo la excluimos si podemos detectarla (origenKey != null).
+      // Para entidades no mapeadas (ej. INS PENSIONES) confiamos en que /lt
+      // traiga 0 en la celda diagonal, así que la dejamos pasar.
+      if (origenKey != null && dest === origenKey) continue
       const destino = LT_DEST_KEY_TO_CANONICAL[dest]
       const key = `${origen}|${destino}|${fecha}`
       const existing = map.get(key) ?? { origen, destino, cantidad: 0, monto: 0 }
@@ -277,9 +287,17 @@ export function agregarFlujosPorOrigenDestino(
   return [...totales.values()].sort((a, b) => b.Cantidad - a.Cantidad)
 }
 
-/** Mapea el nombre canónico de una OPC a la clave de columna en /lt. */
-function origenToKey(nombreCanonico: string): string | null {
-  return LT_KEY_TO_CANONICAL_KEY[nombreCanonico] ?? null
+/**
+ * Devuelve la clave de columna en /lt que corresponde a una OPC canónica, o
+ * null si la entidad no aparece como destino en la matriz. Implementado por
+ * iteración sobre `LT_DEST_KEYS` (8 entradas) en vez de un map inverso con
+ * `as` cast, para que un typo futuro sea visible.
+ */
+function origenToKey(nombreCanonico: string): (typeof LT_DEST_KEYS)[number] | null {
+  for (const k of LT_DEST_KEYS) {
+    if (LT_DEST_KEY_TO_CANONICAL[k] === nombreCanonico) return k
+  }
+  return null
 }
 
 /** Normaliza la `entidadorigen` de /lt a su nombre canónico, o devuelve
@@ -308,8 +326,3 @@ const LT_DEST_KEY_TO_CANONICAL: Record<(typeof LT_DEST_KEYS)[number], string> = 
   BCR_PENSION: 'BCR-PENSION',
   CCSS_OPC: 'CCSS-OPC',
 }
-
-const LT_KEY_TO_CANONICAL_KEY: Record<string, (typeof LT_DEST_KEYS)[number]> =
-  Object.fromEntries(
-    Object.entries(LT_DEST_KEY_TO_CANONICAL).map(([k, v]) => [v, k as (typeof LT_DEST_KEYS)[number]]),
-  )

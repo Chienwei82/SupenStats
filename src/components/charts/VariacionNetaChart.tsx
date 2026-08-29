@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
@@ -151,11 +151,11 @@ export function VariacionNetaChart({ data }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs font-medium text-gray-500 dark:text-[#a6accd] uppercase">
-                <th className="px-2 py-2 cursor-pointer select-none" onClick={() => onSort('entidad')}>OPC {flecha(sortKey, sortDir, 'entidad')}</th>
-                <th className="px-2 py-2 text-right cursor-pointer select-none" onClick={() => onSort('total')}>Var. total {flecha(sortKey, sortDir, 'total')}</th>
-                <th className="px-2 py-2 text-right cursor-pointer select-none" onClick={() => onSort('pctTotal')}>Var. % total {flecha(sortKey, sortDir, 'pctTotal')}</th>
-                <th className="px-2 py-2 text-right cursor-pointer select-none" onClick={() => onSort('best')}>Mejor mes {flecha(sortKey, sortDir, 'best')}</th>
-                <th className="px-2 py-2 text-right cursor-pointer select-none" onClick={() => onSort('worst')}>Peor mes {flecha(sortKey, sortDir, 'worst')}</th>
+                <SortHeader sortKey="entidad" current={sortKey} dir={sortDir} onSort={onSort}>OPC</SortHeader>
+                <SortHeader sortKey="total" current={sortKey} dir={sortDir} onSort={onSort} align="right">Var. total</SortHeader>
+                <SortHeader sortKey="pctTotal" current={sortKey} dir={sortDir} onSort={onSort} align="right">Var. % total</SortHeader>
+                <SortHeader sortKey="best" current={sortKey} dir={sortDir} onSort={onSort} align="right">Mejor mes</SortHeader>
+                <SortHeader sortKey="worst" current={sortKey} dir={sortDir} onSort={onSort} align="right">Peor mes</SortHeader>
               </tr>
             </thead>
             <tbody>
@@ -191,7 +191,39 @@ function fmtDelta(v: number | null, kind: 'abs' | 'pct'): string {
   return formatNumber(v)
 }
 
-function flecha(activo: SortKey, dir: SortDir, k: SortKey): string {
-  if (activo !== k) return ''
-  return dir === 'asc' ? '▲' : '▼'
+interface SortHeaderProps {
+  sortKey: SortKey
+  current: SortKey
+  dir: SortDir
+  onSort: (k: SortKey) => void
+  align?: 'left' | 'right'
+  children: ReactNode
+}
+
+/**
+ * Celda de encabezado ordenable accesible. Usa un <button> dentro del <th> para
+ * que el comportamiento de teclado (Enter/Space), foco y roles de screen reader
+ * sean nativos sin reinventarlos a mano.
+ */
+function SortHeader({ sortKey, current, dir, onSort, align = 'left', children }: SortHeaderProps) {
+  const isActive = current === sortKey
+  const ariaSort = isActive ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'
+  return (
+    <th
+      scope="col"
+      aria-sort={ariaSort}
+      className={`px-2 py-2 ${align === 'right' ? 'text-right' : ''}`}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={`inline-flex items-center gap-1 select-none hover:text-gray-800 dark:hover:text-[#eeffff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#89ddff] focus-visible:rounded ${
+          align === 'right' ? 'flex-row-reverse' : ''
+        }`}
+      >
+        {children}
+        {isActive && <span aria-hidden="true">{dir === 'asc' ? '▲' : '▼'}</span>}
+      </button>
+    </th>
+  )
 }

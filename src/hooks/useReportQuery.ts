@@ -47,7 +47,7 @@ export function useReportQuery<T>(
     // así ReportView puede mostrar skeleton (sin datos) u overlay (con datos).
     loading: query.isFetching,
     error: query.error instanceof Error ? query.error.message : null,
-    refetch: () => void query.refetch(),
+    refetch: () => query.refetch(),
   }
 }
 

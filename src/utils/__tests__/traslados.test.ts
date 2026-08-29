@@ -211,4 +211,20 @@ describe('agregarFlujosPorOrigenDestino', () => {
     expect(out[0]?.Origen).toBe('POPULAR PENSIONES')
     expect(out[0]?.Destino).toBe('BN-VITAL')
   })
+
+  it('no infla totales cuando el origen no está mapeado como destino (ej. INS PENSIONES)', () => {
+    // INS PENSIONES aparece en algunas filas de /lt pero no es un destino en
+    // la matriz: su columna no existe, así que la diagonal es indetectable.
+    // El comportamiento esperado es NO excluir la diagonal (no podemos), pero
+    // tampoco inflar: una celda con valor 0 no se cuenta, y una celda con
+    // valor real (no en su propia diagonal) se cuenta como flujo normal.
+    const out = agregarFlujosPorOrigenDestino([
+      ltRow({
+        origen: 'INS PENSIONES', fecha: '2024-01-31T00:00:00',
+        cells: { BCR_PENSION: [7, 200] },
+      }),
+    ])
+    expect(out).toHaveLength(1)
+    expect(out[0]).toMatchObject({ Origen: 'INS PENSIONES', Destino: 'BCR-PENSION', Cantidad: 7 })
+  })
 })

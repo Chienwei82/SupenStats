@@ -33,7 +33,11 @@ function TrasladosPage() {
 
   const loading = loadingAfiliados || loadingLT
   const error = errorAfiliados ?? errorLT ?? null
-  const refetch = () => { refetchAfiliados(); refetchLT() }
+  // dataCount es el máximo entre las dos queries: si una falla y la otra
+  // tiene datos, ReportView muestra el overlay de error sobre los datos
+  // válidos en vez de reemplazar la vista por un mensaje de error.
+  const dataCount = Math.max(afiliadosRaw?.length ?? 0, ltMatriz?.length ?? 0)
+  const refetch = () => Promise.all([refetchAfiliados(), refetchLT()])
 
   const afiliados: AfiliadoMensual[] = transformAfiliadosMensual(afiliadosRaw)
 
@@ -52,7 +56,7 @@ function TrasladosPage() {
         onDateRangeChange={(r) => filters.setDraft(d => ({ ...d, dates: r }))}
         onConsult={filters.consult}
       />
-      <ReportView loading={loading} error={error} dataCount={afiliados.length + ltMatriz.length} onRetry={refetch}>
+      <ReportView loading={loading} error={error} dataCount={dataCount} onRetry={refetch}>
         <Traslados afiliados={afiliados} trasladosMatriz={ltMatriz} />
       </ReportView>
     </section>
