@@ -96,7 +96,7 @@ describe('transformAfiliadosDemograficos', () => {
 describe('transformBeneficios', () => {
   it('suma pensionados y montos por entidad+fecha+tipo', () => {
     const item = (b: number, m: number): RawBeneficio => ({
-      entidad: 'CCSS-OPC', codigofondo: 'ROP', fecha: '2024-06-01', fondo: 'ROP',
+      entidad: 'CCSS-OPC', codigosexo: '', codigofondo: 'ROP', fecha: '2024-06-01', fondo: 'ROP',
       tipobeneficio: 'VEJEZ', beneficio: b, beneficiocolones: m,
       sexo: '', rangoedad: '',
     })

@@ -199,14 +199,14 @@ describe('calcularRentabilidadPromedio', () => {
     const s = [
       ...base,
       { ...serie('A', 99, '2024-12-31'), Periodicidad: 'HISTÓRICA' },
-      { ...serie('A', 99, '2024-12-31'), Tipo: 'REAL' },
+      { ...serie('A', 99, '2024-12-31'), Tipo: 'REAL' as const },
     ]
     expect(calcularRentabilidadPromedio(s, 'A').promedio).toBeCloseTo(8)
   })
 
   it('respeta el tipo REAL cuando se pide metrica real', () => {
     const vals = Array.from({ length: 12 }, (_, i) => (i % 2 === 0 ? 8 : 10))
-    const s = docesCortes('A', vals).map(r => ({ ...r, Tipo: 'REAL' as const }))
+    const s = docesCortes('A', vals).map(r => ({ ...r, Tipo: 'REAL' as const })) as RentabilidadSerie[]
     const out = calcularRentabilidadPromedio(s, 'A', 'real')
     expect(out.promedio).toBeCloseTo(9)
   })
