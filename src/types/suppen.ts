@@ -215,6 +215,7 @@ export interface RawAfiliado {
 
 export interface RawBeneficio {
   entidad: string
+  codigosexo: string
   sexo: string
   rangoedad: string
   tipobeneficio: string

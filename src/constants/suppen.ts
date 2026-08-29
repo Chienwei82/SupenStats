@@ -147,3 +147,10 @@ export const ISIN_RANGE = {
   FechaInicio: isoDateMonthsOffset(12),
   FechaFinal: new Date().toISOString().split('T')[0],
 }
+
+// El simulador necesita histórico suficiente para promediar la rentabilidad
+// de la OPC (>= MIN_CORTES_RENTABILIDAD). Pedimos 10 años.
+export const SIMULADOR_RANGE = {
+  FechaInicio: isoDate(10),
+  FechaFinal: new Date().toISOString().split('T')[0],
+}
