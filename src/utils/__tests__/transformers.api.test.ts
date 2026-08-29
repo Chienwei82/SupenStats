@@ -3,6 +3,7 @@ import {
   transformComisiones, transformRendimientos, transformPortafolio,
   transformAfiliados, transformAfiliadosAportantes,
   transformAfiliadosDemograficos, transformBeneficios,
+  transformBeneficiosDemograficos, transformRendimientosSerie,
   transformCuentas, transformLibreTransferencia, transformPortafolioISIN,
 } from '../dataTransformers'
 import type {
@@ -159,5 +160,63 @@ describe('transformPortafolioISIN', () => {
     const result = transformPortafolioISIN(raw)
     expect(result).toHaveLength(1)
     expect(result[0]?.Monto).toBe(1000)
+  })
+})
+
+describe('transformBeneficiosDemograficos', () => {
+  const item = (over: Partial<RawBeneficio>): RawBeneficio => ({
+    entidad: 'POPULAR', sexo: 'FEMENINO', codigosexo: 'F', rangoedad: ' < 31',
+    tipobeneficio: 'RENTA PERMANENTE', beneficio: 10, beneficiocolones: 100,
+    fecha: '2024-01-31', codigofondo: 'ROP', fondo: 'ROP',
+    ...over,
+  })
+
+  it('suma pensionados por sexo/rangoedad a través de tipobeneficio', () => {
+    const raw = [
+      item({ tipobeneficio: 'RENTA PERMANENTE', beneficio: 10 }),
+      item({ tipobeneficio: 'RETIRO TOTAL', beneficio: 5 }),
+      { ...item({ sexo: 'MASCULINO', codigosexo: 'M', beneficio: 8 }) },
+    ]
+    const result = transformBeneficiosDemograficos(raw)
+    expect(result).toHaveLength(2)
+    const fem = result.find(r => r.Sexo === 'Femenino')
+    expect(fem?.CantidadPensionados).toBe(15)
+    expect(fem?.RangoEdad).toBe('< 31')
+    const masc = result.find(r => r.Sexo === 'Masculino')
+    expect(masc?.CantidadPensionados).toBe(8)
+  })
+
+  it('deja null (no disponible) cuando todos los registros de la celda son null', () => {
+    const raw = [
+      item({ beneficio: null as unknown as number }),
+      item({ tipobeneficio: 'RETIRO TOTAL', beneficio: null as unknown as number }),
+    ]
+    const result = transformBeneficiosDemograficos(raw)
+    expect(result).toHaveLength(1)
+    expect(result[0]?.CantidadPensionados).toBeNull()
+  })
+
+  it('suma los no-null y no inventa el faltante cuando solo alguno es null', () => {
+    const raw = [
+      item({ beneficio: 10 }),
+      item({ tipobeneficio: 'RETIRO TOTAL', beneficio: null as unknown as number }),
+    ]
+    const result = transformBeneficiosDemograficos(raw)
+    expect(result[0]?.CantidadPensionados).toBe(10)
+  })
+})
+
+describe('transformRendimientosSerie', () => {
+  it('conserva periodicidad, tipo y null sin sustituir por 0', () => {
+    const raw: RawRendimiento[] = [
+      { entidad: 'POPULAR', tipo: 'nominal', periodicidad: 'ANUAL', rentabilidad: 8.5, fecha: '2024-01-31', codigoregimen: 1, 'régimen': 'ROP', codigofondo: 'ROP', fondo: 'ROP' },
+      { entidad: 'POPULAR', tipo: 'REAL', periodicidad: 'ANUAL', rentabilidad: null, fecha: '2024-01-31', codigoregimen: 1, 'régimen': 'ROP', codigofondo: 'ROP', fondo: 'ROP' },
+      { entidad: 'POPULAR', tipo: 'NOMINAL', periodicidad: 'HISTÓRICA', rentabilidad: 6.0, fecha: '2024-01-31', codigoregimen: 1, 'régimen': 'ROP', codigofondo: 'ROP', fondo: 'ROP' },
+    ]
+    const result = transformRendimientosSerie(raw)
+    expect(result).toHaveLength(3)
+    expect(result[0]).toMatchObject({ Entidad: 'POPULAR PENSIONES', Tipo: 'NOMINAL', Periodicidad: 'ANUAL', Rentabilidad: 8.5 })
+    expect(result[1]).toMatchObject({ Tipo: 'REAL', Rentabilidad: null })
+    expect(result[2]?.Periodicidad).toBe('HISTÓRICA')
   })
 })
