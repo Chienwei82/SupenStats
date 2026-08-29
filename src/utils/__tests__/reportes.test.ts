@@ -4,8 +4,10 @@ import {
   compararRendimientos,
   joinComisionConRentabilidad,
   regresionLineal,
+  calcularRentabilidadPromedio,
+  proyeccionPension,
 } from '../reportes'
-import type { RendimientoComparado, Comision } from '../../types/suppen'
+import type { RendimientoComparado, Comision, RentabilidadSerie } from '../../types/suppen'
 
 function rend(parcial: Partial<RendimientoComparado>): RendimientoComparado {
   return {
@@ -165,5 +167,67 @@ describe('regresionLineal', () => {
       rend({ Entidad: 'A', Nominal: 20, Fondo: 'FCL' }),
     ]
     expect(compararRendimientos(rows, 'ANUAL', '2026-05-31')).toHaveLength(2)
+  })
+})
+
+describe('calcularRentabilidadPromedio', () => {
+  const serie = (opc: string, rent: number | null, fecha: string, tipo: 'NOMINAL' | 'REAL' = 'NOMINAL'): RentabilidadSerie => ({
+    Entidad: opc, Fondo: 'ROP', FechaCorte: fecha, Tipo: tipo,
+    Periodicidad: 'ANUAL', Rentabilidad: rent,
+  })
+
+  // 12 cortes ANUAL para superar MIN_CORTES_RENTABILIDAD.
+  const docesCortes = (opc: string, vals: number[]): RentabilidadSerie[] =>
+    vals.map((v, idx) => serie(opc, v, `2024-${String(idx + 1).padStart(2, '0')}-28`))
+
+  it('promedia la serie ANUAL NOMINAL de la OPC', () => {
+    const s = docesCortes('A', [8, 9, 10, 11, 12, 8, 9, 10, 11, 12, 8, 10])
+    const out = calcularRentabilidadPromedio(s, 'A')
+    expect(out.promedio).toBeCloseTo(118 / 12)
+    expect(out.nCortes).toBe(12)
+  })
+
+  it('devuelve promedio null si hay menos de MIN_CORTES_RENTABILIDAD cortes', () => {
+    const s = [serie('A', 8, '2024-01-31'), serie('A', 10, '2024-02-29')]
+    const out = calcularRentabilidadPromedio(s, 'A')
+    expect(out.promedio).toBeNull()
+    expect(out.nCortes).toBe(2)
+  })
+
+  it('ignora periodicidades no ANUAL y tipos distintos', () => {
+    const base = docesCortes('A', Array(12).fill(8))
+    const s = [
+      ...base,
+      { ...serie('A', 99, '2024-12-31'), Periodicidad: 'HISTÓRICA' },
+      { ...serie('A', 99, '2024-12-31'), Tipo: 'REAL' },
+    ]
+    expect(calcularRentabilidadPromedio(s, 'A').promedio).toBeCloseTo(8)
+  })
+
+  it('respeta el tipo REAL cuando se pide metrica real', () => {
+    const vals = Array.from({ length: 12 }, (_, i) => (i % 2 === 0 ? 8 : 10))
+    const s = docesCortes('A', vals).map(r => ({ ...r, Tipo: 'REAL' as const }))
+    const out = calcularRentabilidadPromedio(s, 'A', 'real')
+    expect(out.promedio).toBeCloseTo(9)
+  })
+})
+
+describe('proyeccionPension', () => {
+  it('capitaliza con aportes mensuales y tasa positiva', () => {
+    const out = proyeccionPension({
+      saldoInicial: 1_000_000, aporteMensual: 50_000, anios: 2, tasaAnual: 0.0, edadActual: 30,
+    })
+    // sin rentabilidad: 1M + 24 * 50k = 2.2M
+    expect(out.montoFinal).toBeCloseTo(2_200_000)
+    expect(out.curva).toHaveLength(2)
+    expect(out.curva[0]).toMatchObject({ anio: 1, edad: 31 })
+    expect(out.curva[1].edad).toBe(32)
+  })
+
+  it('crece más con tasa positiva que con tasa cero', () => {
+    const cero = proyeccionPension({ saldoInicial: 1_000_000, aporteMensual: 0, anios: 10, tasaAnual: 0, edadActual: 40 })
+    const conTasa = proyeccionPension({ saldoInicial: 1_000_000, aporteMensual: 0, anios: 10, tasaAnual: 0.07, edadActual: 40 })
+    expect(conTasa.montoFinal).toBeGreaterThan(cero.montoFinal)
+    expect(conTasa.montoFinal).toBeCloseTo(1_000_000 * Math.pow(1.07, 10), 0)
   })
 })
