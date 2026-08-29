@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { agregarFlujosPorOrigenDestino } from '../../utils/traslados'
 import { formatNumber, formatCurrencyMillions } from '../../utils/dataTransformers'
 import { ChartCard } from '../ui/ChartCard'
@@ -69,10 +69,10 @@ export function TopFlujosTable({ data }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs font-medium text-gray-500 dark:text-[#a6accd] uppercase">
-                <th className="px-2 py-2 cursor-pointer select-none" onClick={() => onSort('origen')}>Origen {flecha(sortKey, sortDir, 'origen')}</th>
-                <th className="px-2 py-2 cursor-pointer select-none" onClick={() => onSort('destino')}>Destino {flecha(sortKey, sortDir, 'destino')}</th>
-                <th className="px-2 py-2 text-right cursor-pointer select-none" onClick={() => onSort('cantidad')}>Cantidad {flecha(sortKey, sortDir, 'cantidad')}</th>
-                <th className="px-2 py-2 text-right cursor-pointer select-none" onClick={() => onSort('monto')}>Monto {flecha(sortKey, sortDir, 'monto')}</th>
+                <SortHeader sortKey="origen" current={sortKey} dir={sortDir} onSort={onSort}>Origen</SortHeader>
+                <SortHeader sortKey="destino" current={sortKey} dir={sortDir} onSort={onSort}>Destino</SortHeader>
+                <SortHeader sortKey="cantidad" current={sortKey} dir={sortDir} onSort={onSort} align="right">Cantidad</SortHeader>
+                <SortHeader sortKey="monto" current={sortKey} dir={sortDir} onSort={onSort} align="right">Monto</SortHeader>
               </tr>
             </thead>
             <tbody>
@@ -94,7 +94,38 @@ export function TopFlujosTable({ data }: Props) {
   )
 }
 
-function flecha(activo: SortKey, dir: SortDir, k: SortKey): string {
-  if (activo !== k) return ''
-  return dir === 'asc' ? '▲' : '▼'
+interface SortHeaderProps {
+  sortKey: SortKey
+  current: SortKey
+  dir: SortDir
+  onSort: (k: SortKey) => void
+  align?: 'left' | 'right'
+  children: ReactNode
+}
+
+/**
+ * Celda de encabezado ordenable accesible. <button> dentro de <th> para
+ * soporte nativo de teclado (Enter/Space) y screen reader.
+ */
+function SortHeader({ sortKey, current, dir, onSort, align = 'left', children }: SortHeaderProps) {
+  const isActive = current === sortKey
+  const ariaSort = isActive ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'
+  return (
+    <th
+      scope="col"
+      aria-sort={ariaSort}
+      className={`px-2 py-2 ${align === 'right' ? 'text-right' : ''}`}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={`inline-flex items-center gap-1 select-none hover:text-gray-800 dark:hover:text-[#eeffff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#89ddff] focus-visible:rounded ${
+          align === 'right' ? 'flex-row-reverse' : ''
+        }`}
+      >
+        {children}
+        {isActive && <span aria-hidden="true">{dir === 'asc' ? '▲' : '▼'}</span>}
+      </button>
+    </th>
+  )
 }

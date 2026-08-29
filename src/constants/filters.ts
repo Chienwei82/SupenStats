@@ -19,7 +19,8 @@ export const reportSearchSchema = z.object({
   // OPC de referencia del simulador (selector propio, no es filtro de API).
   entidad: z.string().optional(),
   // Selector de vista del reporte de traslados entre operadoras.
-  vista: z.enum(['neto', 'traslados']).optional(),
+  // Validado por la ruta /traslados en su propio validateSearch; no lo
+  // incluimos en el esquema compartido para no acoplar al resto.
 })
 
 export type ReportSearchInput = z.infer<typeof reportSearchSchema>

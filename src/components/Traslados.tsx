@@ -42,10 +42,11 @@ export function Traslados({ afiliados, trasladosMatriz }: Props) {
             key={v}
             type="button"
             aria-pressed={vista === v}
+            aria-label={v === 'neto' ? 'Variación neta de afiliados' : 'Traslados reales (libre transferencia)'}
             onClick={() => setVista(v)}
             className={chipClass(vista === v)}
           >
-            {v === 'neto' ? 'Variación neta de afiliados' : 'Traslados reales (libre transferencia)'}
+            {v === 'neto' ? 'Variación neta' : 'Traslados'}
           </button>
         ))}
       </div>

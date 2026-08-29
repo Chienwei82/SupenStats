@@ -42,15 +42,16 @@ export function ReportTabs() {
   const triggerRef = useRef<HTMLButtonElement | null>(null)
   const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({})
 
-  // Cierra con click fuera del contenedor.
+  // Cierra con click/tap fuera del contenedor. Usamos 'pointerdown' (no
+  // 'mousedown') para que en pantallas táctiles el menú cierre al tocar fuera.
   useEffect(() => {
     if (!open) return
-    const onMouseDown = (e: MouseEvent) => {
+    const onPointerDown = (e: PointerEvent) => {
       if (!containerRef.current) return
       if (!containerRef.current.contains(e.target as Node)) setOpen(false)
     }
-    document.addEventListener('mousedown', onMouseDown)
-    return () => document.removeEventListener('mousedown', onMouseDown)
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [open])
 
   const closeAndFocusTrigger = () => {

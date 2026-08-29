@@ -108,7 +108,7 @@ import type {
   RawComision, RawRendimiento, RawPortafolio, RawAfiliado,
   RawBeneficio, RawCuenta, RawLibreTransferencia, RawPortafolioISIN,
 } from '../types/suppen'
-import { normalizeEntityName } from '../constants/suppen'
+import { LT_DEST_KEYS, normalizeEntityName } from '../constants/suppen'
 
 // Periodicidad por defecto para el rendimiento. La API devuelve varias
 // periodicidades (ANUAL, 3 AÑOS, 5 AÑOS, 10 AÑOS, HISTÓRICA). Usamos ANUAL
@@ -419,10 +419,9 @@ export function transformLibreTransferencia(raw: RawLibreTransferencia[]): Libre
   // tanto en cantidad ({OPC}_C) como en monto ({OPC}_M). Generamos un registro
   // plano por (origen, destino, fecha) contando transferencias y montos.
   const result: LibreTransferencia[] = []
-  const DEST_KEYS = ['POPULAR', 'VIDA_PLENA', 'BACSJ_PENSIONES', 'BCR_PENSION', 'CCSS_OPC', 'BN_VITAL', 'INS_PENSIONES', 'IBP_PENSIONES']
   for (const item of raw) {
     const fecha = String(item.fecha ?? '')
-    for (const dest of DEST_KEYS) {
+    for (const dest of LT_DEST_KEYS) {
       const count = Number(item[`${dest}_C`] ?? 0)
       const monto = Number(item[`${dest}_M`] ?? 0)
       result.push({

@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import {
-  construirSerieAfiliadosPorOpc,
+  agregarFlujosPorOrigenDestino,
+  agregarVariacionPorOpc,
+  calcularKpisBalance,
   calcularVariacionNeta,
   construirBalanceTraslados,
-  agregarFlujosPorOrigenDestino,
 } from '../traslados'
-import type { RawAfiliado, RawLibreTransferencia } from '../../types/suppen'
+import { transformAfiliadosMensual } from '../dataTransformers'
+import type { RawAfiliado, RawLibreTransferencia, TrasladoBalance } from '../../types/suppen'
 
 const af = (parcial: Partial<RawAfiliado>): RawAfiliado => ({
   entidad: 'POPULAR PENSIONES',
@@ -44,9 +46,9 @@ const ltRow = (parcial: LtRowSpec): RawLibreTransferencia => {
   return row
 }
 
-describe('construirSerieAfiliadosPorOpc', () => {
+describe('transformAfiliadosMensual (vía helper de producción)', () => {
   it('suma las filas demográficas por (entidad, fecha, fondo)', () => {
-    const serie = construirSerieAfiliadosPorOpc([
+    const serie = transformAfiliadosMensual([
       af({ entidad: 'POPULAR', afiliados: 50, rangoedad: '< 30' }),
       af({ entidad: 'POPULAR', afiliados: 70, rangoedad: '30-44' }),
       af({ entidad: 'BCR-PENSION', afiliados: 30, fecha: '2024-06-30T00:00:00' }),
@@ -56,7 +58,7 @@ describe('construirSerieAfiliadosPorOpc', () => {
   })
 
   it('preserva null cuando TODAS las filas de la celda son null', () => {
-    const serie = construirSerieAfiliadosPorOpc([
+    const serie = transformAfiliadosMensual([
       af({ afiliados: null, rangoedad: '< 30' }),
       af({ afiliados: null, rangoedad: '30-44' }),
     ])
@@ -64,7 +66,7 @@ describe('construirSerieAfiliadosPorOpc', () => {
   })
 
   it('suma los no-null y descarta los null cuando hay mezcla', () => {
-    const serie = construirSerieAfiliadosPorOpc([
+    const serie = transformAfiliadosMensual([
       af({ afiliados: 10, rangoedad: '< 30' }),
       af({ afiliados: null, rangoedad: '30-44' }),
     ])
@@ -72,7 +74,7 @@ describe('construirSerieAfiliadosPorOpc', () => {
   })
 
   it('normaliza los nombres de entidad', () => {
-    const serie = construirSerieAfiliadosPorOpc([
+    const serie = transformAfiliadosMensual([
       af({ entidad: 'POPULAR', afiliados: 100 }),
       af({ entidad: 'BACSJ PENSIONES', afiliados: 80 }),
     ])
@@ -210,5 +212,112 @@ describe('agregarFlujosPorOrigenDestino', () => {
     expect(out).toHaveLength(1)
     expect(out[0]?.Origen).toBe('POPULAR PENSIONES')
     expect(out[0]?.Destino).toBe('BN-VITAL')
+  })
+
+  it('no infla totales cuando el origen no está mapeado como destino (ej. INS PENSIONES)', () => {
+    // INS PENSIONES aparece en algunas filas de /lt pero no es un destino en
+    // la matriz: su columna no existe, así que la diagonal es indetectable.
+    // El comportamiento esperado es NO excluir la diagonal (no podemos), pero
+    // tampoco inflar: una celda con valor 0 no se cuenta, y una celda con
+    // valor real (no en su propia diagonal) se cuenta como flujo normal.
+    const out = agregarFlujosPorOrigenDestino([
+      ltRow({
+        origen: 'INS PENSIONES', fecha: '2024-01-31T00:00:00',
+        cells: { BCR_PENSION: [7, 200] },
+      }),
+    ])
+    expect(out).toHaveLength(1)
+    expect(out[0]).toMatchObject({ Origen: 'INS PENSIONES', Destino: 'BCR-PENSION', Cantidad: 7 })
+  })
+})
+
+describe('agregarVariacionPorOpc', () => {
+  const s = (ent: string, fecha: string, n: number | null) => ({
+    Entidad: ent, Fondo: 'ROP', FechaCorte: fecha, CantidadAfiliados: n,
+  })
+
+  it('calcula variacion total y variacion % total entre extremos del rango', () => {
+    const data = [
+      s('A', '2024-01-31', 100),
+      s('A', '2024-03-31', 130),
+    ]
+    const puntos = calcularVariacionNeta(data, 'abs')
+    const tabla = agregarVariacionPorOpc(data, puntos)
+    expect(tabla).toHaveLength(1)
+    expect(tabla[0]?.entidad).toBe('A')
+    expect(tabla[0]?.variacionTotal).toBe(30)
+    expect(tabla[0]?.variacionPctTotal).toBeCloseTo(30)
+  })
+
+  it('best/worst toman el maximo y minimo de los deltas, ignorando nulls', () => {
+    const data = [
+      s('A', '2024-01-31', 100),
+      s('A', '2024-02-29', 110),
+      s('A', '2024-03-31', 90),
+      s('A', '2024-04-30', 120),
+    ]
+    const puntos = calcularVariacionNeta(data, 'abs')
+    const tabla = agregarVariacionPorOpc(data, puntos)
+    // Deltas: 10 (feb), -20 (mar), 30 (abr) → best=30, worst=-20
+    expect(tabla[0]?.best).toBe(30)
+    expect(tabla[0]?.worst).toBe(-20)
+  })
+
+  it('devuelve variacionTotal null si el primer o último dato del rango es null', () => {
+    const data = [
+      s('A', '2024-01-31', null),
+      s('A', '2024-02-29', 110),
+    ]
+    const puntos = calcularVariacionNeta(data, 'abs')
+    const tabla = agregarVariacionPorOpc(data, puntos)
+    expect(tabla[0]?.variacionTotal).toBeNull()
+  })
+
+  it('ordena el resultado por nombre de entidad', () => {
+    const data = [s('B', '2024-01-31', 100), s('A', '2024-01-31', 100)]
+    const puntos = calcularVariacionNeta(data, 'abs')
+    const tabla = agregarVariacionPorOpc(data, puntos)
+    expect(tabla.map(t => t.entidad)).toEqual(['A', 'B'])
+  })
+})
+
+describe('calcularKpisBalance', () => {
+  const b = (ent: string, ingresos: number, salidas: number): TrasladoBalance => ({
+    fecha: '2024-01-31',
+    Entidad: ent,
+    Ingresos: ingresos,
+    Salidas: salidas,
+    Neto: ingresos - salidas,
+  })
+
+  it('suma ingresos de toda la serie', () => {
+    const k = calcularKpisBalance([b('A', 10, 0), b('B', 5, 0), b('A', 7, 0)])
+    expect(k.totalIngresos).toBe(22)
+  })
+
+  it('identifica la OPC con mayor balance positivo y mayor negativo', () => {
+    const k = calcularKpisBalance([
+      b('A', 10, 0),   // neto +10
+      b('B', 0, 5),    // neto -5
+      b('C', 3, 0),    // neto +3
+    ])
+    expect(k.topPos).toBe('A')
+    expect(k.topNeg).toBe('B')
+  })
+
+  it('devuelve nulls y total 0 para entrada vacía', () => {
+    expect(calcularKpisBalance([])).toEqual({ totalIngresos: 0, topPos: null, topNeg: null })
+  })
+
+  it('topPos queda null si TODAS las OPCs son perdedoras netas', () => {
+    const k = calcularKpisBalance([b('A', 0, 10), b('B', 0, 5)])
+    expect(k.topPos).toBeNull()
+    expect(k.topNeg).toBe('A') // -10 < -5
+  })
+
+  it('topNeg queda null si TODAS las OPCs son ganadoras netas', () => {
+    const k = calcularKpisBalance([b('A', 10, 0), b('B', 5, 0)])
+    expect(k.topNeg).toBeNull()
+    expect(k.topPos).toBe('A') // +10 > +5
   })
 })

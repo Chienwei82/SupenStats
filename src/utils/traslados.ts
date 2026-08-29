@@ -1,49 +1,5 @@
-import type { AfiliadoMensual, RawAfiliado, RawLibreTransferencia, TrasladoBalance, TrasladoFlujo, VariacionPunto } from '../types/suppen'
-import { normalizeEntityName } from '../constants/suppen'
-
-/**
- * Construye la serie mensual de afiliados por OPC preservando null cuando la
- * API no trae dato. A diferencia de `transformAfiliados`, NUNCA convierte
- * null en 0: el reporte de traslados necesita distinguir "no disponible" de 0
- * para que las variaciones no se inventen.
- *
- * Regla: si TODOS los registros de `(entidad, fecha, fondo)` son null, la
- * celda queda `null`; si al menos uno trae un número, se suman los no-null
- * y se descartan los null.
- */
-export function construirSerieAfiliadosPorOpc(raw: RawAfiliado[]): AfiliadoMensual[] {
-  interface Acc {
-    entidad: string
-    fondo: string
-    fecha: string
-    sum: number
-    allNull: boolean
-  }
-  const map = new Map<string, Acc>()
-  for (const item of raw) {
-    const entidad = normalizeEntityName(item.entidad)
-    const fecha = String(item.fecha ?? '')
-    const key = `${entidad}|${fecha}|${item.codigofondo}`
-    const existing = map.get(key) ?? {
-      entidad,
-      fondo: item.codigofondo,
-      fecha,
-      sum: 0,
-      allNull: true,
-    }
-    if (item.afiliados != null) {
-      existing.sum += item.afiliados
-      existing.allNull = false
-    }
-    map.set(key, existing)
-  }
-  return Array.from(map.values()).map(a => ({
-    Entidad: a.entidad,
-    Fondo: a.fondo,
-    FechaCorte: a.fecha,
-    CantidadAfiliados: a.allNull ? null : a.sum,
-  }))
-}
+import type { AfiliadoMensual, RawLibreTransferencia, TrasladoBalance, TrasladoFlujo, VariacionPunto } from '../types/suppen'
+import { LT_DEST_KEYS, LT_DEST_KEY_TO_CANONICAL } from '../constants/suppen'
 
 /**
  * Calcula la variación mes a mes por OPC a partir de la serie de afiliados.
@@ -125,20 +81,6 @@ function calcularDelta(
 // Libre transferencia (matriz cruda)
 // ---------------------------------------------------------------------------
 
-/** Claves canónicas de las columnas destino en /lt (en el orden que expone
- *  la API; ver docs/docs/api-notes.md). Se conservan exactamente como llegan
- *  (con guion bajo) porque el `RawLibreTransferencia` las usa tal cual. */
-const LT_DEST_KEYS = [
-  'BN_VITAL',
-  'INS_PENSIONES',
-  'POPULAR',
-  'VIDA_PLENA',
-  'IBP_PENSIONES',
-  'BACSJ_PENSIONES',
-  'BCR_PENSION',
-  'CCSS_OPC',
-] as const
-
 /**
  * Construye el balance neto (ingresos - salidas) por OPC y mes a partir de
  * la matriz cruda de /lt.
@@ -180,6 +122,12 @@ export function construirBalanceTraslados(
     if (!fecha) continue
     const acc = ensure(fecha)
     const origen = normalizarOrigen(String(item.entidadorigen ?? ''))
+    // origenKey es la clave de columna en /lt que corresponde al origen.
+    // Devuelve null cuando la entidad origen no está mapeada (ej. INS PENSIONES
+    // o IBP PENSIONES, que aparecen en algunas filas de la API pero no son
+    // OPCs "destino" en la matriz). En ese caso no podemos detectar la
+    // diagonal: la dejamos pasar y confiamos en que /lt traiga 0 en la celda
+    // diagonal (verificado contra la API).
     const origenKey = origenToKey(origen)
 
     // Salidas del origen: suma de todas las celdas {DEST}_C de la fila.
@@ -188,7 +136,7 @@ export function construirBalanceTraslados(
       const v = Number(item[`${dest}_C`] ?? 0)
       if (!Number.isFinite(v)) continue
       // Excluir la diagonal para que "salidas" no incluya auto-traslados.
-      if (dest === origenKey) continue
+      if (origenKey != null && dest === origenKey) continue
       salidasOrig += v
     }
     if (salidasOrig > 0) {
@@ -196,11 +144,12 @@ export function construirBalanceTraslados(
     }
 
     // Ingresos: para cada columna {DEST}_C en esta fila, el DEST recibe `v`
-    // ingresos (siempre que sea > 0). Excluimos la diagonal.
+    // ingresos (siempre que sea > 0). Excluimos la diagonal si la podemos
+    // detectar.
     for (const dest of LT_DEST_KEYS) {
       const v = Number(item[`${dest}_C`] ?? 0)
       if (!Number.isFinite(v) || v === 0) continue
-      if (dest === origenKey) continue
+      if (origenKey != null && dest === origenKey) continue
       const destino = LT_DEST_KEY_TO_CANONICAL[dest]
       acc.ingresos.set(destino, (acc.ingresos.get(destino) ?? 0) + v)
     }
@@ -256,7 +205,10 @@ export function agregarFlujosPorOrigenDestino(
       const cantidad = Number(item[`${dest}_C`] ?? 0)
       const monto = Number(item[`${dest}_M`] ?? 0)
       if (!Number.isFinite(cantidad) || cantidad === 0) continue
-      if (dest === origenKey) continue
+      // Diagonal: solo la excluimos si podemos detectarla (origenKey != null).
+      // Para entidades no mapeadas (ej. INS PENSIONES) confiamos en que /lt
+      // traiga 0 en la celda diagonal, así que la dejamos pasar.
+      if (origenKey != null && dest === origenKey) continue
       const destino = LT_DEST_KEY_TO_CANONICAL[dest]
       const key = `${origen}|${destino}|${fecha}`
       const existing = map.get(key) ?? { origen, destino, cantidad: 0, monto: 0 }
@@ -277,17 +229,109 @@ export function agregarFlujosPorOrigenDestino(
   return [...totales.values()].sort((a, b) => b.Cantidad - a.Cantidad)
 }
 
-/** Mapea el nombre canónico de una OPC a la clave de columna en /lt. */
-function origenToKey(nombreCanonico: string): string | null {
-  return LT_KEY_TO_CANONICAL_KEY[nombreCanonico] ?? null
+/**
+ * Devuelve la clave de columna en /lt que corresponde a una OPC canónica, o
+ * null si la entidad no aparece como destino en la matriz. Implementado por
+ * iteración sobre `LT_DEST_KEYS` (8 entradas) en vez de un map inverso con
+ * `as` cast, para que un typo futuro sea visible.
+ */
+function origenToKey(nombreCanonico: string): (typeof LT_DEST_KEYS)[number] | null {
+  for (const k of LT_DEST_KEYS) {
+    if (LT_DEST_KEY_TO_CANONICAL[k] === nombreCanonico) return k
+  }
+  return null
+}
+
+/**
+ * Agrega por OPC la variación total y los mejores/peores meses a partir de la
+ * serie cruda (`AfiliadoMensual[]`) y los deltas ya calculados (`puntos`).
+ * Función pura: se extrae de `VariacionNetaChart` para poder testearla
+ * independientemente del componente.
+ */
+export interface VariacionPorOpc {
+  entidad: string
+  variacionTotal: number | null
+  variacionPctTotal: number | null
+  best: number | null
+  worst: number | null
+}
+
+export function agregarVariacionPorOpc(
+  data: AfiliadoMensual[],
+  puntos: VariacionPunto[],
+): VariacionPorOpc[] {
+  // Precomputar Map<ent, serie ordenada> en una sola pasada: antes `tabla`
+  // hacía data.filter(...).sort(...) por entidad, O(N_ent × N_total × log N).
+  const porEnt = new Map<string, AfiliadoMensual[]>()
+  for (const s of data) {
+    const list = porEnt.get(s.Entidad)
+    if (list) list.push(s)
+    else porEnt.set(s.Entidad, [s])
+  }
+  for (const list of porEnt.values()) {
+    list.sort((a, b) => Date.parse(a.FechaCorte) - Date.parse(b.FechaCorte))
+  }
+  return [...porEnt.keys()].sort().map(ent => {
+    const serieEnt = porEnt.get(ent)!
+    const primero = serieEnt[0]?.CantidadAfiliados ?? null
+    const ultimo = serieEnt[serieEnt.length - 1]?.CantidadAfiliados ?? null
+    const variacionTotal = primero != null && ultimo != null ? ultimo - primero : null
+    const variacionPctTotal =
+      primero != null && ultimo != null && primero !== 0
+        ? ((ultimo - primero) / primero) * 100
+        : null
+    // Best/worst en una sola pasada sobre los deltas de la entidad. Evita
+    // Math.max(...arr) que tira RangeError con arrays grandes y asigna dos
+    // arreglos filtrados en cada toggle de métrica.
+    let best: number | null = null
+    let worst: number | null = null
+    for (const p of puntos) {
+      const v = p[ent]
+      if (typeof v !== 'number') continue
+      if (best === null || v > best) best = v
+      if (worst === null || v < worst) worst = v
+    }
+    return { entidad: ent, variacionTotal, variacionPctTotal, best, worst }
+  })
+}
+
+/**
+ * Calcula los KPIs del balance de traslados: total de ingresos, OPC con mayor
+ * balance positivo y OPC con mayor balance negativo. Pura, para testear sin
+ * montar el componente.
+ */
+export interface BalanceKpis {
+  totalIngresos: number
+  topPos: string | null
+  topNeg: string | null
+}
+
+export function calcularKpisBalance(balances: TrasladoBalance[]): BalanceKpis {
+  if (balances.length === 0) return { totalIngresos: 0, topPos: null, topNeg: null }
+  let totalIngresos = 0
+  const porOpc = new Map<string, number>()
+  for (const b of balances) {
+    totalIngresos += b.Ingresos
+    porOpc.set(b.Entidad, (porOpc.get(b.Entidad) ?? 0) + b.Neto)
+  }
+  // topPos = OPC con mayor neto estrictamente positivo. Si todas son
+  // perdedoras, queda null (y la UI muestra "Ninguna OPC con balance
+  // positivo" en el subtítulo del KPI). topNeg es el simétrico.
+  let topPos: string | null = null
+  let topNeg: string | null = null
+  let maxPos: number | null = null
+  let minNeg: number | null = null
+  for (const [opc, n] of porOpc) {
+    if (n > 0 && (maxPos === null || n > maxPos)) { maxPos = n; topPos = opc }
+    if (n < 0 && (minNeg === null || n < minNeg)) { minNeg = n; topNeg = opc }
+  }
+  return { totalIngresos, topPos, topNeg }
 }
 
 /** Normaliza la `entidadorigen` de /lt a su nombre canónico, o devuelve
- *  el original si no hay mapeo (ej. INS PENSIONES, IBP PENSIONES). */
+ *  el original si no hay mapeo. Las variantes con guion bajo o sin
+ *  "PENSIONES" se resuelven acá; el resto pasa por `normalizeEntityName`. */
 function normalizarOrigen(origenRaw: string): string {
-  // /lt a veces entrega "POPULAR" (sin PENSIONES) o "VIDA_PLENA" (sin OPC y
-  // con guion bajo). Mapeamos al nombre canónico de la app para que las
-  // leyendas y KPIs coincidan con el resto de la UI.
   const M: Record<string, string> = {
     POPULAR: 'POPULAR PENSIONES',
     VIDA_PLENA: 'VIDA PLENA OPC',
@@ -296,20 +340,3 @@ function normalizarOrigen(origenRaw: string): string {
   }
   return M[origenRaw] ?? origenRaw
 }
-
-/** Mapea la clave de columna (destino) en /lt al nombre canónico de la OPC. */
-const LT_DEST_KEY_TO_CANONICAL: Record<(typeof LT_DEST_KEYS)[number], string> = {
-  BN_VITAL: 'BN-VITAL',
-  INS_PENSIONES: 'INS PENSIONES',
-  POPULAR: 'POPULAR PENSIONES',
-  VIDA_PLENA: 'VIDA PLENA OPC',
-  IBP_PENSIONES: 'IBP PENSIONES',
-  BACSJ_PENSIONES: 'BAC SJ PENSIONES',
-  BCR_PENSION: 'BCR-PENSION',
-  CCSS_OPC: 'CCSS-OPC',
-}
-
-const LT_KEY_TO_CANONICAL_KEY: Record<string, (typeof LT_DEST_KEYS)[number]> =
-  Object.fromEntries(
-    Object.entries(LT_DEST_KEY_TO_CANONICAL).map(([k, v]) => [v, k as (typeof LT_DEST_KEYS)[number]]),
-  )

@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
-import { calcularVariacionNeta } from '../../utils/traslados'
+import { agregarVariacionPorOpc, calcularVariacionNeta, type VariacionPorOpc } from '../../utils/traslados'
 import { formatDateShort, formatNumber, formatPercent } from '../../utils/dataTransformers'
 import { entityColor } from '../../constants/suppen'
+import { useUrlParam } from '../../hooks/useReportQuery'
 import { ChartCard } from '../ui/ChartCard'
 import { ChartNote } from '../ui/ChartNote'
 import type { AfiliadoMensual } from '../../types/suppen'
@@ -27,7 +28,13 @@ type SortDir = 'asc' | 'desc'
  * se representa como null y la línea muestra un hueco (connectNulls=false).
  */
 export function VariacionNetaChart({ data }: Props) {
-  const [metrica, setMetrica] = useState<'abs' | 'pct'>('abs')
+  // La métrica vive en la URL (`?variacion=abs|pct`) para que la vista quede
+  // reflejada en la URL y sea compartible, igual que los demás selectores.
+  const [metrica, setMetrica] = useUrlParam(
+    'variacion',
+    v => v === 'abs' || v === 'pct',
+    'abs',
+  ) as ['abs' | 'pct', (v: string) => void]
 
   const puntos = useMemo(() => calcularVariacionNeta(data, metrica), [data, metrica])
   const entidades = useMemo(() => {
@@ -36,32 +43,15 @@ export function VariacionNetaChart({ data }: Props) {
     return [...set].sort()
   }, [data])
 
-  // Tabla complementaria (R3.5): agregados por OPC en todo el rango.
-  const tabla = useMemo(() => {
-    return entidades.map(ent => {
-      const serieEnt = data
-        .filter(s => s.Entidad === ent)
-        .sort((a, b) => Date.parse(a.FechaCorte) - Date.parse(b.FechaCorte))
-      const primero = serieEnt[0]?.CantidadAfiliados ?? null
-      const ultimo = serieEnt[serieEnt.length - 1]?.CantidadAfiliados ?? null
-      const variacionTotal = primero != null && ultimo != null ? ultimo - primero : null
-      const variacionPctTotal =
-        primero != null && ultimo != null && primero !== 0
-          ? ((ultimo - primero) / primero) * 100
-          : null
-      const deltas = puntos
-        .map(p => p[ent])
-        .filter((v): v is number => typeof v === 'number')
-      const best = deltas.length > 0 ? Math.max(...deltas) : null
-      const worst = deltas.length > 0 ? Math.min(...deltas) : null
-      return { entidad: ent, variacionTotal, variacionPctTotal, best, worst }
-    })
-  }, [data, entidades, puntos])
+  const tabla = useMemo<VariacionPorOpc[]>(
+    () => agregarVariacionPorOpc(data, puntos),
+    [data, puntos],
+  )
 
   const [sortKey, setSortKey] = useState<SortKey>('entidad')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const tablaOrdenada = useMemo(() => {
-    const cmp = (a: typeof tabla[number], b: typeof tabla[number]): number => {
+    const cmp = (a: VariacionPorOpc, b: VariacionPorOpc): number => {
       const dir = sortDir === 'asc' ? 1 : -1
       switch (sortKey) {
         case 'entidad': return dir * a.entidad.localeCompare(b.entidad)
@@ -101,10 +91,6 @@ export function VariacionNetaChart({ data }: Props) {
           </button>
         ))}
       </div>
-
-      <p className="text-xs text-amber-600 dark:text-amber-400 mb-3">
-        Estimado derivado: incluye traslados entre OPCs, nuevas afiliaciones y bajas (pensionados, fallecidos, retiros). No es conteo directo de traslados.
-      </p>
 
       {puntos.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-[#a6accd] py-8 text-center">
@@ -151,11 +137,11 @@ export function VariacionNetaChart({ data }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs font-medium text-gray-500 dark:text-[#a6accd] uppercase">
-                <th className="px-2 py-2 cursor-pointer select-none" onClick={() => onSort('entidad')}>OPC {flecha(sortKey, sortDir, 'entidad')}</th>
-                <th className="px-2 py-2 text-right cursor-pointer select-none" onClick={() => onSort('total')}>Var. total {flecha(sortKey, sortDir, 'total')}</th>
-                <th className="px-2 py-2 text-right cursor-pointer select-none" onClick={() => onSort('pctTotal')}>Var. % total {flecha(sortKey, sortDir, 'pctTotal')}</th>
-                <th className="px-2 py-2 text-right cursor-pointer select-none" onClick={() => onSort('best')}>Mejor mes {flecha(sortKey, sortDir, 'best')}</th>
-                <th className="px-2 py-2 text-right cursor-pointer select-none" onClick={() => onSort('worst')}>Peor mes {flecha(sortKey, sortDir, 'worst')}</th>
+                <SortHeader sortKey="entidad" current={sortKey} dir={sortDir} onSort={onSort}>OPC</SortHeader>
+                <SortHeader sortKey="total" current={sortKey} dir={sortDir} onSort={onSort} align="right">Var. total</SortHeader>
+                <SortHeader sortKey="pctTotal" current={sortKey} dir={sortDir} onSort={onSort} align="right">Var. % total</SortHeader>
+                <SortHeader sortKey="best" current={sortKey} dir={sortDir} onSort={onSort} align="right">Mejor mes</SortHeader>
+                <SortHeader sortKey="worst" current={sortKey} dir={sortDir} onSort={onSort} align="right">Peor mes</SortHeader>
               </tr>
             </thead>
             <tbody>
@@ -191,7 +177,39 @@ function fmtDelta(v: number | null, kind: 'abs' | 'pct'): string {
   return formatNumber(v)
 }
 
-function flecha(activo: SortKey, dir: SortDir, k: SortKey): string {
-  if (activo !== k) return ''
-  return dir === 'asc' ? '▲' : '▼'
+interface SortHeaderProps {
+  sortKey: SortKey
+  current: SortKey
+  dir: SortDir
+  onSort: (k: SortKey) => void
+  align?: 'left' | 'right'
+  children: ReactNode
+}
+
+/**
+ * Celda de encabezado ordenable accesible. Usa un <button> dentro del <th> para
+ * que el comportamiento de teclado (Enter/Space), foco y roles de screen reader
+ * sean nativos sin reinventarlos a mano.
+ */
+function SortHeader({ sortKey, current, dir, onSort, align = 'left', children }: SortHeaderProps) {
+  const isActive = current === sortKey
+  const ariaSort = isActive ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'
+  return (
+    <th
+      scope="col"
+      aria-sort={ariaSort}
+      className={`px-2 py-2 ${align === 'right' ? 'text-right' : ''}`}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={`inline-flex items-center gap-1 select-none hover:text-gray-800 dark:hover:text-[#eeffff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#89ddff] focus-visible:rounded ${
+          align === 'right' ? 'flex-row-reverse' : ''
+        }`}
+      >
+        {children}
+        {isActive && <span aria-hidden="true">{dir === 'asc' ? '▲' : '▼'}</span>}
+      </button>
+    </th>
+  )
 }

@@ -186,14 +186,10 @@ export function PiramideChart({ afiliados, beneficios }: Props) {
   )
 }
 
-const chip = (activa: boolean) => `
+const cx = (activa: boolean) => `
   px-3 py-1 text-xs font-medium rounded-full border transition-colors
   ${activa
     ? 'bg-[#7c4dff] text-white border-[#7c4dff]'
     : 'bg-transparent text-gray-600 dark:text-[#a6accd] border-gray-300 dark:border-[#414868] hover:bg-gray-100 dark:hover:bg-[#303348]'
   }
 `
-
-function cx(activa: boolean) {
-  return chip(activa)
-}

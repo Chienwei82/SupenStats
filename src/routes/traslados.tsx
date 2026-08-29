@@ -9,14 +9,27 @@ import { ReportView } from '../components/ui/ReportView'
 import { transformAfiliadosMensual } from '../utils/dataTransformers'
 import type { AfiliadoMensual, RawAfiliado, RawLibreTransferencia } from '../types/suppen'
 
+/**
+ * validateSearch propio de /traslados: extiende el compartido con `vista`,
+ * que solo aplica a este reporte. Mantenerlo acá (en vez de en
+ * `reportSearchSchema`) evita acoplar `vista` al resto de rutas, donde
+ * no significa nada.
+ */
+function validateTrasladosSearch(input: Record<string, unknown>) {
+  const base = validateReportSearch(input)
+  return {
+    ...base,
+    vista: input.vista === 'traslados' || input.vista === 'neto' ? input.vista : undefined,
+  }
+}
+
 export const Route = createFileRoute('/traslados')({
-  validateSearch: validateReportSearch,
+  validateSearch: validateTrasladosSearch,
   component: TrasladosPage,
 })
 
 function TrasladosPage() {
-  const search = validateReportSearch({})
-  const applied = resolveFilters(search, FILTER_DEFAULTS.standard)
+  const applied = resolveFilters(validateReportSearch({}), FILTER_DEFAULTS.standard)
   const filters = useUrlFilters(applied)
 
   // /afiliado devuelve el desglose demográfico; lo agrupamos por
@@ -33,7 +46,11 @@ function TrasladosPage() {
 
   const loading = loadingAfiliados || loadingLT
   const error = errorAfiliados ?? errorLT ?? null
-  const refetch = () => { refetchAfiliados(); refetchLT() }
+  // dataCount es el máximo entre las dos queries: si una falla y la otra
+  // tiene datos, ReportView muestra el overlay de error sobre los datos
+  // válidos en vez de reemplazar la vista por un mensaje de error.
+  const dataCount = Math.max(afiliadosRaw?.length ?? 0, ltMatriz?.length ?? 0)
+  const refetch = () => Promise.all([refetchAfiliados(), refetchLT()])
 
   const afiliados: AfiliadoMensual[] = transformAfiliadosMensual(afiliadosRaw)
 
@@ -52,7 +69,7 @@ function TrasladosPage() {
         onDateRangeChange={(r) => filters.setDraft(d => ({ ...d, dates: r }))}
         onConsult={filters.consult}
       />
-      <ReportView loading={loading} error={error} dataCount={afiliados.length + ltMatriz.length} onRetry={refetch}>
+      <ReportView loading={loading} error={error} dataCount={dataCount} onRetry={refetch}>
         <Traslados afiliados={afiliados} trasladosMatriz={ltMatriz} />
       </ReportView>
     </section>
