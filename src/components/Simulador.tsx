@@ -3,9 +3,10 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
-import { calcularRentabilidadPromedio, proyeccionPension, MIN_CORTES_RENTABILIDAD } from '../utils/reportes'
+import { calcularRentabilidadPromedio, proyeccionPension, valorPresente, MIN_CORTES_RENTABILIDAD } from '../utils/reportes'
 import { formatCurrency, formatCurrencyMillions, getUniqueValues } from '../utils/dataTransformers'
 import { useUrlParam } from '../hooks/useReportQuery'
+import { useInflacion } from '../hooks/useInflacion'
 import { ChartCard } from './ui/ChartCard'
 import { ChartNote } from './ui/ChartNote'
 import { OPC_LIST } from '../constants/supen'
@@ -73,6 +74,28 @@ export function Simulador({ data }: Props) {
     })
   }, [inputsValidos, rentabilidad.promedio, saldoN, aporteN, edadRetiroN, edadActualN])
 
+  // Poder adquisitivo (Reporte 7): descuenta el monto nominal proyectado por
+  // la inflación promedio. Si no hay tasa de inflación (BCCR no conectado o
+  // histórico insuficiente), valorPresente devuelve null y solo se muestra el
+  // monto nominal. Nunca se inventa una cifra equivalente.
+  const { inflacion, integracionActiva, error: errorInflacion } = useInflacion()
+
+  const añosProyeccion = edadRetiroN - edadActualN
+
+  const montoValorPresente = useMemo(() => {
+    if (!proyeccion) return null
+    return valorPresente(proyeccion.montoFinal, añosProyeccion, inflacion.tasaAnual)
+  }, [proyeccion, añosProyeccion, inflacion.tasaAnual])
+
+  const ajusteInflacionMensaje =
+    errorInflacion != null
+      ? 'No se pudo obtener datos de inflación.'
+      : !integracionActiva
+        ? 'El ajuste por inflación no está disponible en este momento.'
+        : (inflacion.insuficiente && inflacion.tasaAnual == null)
+          ? 'Histórico de inflación insuficiente para proyectar el ajuste.'
+          : null
+
   return (
     <ChartCard
       title="Simulador: ¿cuánto tendré al pensionarme?"
@@ -139,6 +162,38 @@ export function Simulador({ data }: Props) {
                 : ''}.
             </p>
           </div>
+
+          {metrica === 'real' ? (
+            // La serie REAL de SUPEN ya está ajustada por inflación: este monto
+            // ya está en poder adquisitivo de hoy, no se descuenta otra vez.
+            <p className="mb-3 text-xs text-gray-500 dark:text-[#a6accd]">
+              Esta proyección usa la rentabilidad real (ya ajustada por inflación), por lo que el
+              monto está expresado en poder adquisitivo de hoy y no requiere descuento adicional.
+            </p>
+          ) : montoValorPresente != null && inflacion.tasaAnual != null ? (
+            <div className="mb-3 rounded-lg border border-blue-200 dark:border-[#2b2a3e] bg-blue-50 dark:bg-[#252a3a] px-4 py-3">
+              <p className="text-xs font-medium text-blue-900 dark:text-[#89ddff]">
+                Equivalente en colones de hoy
+              </p>
+              <p className="text-3xl font-bold text-blue-900 dark:text-[#89ddff]">
+                {formatCurrency(montoValorPresente)}
+              </p>
+              <p className="text-xs text-blue-900/80 dark:text-[#89ddff]/80 mt-1">
+                Este monto representa cuánto valdría hoy lo que recibirías al retirarte: la
+                inflación acumulada reduce el poder adquisitivo del dinero nominal futuro.
+              </p>
+              <p className="text-xs text-blue-900/80 dark:text-[#89ddff]/80 mt-1">
+                Basado en inflación promedio {inflacion.fechaInicio?.slice(0, 4)}–
+                {inflacion.fechaFin?.slice(0, 4)} de {(inflacion.tasaAnual * 100).toFixed(2)}% anual
+                ({inflacion.nAnios} años).
+              </p>
+            </div>
+          ) : ajusteInflacionMensaje ? (
+            <p className="mb-3 text-sm text-amber-600 dark:text-amber-400">
+              {ajusteInflacionMensaje} Se muestra solo el monto nominal; no se presenta una cifra
+              equivalente inventada.
+            </p>
+          ) : null}
 
           <ResponsiveContainer width="100%" height={320}>
             <LineChart data={proyeccion.curva} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>

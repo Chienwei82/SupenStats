@@ -317,6 +317,14 @@ En **rama** `feature/poder-adquisitivo-pension`, en este orden:
 2. Implementar Vercel Function `api/bccr-inflacion.ts` + env vars `BCCR_EMAIL`/`BCCR_TOKEN`.
 3. Conectar `useInflacion()` al proxy. Sin cambios en los helpers ni en `Simulador.tsx`.
 
+### Nota de implementación (metría real)
+
+Si la métrica seleccionada en el simulador es **`real`**, el monto proyectado ya está
+ajustado por inflación (la serie REAL la calcula y publica SUPEN), por lo que **no** se
+descuenta nuevamente: el valor presente ya está embebido. `Simulador.tsx` muestra en ese
+caso una nota aclaratoria en lugar de aplicar `valorPresente()`. El descuento por
+inflación solo aplica cuando la proyección usa la métrica nominal.
+
 ### Verificación
 
 ```bash
