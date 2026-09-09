@@ -6,8 +6,12 @@ import {
   regresionLineal,
   calcularRentabilidadPromedio,
   proyeccionPension,
+  valorPresente,
+  calcularTasaInflacionPromedio,
+  ANIOS_INFLACION,
+  MIN_ANIOS_INFLACION,
 } from '../reportes'
-import type { RendimientoComparado, Comision, RentabilidadSerie } from '../../types/supen'
+import type { RendimientoComparado, Comision, RentabilidadSerie, RegistroIPC } from '../../types/supen'
 
 function rend(parcial: Partial<RendimientoComparado>): RendimientoComparado {
   return {
@@ -237,5 +241,96 @@ describe('proyeccionPension', () => {
     const conTasa = proyeccionPension({ saldoInicial: 1_000_000, aporteMensual: 0, anios: 10, tasaAnual: 0.07, edadActual: 40 })
     expect(conTasa.montoFinal).toBeGreaterThan(cero.montoFinal)
     expect(conTasa.montoFinal).toBeCloseTo(1_000_000 * Math.pow(1.07, 10), 0)
+  })
+})
+
+describe('valorPresente', () => {
+  it('descuenta por inflación acumulada con la fórmula aprobada', () => {
+    // 1M en 10 años con 4% anual => 1M / 1.04^10 ≈ 675 564.17
+    expect(valorPresente(1_000_000, 10, 0.04)).toBeCloseTo(675_564.17, 2)
+  })
+
+  it('devuelve null si no hay tasa de inflación (no inventa)', () => {
+    expect(valorPresente(1_000_000, 10, null)).toBeNull()
+  })
+
+  it('con tasa 0 o años 0 no descuenta', () => {
+    expect(valorPresente(1_000_000, 10, 0)).toBeCloseTo(1_000_000)
+    expect(valorPresente(1_000_000, 0, 0.04)).toBeCloseTo(1_000_000)
+  })
+})
+
+describe('calcularTasaInflacionPromedio', () => {
+  // Un registro por año (valor representativo del promedio IPC anual).
+  const ipc = (year: number, valor: number | null): RegistroIPC => ({
+    fecha: `${year}-06-15`,
+    valor,
+  })
+
+  // Genera N años con crecimiento geométrico `factor` (ej. 1.04 = 4% anual).
+  const anos = (factor: number, desde: number, hasta: number): RegistroIPC[] =>
+    Array.from({ length: hasta - desde + 1 }, (_, k) => ipc(desde + k, 100 * Math.pow(factor, k)))
+
+  it('promedio geométrico de tasas anuales consecutivas', () => {
+    // 2015..2025 => 10 tasas anuales, todas 4% => geométrico = 4%
+    const out = calcularTasaInflacionPromedio(anos(1.04, 2015, 2025))
+    expect(out.tasaAnual).toBeCloseTo(0.04, 8)
+    expect(out.insuficiente).toBe(false)
+    expect(out.nAnios).toBe(10)
+    expect(out.fechaInicio).toBe('2016-01-01')
+    expect(out.fechaFin).toBe('2025-12-01')
+  })
+
+  it('usa solo la ventana de ANIOS_INFLACION más reciente', () => {
+    // 2014..2025: la tasa de 2015 (400%) y las de la ventana (4%).
+    const base = anos(1.04, 2015, 2025) // 2015 = 100, luego 4% anual
+    const datos = [ipc(2014, 20), ...base] // 2014 = 20 => tasa 2015 de 400%
+    const out = calcularTasaInflacionPromedio(datos)
+    expect(out.nAnios).toBe(ANIOS_INFLACION)
+    // La tasa exagerada de 2015 queda fuera de la ventana.
+    expect(out.tasaAnual).toBeCloseTo(0.04, 8)
+    expect(out.fechaInicio).toBe('2016-01-01')
+  })
+
+  it('marca insuficiente si hay menos de MIN_ANIOS_INFLACION tasas', () => {
+    const out = calcularTasaInflacionPromedio(anos(1.04, 2015, 2017))
+    expect(out.tasaAnual).toBeNull()
+    expect(out.insuficiente).toBe(true)
+    expect(out.nAnios).toBe(2)
+  })
+
+  it('con lista vacía devuelve insuficiente sin tasa', () => {
+    const out = calcularTasaInflacionPromedio([])
+    expect(out.tasaAnual).toBeNull()
+    expect(out.insuficiente).toBe(true)
+    expect(out.nAnios).toBe(0)
+  })
+
+  it('ignora registros sin valor (null) en vez de tratarlos como 0', () => {
+    const base = anos(1.04, 2015, 2025)
+    // Reemplaza 2017 y 2020 por registros sin valor (la base los trae con dato).
+    const datos = base.map(r => {
+      const anio = Number(r.fecha.slice(0, 4))
+      return anio === 2017 || anio === 2020 ? ipc(anio, null) : r
+    })
+    const out = calcularTasaInflacionPromedio(datos)
+    // Pares válidos restantes: 2016, 2019 y 2022..2025 => 6 tasas, todas 4%.
+    expect(out.tasaAnual).toBeCloseTo(0.04, 8)
+    expect(out.nAnios).toBe(6)
+  })
+
+  it('requiere años consecutivos con dato para formar una tasa', () => {
+    // Sin dato en 2018 => no hay tasa 2017->2018 ni 2018->2019.
+    const base = anos(1.04, 2015, 2017)
+    const despues = anos(1.04, 2019, 2025).map(r => ipc(Number(r.fecha.slice(0, 4)), r.valor))
+    const datos = [...base, ipc(2018, null), ...despues]
+    const out = calcularTasaInflacionPromedio(datos)
+    // Tasas: 2016, 2017, 2020..2025 => 8 tasas, todas 4% => geométrico 4%.
+    expect(out.tasaAnual).toBeCloseTo(0.04, 8)
+    expect(out.nAnios).toBe(8)
+  })
+
+  it('MIN_ANIOS_INFLACION se respeta como umbral inferior', () => {
+    expect(MIN_ANIOS_INFLACION).toBe(5)
   })
 })

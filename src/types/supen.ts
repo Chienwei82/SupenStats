@@ -194,6 +194,31 @@ export interface TrasladoFlujo {
 
 export type FondoTipo = 'ROP' | 'FCL' | 'VOL' | 'BASI' | 'OCUP' | 'VOLCA' | 'VOLCB' | 'VOLDA' | 'VOLDB'
 
+// ---------------------------------------------------------------------------
+// Reporte 'Poder adquisitivo de la pensión proyectada'
+// ---------------------------------------------------------------------------
+
+/** Observación mensual del índice de precios al consumidor (IPC) del BCCR. */
+export interface RegistroIPC {
+  fecha: string
+  /** Nivel del IPC (índice, no tasa). null = no reportado; nunca interpretar como 0. */
+  valor: number | null
+}
+
+/** Resultado del cálculo de la tasa de inflación promedio. */
+export interface InflacionPromedio {
+  /** Tasa anual promedio en decimal (ej. 0.045 = 4.5%). null = sin datos suficientes. */
+  tasaAnual: number | null
+  /** Cantidad de tasas anuales usadas en el promedio. */
+  nAnios: number
+  /** Primer año de la ventana usada, en ISO ('YYYY-01-01'). null si insuficiente. */
+  fechaInicio: string | null
+  /** Último año de la ventana usada, en ISO ('YYYY-12-01'). null si insuficiente. */
+  fechaFin: string | null
+  /** true si hubo datos pero por debajo del mínimo usable; la UI debe avisar. */
+  insuficiente: boolean
+}
+
 export interface DateRange {
   FechaInicio: string
   FechaFinal: string

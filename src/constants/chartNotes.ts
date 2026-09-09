@@ -121,7 +121,7 @@ export const CHART_NOTES: Record<string, ChartNote> = {
   simulador: {
     title: '¿Cómo leer este simulador?',
     body:
-      'Este simulador proyecta el monto que podrías acumular en tu cuenta de pensión (ROP) al momento de retirarte, a partir de tu saldo actual, tus aportes mensuales y tu edad. La tasa de crecimiento que usa es el promedio de la rentabilidad histórica (anualizada) de la operadora (OPC) que elijas. Es una estimación educativa basada en el desempeño pasado: la rentabilidad futura puede ser mayor o menor, y en ningún caso es una garantía de resultado. No considera cambios en comisiones, inflación ni aportes patronales adicionales.',
+      'Este simulador proyecta el monto que podrías acumular en tu cuenta de pensión (ROP) al momento de retirarte, a partir de tu saldo actual, tus aportes mensuales y tu edad. La tasa de crecimiento que usa es el promedio de la rentabilidad histórica (anualizada) de la operadora (OPC) que elijas. Es una estimación educativa basada en el desempeño pasado: la rentabilidad futura puede ser mayor o menor, y en ningún caso es una garantía de resultado. Cuando hay datos de inflación disponibles, se muestra además el monto equivalente en "colones de hoy", que descuenta la inflación promedio acumulada hasta el retiro: ese valor representa cuánto poder adquisitivo tendría realmente tu pensión futura. Si el dato de inflación no está disponible, solo se muestra el monto nominal. No considera cambios en comisiones ni aportes patronales adicionales.',
     references: [
       { label: 'SUPEN — ¿Cómo obtener una mejor pensión?', url: 'https://www.supen.fi.cr/como-obtener-una-mejor-pension' },
       { label: 'SUPEN — Estadísticas del sistema de pensiones', url: 'https://www.supen.fi.cr/estadisticas' },

@@ -5,6 +5,8 @@ import type {
   RentabilidadSerie,
   PuntoComisionRentabilidad,
   ExcluidoComisionRentabilidad,
+  RegistroIPC,
+  InflacionPromedio,
 } from '../types/supen'
 
 // Periodicidades que expone la API de rendimiento, en orden de presentación.
@@ -249,4 +251,105 @@ export function proyeccionPension({
     curva.push({ anio: t, edad: edadActual + t, saldo })
   }
   return { montoFinal: curva.length > 0 ? curva[curva.length - 1].saldo : saldoInicial, curva }
+}
+
+// ---------------------------------------------------------------------------
+// Poder adquisitivo (Reporte 7)
+// ---------------------------------------------------------------------------
+
+/**
+ * Años mínimos de tasas anuales para considerar la inflación promedio
+ * "confiable". Por debajo de esto se devuelve `tasaAnual = null` y la UI debe
+ * informar que el ajuste por inflación no está disponible.
+ */
+export const MIN_ANIOS_INFLACION = 5
+
+/**
+ * Ventana de promediación aprobada (DESIGN.md §5): se usan hasta los últimos
+ * 10 años de tasas anuales disponibles.
+ */
+export const ANIOS_INFLACION = 10
+
+const AUSENTE: InflacionPromedio = {
+  tasaAnual: null,
+  nAnios: 0,
+  fechaInicio: null,
+  fechaFin: null,
+  insuficiente: true,
+}
+
+/**
+ * Promedio geométrico de las tasas de inflación anuales derivadas del IPC
+ * mensual del BCCR, restringido a la ventana `ANIOS_INFLACION` más reciente.
+ *
+ * Método (DESIGN.md §5): agrupa el IPC por año, calcula el promedio anual,
+ * deriva la tasa anual de cada par de años consecutivos
+ * (avg[Y]/avg[Y-1] − 1) y promedia geométricamente las tasas de la ventana:
+ * (∏(1+tasa))^(1/n) − 1.
+ *
+ * No inventa: si hay menos de `MIN_ANIOS_INFLACION` tasas anuales, devuelve
+ * `tasaAnual = null` e `insuficiente: true`.
+ */
+export function calcularTasaInflacionPromedio(
+  ipcMensual: RegistroIPC[],
+  minAnios: number = MIN_ANIOS_INFLACION,
+): InflacionPromedio {
+  const porAnio = new Map<number, { suma: number; n: number }>()
+  for (const r of ipcMensual) {
+    if (r.valor == null) continue
+    const anio = Number(r.fecha.slice(0, 4))
+    if (!Number.isFinite(anio)) continue
+    const acc = porAnio.get(anio) ?? { suma: 0, n: 0 }
+    acc.suma += r.valor
+    acc.n += 1
+    porAnio.set(anio, acc)
+  }
+  if (porAnio.size === 0) return AUSENTE
+
+  const anios = [...porAnio.keys()].sort((a, b) => a - b)
+  const promedioAnual = new Map(anios.map(a => [a, porAnio.get(a)!.suma / porAnio.get(a)!.n]))
+
+  // Tasa anual de cada par de años calendario consecutivos con dato.
+  // Un hueco (año sin dato) NO forma tasa: requeriría cruzar dos años no
+  // contiguos, lo que mezclaría periodos distintos.
+  const tasas: { anio: number; tasa: number }[] = []
+  for (let i = 1; i < anios.length; i++) {
+    if (anios[i] !== anios[i - 1] + 1) continue
+    const actual = promedioAnual.get(anios[i]) as number
+    const anterior = promedioAnual.get(anios[i - 1]) as number
+    tasas.push({ anio: anios[i], tasa: actual / anterior - 1 })
+  }
+
+  // Ventana: las ANIOS_INFLACION tasas más recientes.
+  const ventana = tasas.slice(-ANIOS_INFLACION)
+  if (ventana.length < minAnios) {
+    return { ...AUSENTE, nAnios: ventana.length }
+  }
+
+  let producto = 1
+  for (const { tasa } of ventana) {
+    producto *= 1 + tasa
+  }
+  const promedio = Math.pow(producto, 1 / ventana.length) - 1
+  return {
+    tasaAnual: promedio,
+    nAnios: ventana.length,
+    fechaInicio: `${ventana[0].anio}-01-01`,
+    fechaFin: `${ventana[ventana.length - 1].anio}-12-01`,
+    insuficiente: false,
+  }
+}
+
+/**
+ * Valor presente del monto proyectado, descontado por la inflación acumulada
+ * proyectada: `monto / (1 + tasa)^años`. Devuelve `null` si no hay tasa
+ * (la UI debe mostrar solo el monto nominal, nunca inventar la cifra).
+ */
+export function valorPresente(
+  montoNominal: number,
+  añosHastaRetiro: number,
+  tasaInflacionAnual: number | null,
+): number | null {
+  if (tasaInflacionAnual == null) return null
+  return montoNominal / Math.pow(1 + tasaInflacionAnual, añosHastaRetiro)
 }
