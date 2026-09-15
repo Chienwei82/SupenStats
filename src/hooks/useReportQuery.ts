@@ -5,7 +5,8 @@ import type { FondoTipo, DateRange } from '../types/supen'
 
 /**
  * Search params de filtros compartidos por todas las rutas de reportes.
- * Validados con zod en el `validateSearch` de cada ruta.
+ * Normalizados por `reportSearchSchema` (zod) en el `validateSearch` de cada
+ * ruta; los defaults se aplican después en `resolveFilters`.
  */
 export interface ReportSearch {
   fondo?: FondoTipo | ''

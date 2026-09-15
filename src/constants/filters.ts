@@ -6,18 +6,23 @@ import { FONDO_DEFAULT, DATE_RANGE_DEFAULT, PORTFOLIO_RANGE, COMISION_RANGE, ISI
  * Esquema de search params de filtros para las rutas de reportes.
  * Todos los campos son opcionales: al faltar se aplican los defaults del
  * reporte. Esto permite URLs compartibles tipo /portafolio?fondo=FCL&...
+ *
+ * `.catch(undefined)` hace que valores malformados (ej. arrays de parámetro
+ * repetido en la URL) se normalicen a undefined en vez de lanzar: con la
+ * validación estricta de zod un ?fechaInicio=a&fechaInicio=b tumbaría la
+ * ruta. Es la única fuente de verdad de validación (ver validateReportSearch).
  */
 export const reportSearchSchema = z.object({
-  fondo: z.string().optional(),
-  fechaInicio: z.string().optional(),
-  fechaFinal: z.string().optional(),
+  fondo: z.string().optional().catch(undefined),
+  fechaInicio: z.string().optional().catch(undefined),
+  fechaFinal: z.string().optional().catch(undefined),
   // Params extra de los reportes de rentabilidad/comisiones. Opcionales y
   // validados al consumirlos; al faltar aplican los defaults del componente.
-  periodicidad: z.string().optional(),
-  corte: z.string().optional(),
-  metrica: z.enum(['nominal', 'real']).optional(),
+  periodicidad: z.string().optional().catch(undefined),
+  corte: z.string().optional().catch(undefined),
+  metrica: z.enum(['nominal', 'real']).optional().catch(undefined),
   // OPC de referencia del simulador (selector propio, no es filtro de API).
-  entidad: z.string().optional(),
+  entidad: z.string().optional().catch(undefined),
 })
 
 export type ReportSearchInput = z.infer<typeof reportSearchSchema>

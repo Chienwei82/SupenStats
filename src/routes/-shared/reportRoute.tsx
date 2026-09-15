@@ -3,7 +3,7 @@ import { useSearch } from '@tanstack/react-router'
 import { FilterBar } from '../../components/ui/FilterBar'
 import { ReportView } from '../../components/ui/ReportView'
 import { useReportQuery, useUrlFilters } from '../../hooks/useReportQuery'
-import { resolveFilters } from '../../constants/filters'
+import { reportSearchSchema, resolveFilters } from '../../constants/filters'
 import type { ReportSearchInput } from '../../constants/filters'
 import type { FondoTipo, DateRange } from '../../types/supen'
 
@@ -23,15 +23,10 @@ interface ReportRouteConfig {
  * undefined. Los defaults se aplican en el componente vía resolveFilters.
  */
 export function validateReportSearch(search: Record<string, unknown>): ReportSearchInput {
-  return {
-    fondo: typeof search.fondo === 'string' ? search.fondo : undefined,
-    fechaInicio: typeof search.fechaInicio === 'string' ? search.fechaInicio : undefined,
-    fechaFinal: typeof search.fechaFinal === 'string' ? search.fechaFinal : undefined,
-    periodicidad: typeof search.periodicidad === 'string' ? search.periodicidad : undefined,
-    corte: typeof search.corte === 'string' ? search.corte : undefined,
-    metrica: search.metrica === 'real' ? 'real' : search.metrica === 'nominal' ? 'nominal' : undefined,
-    entidad: typeof search.entidad === 'string' ? search.entidad : undefined,
-  }
+  // Normalización tolerante con reportSearchSchema (única fuente de verdad):
+  // valores inválidos → undefined (→ defaults del reporte), claves ajenas al
+  // schema (ej. vista/variacion de otras rutas) se descartan. Nunca lanza.
+  return reportSearchSchema.parse(search)
 }
 
 /**

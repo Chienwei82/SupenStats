@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { resolveFilters, sanitizeDate } from '../filters'
+import { validateReportSearch } from '../../routes/-shared/reportRoute'
 import { filtersToSearch } from '../../hooks/useReportQuery'
 
 describe('filtersToSearch + resolveFilters (round-trip de "Todos los fondos")', () => {
@@ -46,5 +47,23 @@ describe('sanitizeDate / resolveFilters (rangos)', () => {
 
   it('rechaza valores no string (arrays de query param)', () => {
     expect(resolveFilters({ fondo: 'ROP' } as never, defaults).fondo).toBe('ROP')
+  })
+})
+
+describe('validateReportSearch (zod como única fuente)', () => {
+  it('convierte valores inválidos en undefined en vez de fallar o dejar basura', () => {
+    expect(validateReportSearch({ fondo: ['ROP'] })).toEqual({})
+    expect(validateReportSearch({ metrica: 'bogus' }).metrica).toBeUndefined()
+    expect(validateReportSearch({ metrica: 'real' }).metrica).toBe('real')
+  })
+
+  it('descarta claves no del schema (vista/variacion no deben colarse)', () => {
+    const out = validateReportSearch({ fondo: 'ROP', vista: 'neto' })
+    expect(out).not.toHaveProperty('vista')
+  })
+
+  it('pasa strings válidos tal cual', () => {
+    const out = validateReportSearch({ fondo: 'FCL', fechaInicio: '2024-01-01', entidad: 'BN-VITAL' })
+    expect(out).toMatchObject({ fondo: 'FCL', fechaInicio: '2024-01-01', entidad: 'BN-VITAL' })
   })
 })
