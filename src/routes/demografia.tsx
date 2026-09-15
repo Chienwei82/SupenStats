@@ -3,13 +3,14 @@ import { createReportRoute, validateReportSearch } from './-shared/reportRoute'
 import { DemografiaChart } from '../components/charts/DemografiaChart'
 import { fetchAfiliadosDemograficos } from '../api/apiService'
 import { FILTER_DEFAULTS } from '../constants/filters'
+import type { AfiliadoDemografico } from '../types/supen'
 
 export const Route = createFileRoute('/demografia')({
   validateSearch: validateReportSearch,
-  component: createReportRoute({
+  component: createReportRoute<AfiliadoDemografico>({
     endpoint: 'demografia',
     defaults: FILTER_DEFAULTS.standard,
     fetcher: (f, signal) => fetchAfiliadosDemograficos(undefined, f.fondo || undefined, f.dates, signal),
-    render: data => <DemografiaChart data={data as never} />,
+    render: data => <DemografiaChart data={data} />,
   }),
 })

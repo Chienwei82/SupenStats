@@ -7,7 +7,7 @@ import type { ComisionRentabilidadDataset } from '../types/supen'
 
 export const Route = createFileRoute('/comision-rentabilidad')({
   validateSearch: validateReportSearch,
-  component: createReportRoute({
+  component: createReportRoute<ComisionRentabilidadDataset>({
     endpoint: 'comision-rentabilidad',
     defaults: FILTER_DEFAULTS.standard,
     // El reporte cruza dos endpoints: componemos ambos en una sola query y
@@ -19,6 +19,6 @@ export const Route = createFileRoute('/comision-rentabilidad')({
       ])
       return [{ comisiones, rendimientos }]
     },
-    render: data => <ComisionVsRentabilidadChart data={data as never} />,
+    render: data => <ComisionVsRentabilidadChart data={data} />,
   }),
 })

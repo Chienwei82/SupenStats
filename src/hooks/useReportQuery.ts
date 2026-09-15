@@ -1,11 +1,12 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import type { FondoTipo, DateRange } from '../types/supen'
 
 /**
  * Search params de filtros compartidos por todas las rutas de reportes.
- * Validados con zod en el `validateSearch` de cada ruta.
+ * Normalizados por `reportSearchSchema` (zod) en el `validateSearch` de cada
+ * ruta; los defaults se aplican después en `resolveFilters`.
  */
 export interface ReportSearch {
   fondo?: FondoTipo | ''
@@ -15,7 +16,9 @@ export interface ReportSearch {
 
 export function filtersToSearch(applied: { fondo: FondoTipo | ''; dates?: DateRange }): ReportSearch {
   return {
-    fondo: applied.fondo || undefined,
+    // `??` (no `||`) preserva '' ("Todos los fondos"): con `||`, '' se perdía
+    // y el pipeline volvía en silencio al fondo por defecto.
+    fondo: applied.fondo ?? undefined,
     fechaInicio: applied.dates?.FechaInicio,
     fechaFinal: applied.dates?.FechaFinal,
   }
@@ -29,10 +32,15 @@ export function filtersToSearch(applied: { fondo: FondoTipo | ''; dates?: DateRa
 export function useReportQuery<T>(
   key: readonly unknown[],
   fetchFn: (signal?: AbortSignal) => Promise<T[]>,
+  options?: { enabled?: boolean },
 ) {
   const query = useQuery({
     queryKey: key,
     queryFn: ({ signal }) => fetchFn(signal),
+    // `enabled: false` evita descargar un endpoint que la vista actual no usa
+    // (ej. /traslados alterna entre /afiliado y /lt); la data se conserva en
+    // caché y se sirve al volver, evitando descargas innecesarias (~80k regs).
+    enabled: options?.enabled,
     // La API de SUPEN no soporta bien reintentos concurrentes en endpoints
     // pesados; con retry:1 global basta.
     placeholderData: prev => prev,
@@ -60,6 +68,20 @@ export function useReportQuery<T>(
 export function useUrlFilters(defaults: { fondo: FondoTipo | ''; dates?: DateRange }) {
   const navigate = useNavigate()
   const [draft, setDraft] = useState(defaults)
+
+  // Re-sincroniza el draft cuando los applied cambian por fuera de la edición
+  // (back/forward, link compartido): antes el draft quedaba desincronizado y
+  // FilterBar mostraba valores viejos mientras el query ya refetcheaba. Se
+  // compara un key via ref y no `defaults` directamente para no resetear en
+  // cada render (defaults es una objeto nuevo por ruta).
+  const appliedKey = JSON.stringify([defaults.fondo, defaults.dates?.FechaInicio, defaults.dates?.FechaFinal])
+  const lastAppliedRef = useRef(appliedKey)
+  useEffect(() => {
+    if (lastAppliedRef.current !== appliedKey) {
+      lastAppliedRef.current = appliedKey
+      setDraft(defaults)
+    }
+  }, [appliedKey, defaults])
 
   const consult = useCallback(() => {
     void navigate({

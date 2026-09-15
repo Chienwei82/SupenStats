@@ -75,6 +75,33 @@ export const ENTITY_NAME_MAP: Record<string, string> = {
   'TOTAL': 'TOTAL',
 }
 
+/** Mapea la `entidadorigen` de /lt al nombre canónico de la OPC. Combina las
+ *  variantes con guion bajo que usa la matriz (ej. 'VIDA_PLENA') con los
+ *  nombres que ya resuelve `ENTITY_NAME_MAP` (ej. 'VIDA PLENA'). Este es el
+ *  fuente única para /lt: antes vivía duplicado en `utils/traslados`. */
+export const LT_ORIGEN_TO_CANONICAL: Record<string, string> = {
+  POPULAR: 'POPULAR PENSIONES',
+  'POPULAR PENSIONES': 'POPULAR PENSIONES',
+  VIDA_PLENA: 'VIDA PLENA OPC',
+  'VIDA PLENA': 'VIDA PLENA OPC',
+  'VIDA PLENA OPC': 'VIDA PLENA OPC',
+  BACSJ_PENSIONES: 'BAC SJ PENSIONES',
+  'BACSJ PENSIONES': 'BAC SJ PENSIONES',
+  'BAC SJ PENSIONES': 'BAC SJ PENSIONES',
+  BCR_PENSION: 'BCR-PENSION',
+  'BCR-PENSION': 'BCR-PENSION',
+  BN_VITAL: 'BN-VITAL',
+  'BN-VITAL': 'BN-VITAL',
+  CCSS_OPC: 'CCSS-OPC',
+  'CCSS-OPC': 'CCSS-OPC',
+  'INS PENSIONES': 'INS PENSIONES',
+  'IBP PENSIONES': 'IBP PENSIONES',
+}
+
+export function normalizeLtOrigen(name: string): string {
+  return LT_ORIGEN_TO_CANONICAL[name] ?? name
+}
+
 export function normalizeEntityName(name: string): string {
   return ENTITY_NAME_MAP[name] ?? name
 }

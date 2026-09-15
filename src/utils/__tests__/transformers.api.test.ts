@@ -48,13 +48,22 @@ describe('transformRendimientos', () => {
       RendimientoReal: 3.2,
     })
   })
+
+  it('preserva null (no disponible) sin convertirlo a 0%', () => {
+    const raw = [
+      { entidad: 'POPULAR', tipo: 'NOMINAL', periodicidad: 'ANUAL', rentabilidad: null, fecha: '2023-12-31', codigofondo: 'ROP' },
+    ] as unknown as RawRendimiento[]
+    const result = transformRendimientos(raw)
+    expect(result[0]?.RendimientoNominal).toBeNull()
+    expect(result[0]?.RendimientoReal).toBeNull()
+  })
 })
 
 describe('transformPortafolio', () => {
-  it('mapea campos y trata monto null como 0', () => {
+  it('mapea campos y preserva monto null (no inventa 0)', () => {
     const raw = { entidad: 'CCSS-OPC', instrumento: 'BONOS', montocolones: null, fecha: '2024-05-01', codigofondo: 'ROP' } as unknown as RawPortafolio
     const r = transformPortafolio(raw)
-    expect(r).toMatchObject({ Entidad: 'CCSS-OPC', TipoInstrumento: 'BONOS', Monto: 0 })
+    expect(r).toMatchObject({ Entidad: 'CCSS-OPC', TipoInstrumento: 'BONOS', Monto: null })
   })
 })
 
@@ -67,6 +76,24 @@ describe('transformAfiliados', () => {
     const result = transformAfiliados([item(100), item(50), { ...item(10), entidad: 'BCR-PENSION' }])
     expect(result).toHaveLength(2)
     expect(result.find(r => r.Entidad === 'POPULAR PENSIONES')?.CantidadAfiliados).toBe(150)
+  })
+
+  it('preserva null si todas las filas de la celda son null', () => {
+    const item = (afiliados: number | null): RawAfiliado => ({
+      entidad: 'POPULAR', codigofondo: 'ROP', fecha: '2024-03-01', fondo: 'ROP',
+      afiliados, sexo: 'MASCULINO', codigosexo: 'M', rangoedad: '25-30', aportantes: 0,
+    })
+    const result = transformAfiliados([item(null), item(null)])
+    expect(result[0]?.CantidadAfiliados).toBeNull()
+  })
+
+  it('suma los no-null cuando hay mezcla', () => {
+    const item = (afiliados: number | null): RawAfiliado => ({
+      entidad: 'POPULAR', codigofondo: 'ROP', fecha: '2024-03-01', fondo: 'ROP',
+      afiliados, sexo: 'MASCULINO', codigosexo: 'M', rangoedad: '25-30', aportantes: 0,
+    })
+    const result = transformAfiliados([item(10), item(null)])
+    expect(result[0]?.CantidadAfiliados).toBe(10)
   })
 })
 
@@ -116,6 +143,15 @@ describe('transformCuentas', () => {
     expect(result).toHaveLength(1)
     expect(result[0]?.MontoColones).toBe(3_000)
   })
+
+  it('deja null si todos los registros de la celda son null', () => {
+    const item = (m: number | null): RawCuenta => ({
+      entidad: 'BAC SJ PENSIONES', codigofondo: 'ROP', fecha: '2024-06-01', fondo: 'ROP',
+      cuenta: 'ACTIVO', montocolones: m,
+    })
+    const result = transformCuentas([item(null), item(null)])
+    expect(result[0]?.MontoColones).toBeNull()
+  })
 })
 
 describe('transformLibreTransferencia', () => {
@@ -133,6 +169,19 @@ describe('transformLibreTransferencia', () => {
     const vidaPlena = result.find(r => r.Entidad.includes('VIDA PLENA'))
     expect(vidaPlena).toMatchObject({ CantidadTransferencias: 12, MontoTransferido: 450_000_000 })
   })
+
+  it('usa nombres canónicos de OPC para origen y destino (colores/leyendas consistentes)', () => {
+    const raw: RawLibreTransferencia[] = [{
+      fecha: '2024-06-01',
+      entidadorigen: 'VIDA_PLENA',
+      BCR_PENSION_C: 5, BCR_PENSION_M: 100_000,
+    } as unknown as RawLibreTransferencia]
+    const result = transformLibreTransferencia(raw)
+    const r = result.find(x => x.Entidad.includes('BCR-PENSION'))
+    // origen con guion bajo + destino con guion bajo se normalizan a los
+    // nombres canónicos que ya entienden los colores y leyendas de la app.
+    expect(r?.Entidad).toBe('VIDA PLENA OPC -> BCR-PENSION')
+  })
 })
 
 describe('transformPortafolioISIN', () => {
@@ -146,6 +195,14 @@ describe('transformPortafolioISIN', () => {
       Entidad: 'POPULAR PENSIONES', CodigoISIN: 'CRP00001011',
       Descripcion: 'BANCO POPULAR', Monto: 1000,
     })
+  })
+
+  it('preserva monto null (no inventa 0)', () => {
+    const raw = {
+      entidad: 'POPULAR', codigofondo: 'ROP', fecha: '2024-06-01',
+      isin: 'CRP00001011', emisor_gestor: 'BANCO POPULAR', tipo: 'EMISOR', montocolones: null,
+    } as unknown as RawPortafolioISIN
+    expect(transformPortafolioISIN([raw])[0]?.Monto).toBeNull()
   })
 
   it('descarta registros GESTOR (misma posición duplicada)', () => {

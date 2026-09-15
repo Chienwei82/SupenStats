@@ -24,7 +24,9 @@ export function CuentasChart({ data }: Props) {
     const point: Record<string, string | number> = { fecha: formatDateShort(fecha) }
     entities.forEach(ent => {
       const match = grouped[ent]?.find((c: Cuenta) => c.FechaCorte === fecha)
-      if (match) point[ent] = match.MontoColones ?? 0
+      // Hueco (sin punto) cuando el monto no está disponible: un `?? 0`
+      // dibujaba un 0 falso para el mes sin registro.
+      if (match && match.MontoColones != null) point[ent] = match.MontoColones
     })
     return point
   })
@@ -60,7 +62,6 @@ export function CuentasChart({ data }: Props) {
               stroke={entityColor(ent)}
               strokeWidth={2}
               dot={false}
-              connectNulls
             />
           ))}
         </LineChart>

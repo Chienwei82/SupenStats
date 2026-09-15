@@ -1,17 +1,34 @@
+/** Date válido más lejano de JS (+275760-09-13T00:00:00Z). Sentin la para
+ *  fechas vacías/no parseables: sortByDateAsc las ordena al FINAL (una fecha
+ *  ausente no es "la más antigua" y tampoco "hoy", que descuadraba la serie). */
+const MAX_VALID_DATE_MS = 8_640_000_000_000_000
+const SENTINEL_DATE = () => new Date(MAX_VALID_DATE_MS)
+
 export function parseDate(dateStr: string): Date {
-  if (!dateStr) return new Date()
+  if (!dateStr) return SENTINEL_DATE()
   if (dateStr.includes('T')) return new Date(dateStr)
   const parts = dateStr.split(/[/\-\.]/)
   if (parts.length === 3) {
     const [a, b, c] = parts.map(Number)
-    // Formato SUPEN típico: YYYY-MM-DD o DD/MM/YYYY.
-    // - Si el primer número tiene 4 dígitos → YYYY-MM-DD.
-    // - Si el tercero tiene 4 dígitos → DD/MM/YYYY (formato local).
-    if (a > 31 || String(parts[0]).length === 4) return new Date(a, b - 1, c)
-    if (c > 31 || String(parts[2]).length === 4) return new Date(c, b - 1, a)
+    // Si el primer número tiene 4 dígitos → YYYY-MM-DD (local; `new Date(str)`
+    // lo parsearía como UTC y en CR el día se corría un día).
+    if (String(parts[0]).length === 4) return new Date(a, b - 1, c)
+    // Si el tercero tiene 4 dígitos → DD/MM/YYYY (formato local).
+    if (String(parts[2]).length === 4) return new Date(c, b - 1, a)
     return new Date(a, b - 1, c)
   }
-  return new Date(dateStr)
+  // Fallback defensivo para el caso YYYY-MM-DD sin T (parseo local) y para
+  // formatos que no pasan el split anterior; nunca Invalid Date.
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr)
+  if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]))
+  const d = new Date(dateStr)
+  return Number.isNaN(d.getTime()) ? SENTINEL_DATE() : d
+}
+
+/** Milisegundos para ordenar fechas: vacías/garbage van al final (sentinel),
+ *  consistente con parseDate. Unificación del helper privado de traslados. */
+export function parseDateMs(dateStr: string): number {
+  return parseDate(dateStr).getTime()
 }
 
 export function formatDate(dateStr: string): string {
@@ -43,12 +60,14 @@ export function formatCurrencyBillions(value: number): string {
   return `₡${billions.toFixed(2)}B`
 }
 
-export function formatPercent(value: number): string {
-  return `${Number(value ?? 0).toFixed(2)}%`
+export function formatPercent(value: number | null): string {
+  if (value == null) return 'N/D'
+  return `${value.toFixed(2)}%`
 }
 
-export function formatNumber(value: number): string {
-  return new Intl.NumberFormat('es-CR').format(Number(value ?? 0))
+export function formatNumber(value: number | null): string {
+  if (value == null) return 'N/D'
+  return new Intl.NumberFormat('es-CR').format(value)
 }
 
 export function sortByDateAsc<T>(data: T[], dateKey: keyof T): T[] {
@@ -108,7 +127,7 @@ import type {
   RawComision, RawRendimiento, RawPortafolio, RawAfiliado,
   RawBeneficio, RawCuenta, RawLibreTransferencia, RawPortafolioISIN,
 } from '../types/supen'
-import { LT_DEST_KEYS, normalizeEntityName } from '../constants/supen'
+import { LT_DEST_KEYS, LT_DEST_KEY_TO_CANONICAL, normalizeEntityName, normalizeLtOrigen } from '../constants/supen'
 
 // Periodicidad por defecto para el rendimiento. La API devuelve varias
 // periodicidades (ANUAL, 3 AÑOS, 5 AÑOS, 10 AÑOS, HISTÓRICA). Usamos ANUAL
@@ -121,7 +140,9 @@ export function transformPortafolio(raw: RawPortafolio): Portafolio {
     Fondo: raw.codigofondo,
     FechaCorte: raw.fecha,
     TipoInstrumento: raw.instrumento,
-    Monto: raw.montocolones ?? 0,
+    // null significa "sin posición reportada"; no inventar un 0 (la gráfica
+    // debe dejar un hueco, no dibujar una barra de 0).
+    Monto: raw.montocolones ?? null,
   }
 }
 
@@ -162,12 +183,14 @@ export function transformRendimientos(raw: RawRendimiento[]): Rendimiento[] {
       Entidad: normalizeEntityName(item.entidad),
       Fondo: item.codigofondo,
       FechaCorte: item.fecha,
-      RendimientoNominal: 0,
-      RendimientoReal: 0,
+      RendimientoNominal: null,
+      RendimientoReal: null,
       ValorCuota: 0,
     }
-    if (item.tipo === 'NOMINAL') existing.RendimientoNominal = item.rentabilidad ?? 0
-    if (item.tipo === 'REAL') existing.RendimientoReal = item.rentabilidad ?? 0
+    // Preservamos null cuando la API no reporta el mes: un rendimiento
+    // ausente no es 0% (la línea debe mostrar hueco, no caer a cero).
+    if (item.tipo === 'NOMINAL') existing.RendimientoNominal = item.rentabilidad ?? null
+    if (item.tipo === 'REAL') existing.RendimientoReal = item.rentabilidad ?? null
     map.set(key, existing)
   }
   return Array.from(map.values())
@@ -199,21 +222,29 @@ export function transformPortafolios(raw: RawPortafolio[]): Portafolio[] {
 export function transformAfiliados(raw: RawAfiliado[]): Afiliado[] {
   // La API devuelve afiliados desglosados por sexo y rango de edad.
   // Sumamos los afiliados por (entidad, fecha) para obtener el total por OPC.
-  const map = new Map<string, Afiliado>()
+  // Si todas las filas de la celda vienen null, queda null (no 0): la API no
+  // reporta el conteo y 0 inventaría una caída.
+  interface Acc { entidad: string; fondo: string; fecha: string; sum: number; allNull: boolean }
+  const map = new Map<string, Acc>()
   for (const item of raw) {
     const entidad = normalizeEntityName(item.entidad)
     const key = `${entidad}|${item.fecha}`
     const existing = map.get(key) ?? {
-      Entidad: entidad,
-      Fondo: item.codigofondo,
-      FechaCorte: item.fecha,
-      CantidadAfiliados: 0,
-      MontoAportes: 0,
+      entidad, fondo: item.codigofondo, fecha: item.fecha, sum: 0, allNull: true,
     }
-    existing.CantidadAfiliados += item.afiliados ?? 0
+    if (item.afiliados != null) {
+      existing.sum += item.afiliados
+      existing.allNull = false
+    }
     map.set(key, existing)
   }
-  return Array.from(map.values())
+  return Array.from(map.values()).map(a => ({
+    Entidad: a.entidad,
+    Fondo: a.fondo,
+    FechaCorte: a.fecha,
+    CantidadAfiliados: a.allNull ? null : a.sum,
+    MontoAportes: 0,
+  }))
 }
 
 /**
@@ -397,35 +428,46 @@ export function transformCuentas(raw: RawCuenta[]): Cuenta[] {
   // La API devuelve un desglose por categoría contable (ACTIVO, GASTOS,
   // INGRESOS, PASIVO, PATRIMONIO, VALOR DE LA CUOTA...) con montos en colones.
   // Mapeamos cada registro a (entidad, tipo de cuenta, fecha, monto).
-  const map = new Map<string, Cuenta>()
+  // Si todas las filas de la celda vienen null, queda null (no 0).
+  interface Acc { entidad: string; fondo: string; fecha: string; cuenta: string; sum: number; allNull: boolean }
+  const map = new Map<string, Acc>()
   for (const item of raw) {
     const entidad = normalizeEntityName(item.entidad)
     const key = `${entidad}|${item.cuenta}|${item.fecha}|${item.codigofondo}`
     const existing = map.get(key) ?? {
-      Entidad: entidad,
-      Fondo: item.codigofondo,
-      FechaCorte: item.fecha,
-      CuentaTipo: item.cuenta,
-      MontoColones: 0,
+      entidad, fondo: item.codigofondo, fecha: item.fecha, cuenta: item.cuenta, sum: 0, allNull: true,
     }
-    existing.MontoColones += item.montocolones ?? 0
+    if (item.montocolones != null) {
+      existing.sum += item.montocolones
+      existing.allNull = false
+    }
     map.set(key, existing)
   }
-  return Array.from(map.values())
+  return Array.from(map.values()).map(a => ({
+    Entidad: a.entidad,
+    Fondo: a.fondo,
+    FechaCorte: a.fecha,
+    CuentaTipo: a.cuenta,
+    MontoColones: a.allNull ? null : a.sum,
+  }))
 }
 
 export function transformLibreTransferencia(raw: RawLibreTransferencia[]): LibreTransferencia[] {
   // La API devuelve una matriz: fila por OPC origen, columnas por OPC destino,
   // tanto en cantidad ({OPC}_C) como en monto ({OPC}_M). Generamos un registro
   // plano por (origen, destino, fecha) contando transferencias y montos.
+  // Origen y destino se normalizan a los nombres canónicos de la app (los
+  // colores y leyendas dependen de ellos); antes el destino se dejaba con
+  // guiones bajos y 'VIDA_PLENA'/'BN_VITAL' quedaban fuera del mapeo de color.
   const result: LibreTransferencia[] = []
   for (const item of raw) {
     const fecha = String(item.fecha ?? '')
+    const origen = normalizeLtOrigen(String(item.entidadorigen ?? ''))
     for (const dest of LT_DEST_KEYS) {
       const count = Number(item[`${dest}_C`] ?? 0)
       const monto = Number(item[`${dest}_M`] ?? 0)
       result.push({
-        Entidad: `${normalizeEntityName(item.entidadorigen)} -> ${dest.replace(/_/g, ' ')}`,
+        Entidad: `${origen} -> ${LT_DEST_KEY_TO_CANONICAL[dest]}`,
         Fondo: String(item.codigofondo ?? ''),
         FechaCorte: fecha,
         CantidadTransferencias: count,
@@ -455,7 +497,7 @@ export function transformPortafolioISIN(raw: RawPortafolioISIN[]): PortafolioISI
       FechaCorte: item.fecha,
       CodigoISIN: item.isin,
       Descripcion: item.emisor_gestor || item.isin,
-      Monto: item.montocolones ?? 0,
+      Monto: item.montocolones ?? null,
       Porcentaje: 0,
     })
   }
