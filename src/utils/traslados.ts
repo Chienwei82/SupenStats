@@ -1,5 +1,6 @@
 import type { AfiliadoMensual, RawLibreTransferencia, TrasladoBalance, TrasladoFlujo, VariacionPunto } from '../types/supen'
 import { LT_DEST_KEYS, LT_DEST_KEY_TO_CANONICAL } from '../constants/supen'
+import { parseDateMs } from './dataTransformers'
 
 /**
  * Calcula la variación mes a mes por OPC a partir de la serie de afiliados.
@@ -57,17 +58,6 @@ export function calcularVariacionNeta(
     puntos.push({ fecha, deltas })
   })
   return puntos
-}
-
-/**
- * Milisegundos para ordenar fechas de forma determinista. Las fechas vacías o
- * no parseables van al FINAL (MAX_SAFE_INTEGER) en vez de colapsar al índice
- * 0, para que una fecha malformada no se trate como la más antigua.
- */
-function parseDateMs(dateStr: string): number {
-  if (!dateStr) return Number.MAX_SAFE_INTEGER
-  const ms = Date.parse(dateStr)
-  return Number.isNaN(ms) ? Number.MAX_SAFE_INTEGER : ms
 }
 
 function calcularDelta(

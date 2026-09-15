@@ -1,17 +1,34 @@
+/** Date válido más lejano de JS (+275760-09-13T00:00:00Z). Sentin la para
+ *  fechas vacías/no parseables: sortByDateAsc las ordena al FINAL (una fecha
+ *  ausente no es "la más antigua" y tampoco "hoy", que descuadraba la serie). */
+const MAX_VALID_DATE_MS = 8_640_000_000_000_000
+const SENTINEL_DATE = () => new Date(MAX_VALID_DATE_MS)
+
 export function parseDate(dateStr: string): Date {
-  if (!dateStr) return new Date()
+  if (!dateStr) return SENTINEL_DATE()
   if (dateStr.includes('T')) return new Date(dateStr)
   const parts = dateStr.split(/[/\-\.]/)
   if (parts.length === 3) {
     const [a, b, c] = parts.map(Number)
-    // Formato SUPEN típico: YYYY-MM-DD o DD/MM/YYYY.
-    // - Si el primer número tiene 4 dígitos → YYYY-MM-DD.
-    // - Si el tercero tiene 4 dígitos → DD/MM/YYYY (formato local).
-    if (a > 31 || String(parts[0]).length === 4) return new Date(a, b - 1, c)
-    if (c > 31 || String(parts[2]).length === 4) return new Date(c, b - 1, a)
+    // Si el primer número tiene 4 dígitos → YYYY-MM-DD (local; `new Date(str)`
+    // lo parsearía como UTC y en CR el día se corría un día).
+    if (String(parts[0]).length === 4) return new Date(a, b - 1, c)
+    // Si el tercero tiene 4 dígitos → DD/MM/YYYY (formato local).
+    if (String(parts[2]).length === 4) return new Date(c, b - 1, a)
     return new Date(a, b - 1, c)
   }
-  return new Date(dateStr)
+  // Fallback defensivo para el caso YYYY-MM-DD sin T (parseo local) y para
+  // formatos que no pasan el split anterior; nunca Invalid Date.
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr)
+  if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]))
+  const d = new Date(dateStr)
+  return Number.isNaN(d.getTime()) ? SENTINEL_DATE() : d
+}
+
+/** Milisegundos para ordenar fechas: vacías/garbage van al final (sentinel),
+ *  consistente con parseDate. Unificación del helper privado de traslados. */
+export function parseDateMs(dateStr: string): number {
+  return parseDate(dateStr).getTime()
 }
 
 export function formatDate(dateStr: string): string {
