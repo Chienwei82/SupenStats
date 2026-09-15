@@ -133,6 +133,19 @@ describe('transformLibreTransferencia', () => {
     const vidaPlena = result.find(r => r.Entidad.includes('VIDA PLENA'))
     expect(vidaPlena).toMatchObject({ CantidadTransferencias: 12, MontoTransferido: 450_000_000 })
   })
+
+  it('usa nombres canónicos de OPC para origen y destino (colores/leyendas consistentes)', () => {
+    const raw: RawLibreTransferencia[] = [{
+      fecha: '2024-06-01',
+      entidadorigen: 'VIDA_PLENA',
+      BCR_PENSION_C: 5, BCR_PENSION_M: 100_000,
+    } as unknown as RawLibreTransferencia]
+    const result = transformLibreTransferencia(raw)
+    const r = result.find(x => x.Entidad.includes('BCR-PENSION'))
+    // origen con guion bajo + destino con guion bajo se normalizan a los
+    // nombres canónicos que ya entienden los colores y leyendas de la app.
+    expect(r?.Entidad).toBe('VIDA PLENA OPC -> BCR-PENSION')
+  })
 })
 
 describe('transformPortafolioISIN', () => {

@@ -125,7 +125,7 @@ import type {
   RawComision, RawRendimiento, RawPortafolio, RawAfiliado,
   RawBeneficio, RawCuenta, RawLibreTransferencia, RawPortafolioISIN,
 } from '../types/supen'
-import { LT_DEST_KEYS, normalizeEntityName } from '../constants/supen'
+import { LT_DEST_KEYS, LT_DEST_KEY_TO_CANONICAL, normalizeEntityName, normalizeLtOrigen } from '../constants/supen'
 
 // Periodicidad por defecto para el rendimiento. La API devuelve varias
 // periodicidades (ANUAL, 3 AÑOS, 5 AÑOS, 10 AÑOS, HISTÓRICA). Usamos ANUAL
@@ -435,14 +435,18 @@ export function transformLibreTransferencia(raw: RawLibreTransferencia[]): Libre
   // La API devuelve una matriz: fila por OPC origen, columnas por OPC destino,
   // tanto en cantidad ({OPC}_C) como en monto ({OPC}_M). Generamos un registro
   // plano por (origen, destino, fecha) contando transferencias y montos.
+  // Origen y destino se normalizan a los nombres canónicos de la app (los
+  // colores y leyendas dependen de ellos); antes el destino se dejaba con
+  // guiones bajos y 'VIDA_PLENA'/'BN_VITAL' quedaban fuera del mapeo de color.
   const result: LibreTransferencia[] = []
   for (const item of raw) {
     const fecha = String(item.fecha ?? '')
+    const origen = normalizeLtOrigen(String(item.entidadorigen ?? ''))
     for (const dest of LT_DEST_KEYS) {
       const count = Number(item[`${dest}_C`] ?? 0)
       const monto = Number(item[`${dest}_M`] ?? 0)
       result.push({
-        Entidad: `${normalizeEntityName(item.entidadorigen)} -> ${dest.replace(/_/g, ' ')}`,
+        Entidad: `${origen} -> ${LT_DEST_KEY_TO_CANONICAL[dest]}`,
         Fondo: String(item.codigofondo ?? ''),
         FechaCorte: fecha,
         CantidadTransferencias: count,

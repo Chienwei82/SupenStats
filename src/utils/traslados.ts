@@ -1,5 +1,6 @@
 import type { AfiliadoMensual, RawLibreTransferencia, TrasladoBalance, TrasladoFlujo, VariacionPunto } from '../types/supen'
 import { LT_DEST_KEYS, LT_DEST_KEY_TO_CANONICAL } from '../constants/supen'
+import { normalizeLtOrigen } from '../constants/supen'
 import { parseDateMs } from './dataTransformers'
 
 /**
@@ -117,7 +118,7 @@ export function construirBalanceTraslados(
     const fecha = String(item.fecha ?? '')
     if (!fecha) continue
     const acc = ensure(fecha)
-    const origen = normalizarOrigen(String(item.entidadorigen ?? ''))
+    const origen = normalizeLtOrigen(String(item.entidadorigen ?? ''))
     // origenKey es la clave de columna en /lt que corresponde al origen.
     // Devuelve null cuando la entidad origen no está mapeada (ej. INS PENSIONES
     // o IBP PENSIONES, que aparecen en algunas filas de la API pero no son
@@ -189,8 +190,7 @@ export function agregarFlujosPorOrigenDestino(
   for (const item of raw) {
     const fecha = String(item.fecha ?? '')
     if (!fecha) continue
-    const origenRaw = String(item.entidadorigen ?? '')
-    const origen = normalizarOrigen(origenRaw)
+    const origen = normalizeLtOrigen(String(item.entidadorigen ?? ''))
     const origenKey = origenToKey(origen)
     for (const dest of LT_DEST_KEYS) {
       const cantidad = Number(item[`${dest}_C`] ?? 0)
@@ -317,18 +317,4 @@ export function calcularKpisBalance(balances: TrasladoBalance[]): BalanceKpis {
     if (n < 0 && (minNeg === null || n < minNeg)) { minNeg = n; topNeg = opc }
   }
   return { totalIngresos, topPos, topNeg }
-}
-
-/** Normaliza la `entidadorigen` de /lt a su nombre canónico, o devuelve
- *  el original si no hay mapeo. Las variantes con guion bajo o sin
- *  "PENSIONES" se resuelven acá; el resto pasa por `normalizeEntityName`. */
-const ORIGEN_NAME_MAP: Record<string, string> = {
-  POPULAR: 'POPULAR PENSIONES',
-  VIDA_PLENA: 'VIDA PLENA OPC',
-  'VIDA PLENA': 'VIDA PLENA OPC',
-  'BACSJ PENSIONES': 'BAC SJ PENSIONES',
-}
-
-function normalizarOrigen(origenRaw: string): string {
-  return ORIGEN_NAME_MAP[origenRaw] ?? origenRaw
 }
