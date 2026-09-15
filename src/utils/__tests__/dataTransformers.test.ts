@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   parseDate, parseDateMs, sortByDateAsc, groupBy, getUniqueValues,
-  calculateAverage, findMax, findMin,
+  calculateAverage, findMax, findMin, formatNumber, formatPercent,
 } from '../dataTransformers'
 
 describe('parseDate', () => {
@@ -61,6 +61,18 @@ describe('sortByDateAsc', () => {
       'f',
     )
     expect(sorted.map(d => d.v)).toEqual([3, 2, 1])
+  })
+})
+
+describe('formatPercent / formatNumber', () => {
+  it('no muestra 0 cuando el valor es null (no disponible)', () => {
+    expect(formatPercent(null)).toBe('N/D')
+    expect(formatNumber(null)).toBe('N/D')
+  })
+
+  it('formatea valores válidos como antes', () => {
+    expect(formatPercent(8.5)).toBe('8.50%')
+    expect(formatNumber(1250)).toBe(new Intl.NumberFormat('es-CR').format(1250))
   })
 })
 

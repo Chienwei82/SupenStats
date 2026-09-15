@@ -10,8 +10,9 @@ export interface Rendimiento {
   Entidad: string
   Fondo: string
   FechaCorte: string
-  RendimientoNominal: number
-  RendimientoReal: number
+  /** null = la API no reporta el rendimiento del mes; no pintar como 0%. */
+  RendimientoNominal: number | null
+  RendimientoReal: number | null
   ValorCuota: number
 }
 
@@ -20,7 +21,8 @@ export interface Portafolio {
   Fondo: string
   FechaCorte: string
   TipoInstrumento: string
-  Monto: number
+  /** null = la API no reporta la posición; no inventar un 0. */
+  Monto: number | null
 }
 
 export interface PortafolioISIN {
@@ -29,7 +31,7 @@ export interface PortafolioISIN {
   FechaCorte: string
   CodigoISIN: string
   Descripcion: string
-  Monto: number
+  Monto: number | null
   Porcentaje: number
 }
 
@@ -37,7 +39,8 @@ export interface Afiliado {
   Entidad: string
   Fondo: string
   FechaCorte: string
-  CantidadAfiliados: number
+  /** null = la API no reporta el conteo para esa celda; no representar como 0. */
+  CantidadAfiliados: number | null
   MontoAportes: number
 }
 
@@ -54,7 +57,8 @@ export interface Cuenta {
   Fondo: string
   FechaCorte: string
   CuentaTipo: string
-  MontoColones: number
+  /** null = la API no reporta el monto de la cuenta; no pintar como 0. */
+  MontoColones: number | null
 }
 
 export interface LibreTransferencia {

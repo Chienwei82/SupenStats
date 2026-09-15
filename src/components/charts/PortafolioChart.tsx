@@ -18,8 +18,11 @@ export function PortafolioChart({ data, title = 'Distribucion del Portafolio de 
   const latestData = latestDate ? data.filter(d => d.FechaCorte === latestDate) : data
 
   const aggregated = latestData.reduce<Record<string, number>>((acc, item) => {
+    // Sin posición reportada para el instrumento → no contarlo (un `?? 0`
+    // desinflaría la distribución con ceros falsos).
+    if (item.Monto == null) return acc
     const key = item.TipoInstrumento || 'Sin clasificar'
-    acc[key] = (acc[key] || 0) + (item.Monto ?? 0)
+    acc[key] = (acc[key] || 0) + item.Monto
     return acc
   }, {})
 

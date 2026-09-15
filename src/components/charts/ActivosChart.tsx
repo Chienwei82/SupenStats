@@ -21,7 +21,10 @@ export function ActivosChart({ data }: Props) {
     const point: Record<string, string | number> = { fecha: formatDateShort(fecha) }
     entities.forEach(ent => {
       const items = grouped[ent]?.filter((p: Portafolio) => p.FechaCorte === fecha) ?? []
-      point[ent] = items.reduce((sum, item) => sum + (item.Monto ?? 0), 0)
+      const montos = items.filter(p => p.Monto != null)
+      // Hueco (barra vacía) si el mes no tiene montos reportados: sumar
+      // `?? 0` pintaba una barra de 0 falsa para la operadora ausente.
+      if (montos.length > 0) point[ent] = montos.reduce((sum, p) => sum + p.Monto!, 0)
     })
     return point
   })

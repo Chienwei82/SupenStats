@@ -60,12 +60,14 @@ export function formatCurrencyBillions(value: number): string {
   return `₡${billions.toFixed(2)}B`
 }
 
-export function formatPercent(value: number): string {
-  return `${Number(value ?? 0).toFixed(2)}%`
+export function formatPercent(value: number | null): string {
+  if (value == null) return 'N/D'
+  return `${value.toFixed(2)}%`
 }
 
-export function formatNumber(value: number): string {
-  return new Intl.NumberFormat('es-CR').format(Number(value ?? 0))
+export function formatNumber(value: number | null): string {
+  if (value == null) return 'N/D'
+  return new Intl.NumberFormat('es-CR').format(value)
 }
 
 export function sortByDateAsc<T>(data: T[], dateKey: keyof T): T[] {
@@ -138,7 +140,9 @@ export function transformPortafolio(raw: RawPortafolio): Portafolio {
     Fondo: raw.codigofondo,
     FechaCorte: raw.fecha,
     TipoInstrumento: raw.instrumento,
-    Monto: raw.montocolones ?? 0,
+    // null significa "sin posición reportada"; no inventar un 0 (la gráfica
+    // debe dejar un hueco, no dibujar una barra de 0).
+    Monto: raw.montocolones ?? null,
   }
 }
 
@@ -179,12 +183,14 @@ export function transformRendimientos(raw: RawRendimiento[]): Rendimiento[] {
       Entidad: normalizeEntityName(item.entidad),
       Fondo: item.codigofondo,
       FechaCorte: item.fecha,
-      RendimientoNominal: 0,
-      RendimientoReal: 0,
+      RendimientoNominal: null,
+      RendimientoReal: null,
       ValorCuota: 0,
     }
-    if (item.tipo === 'NOMINAL') existing.RendimientoNominal = item.rentabilidad ?? 0
-    if (item.tipo === 'REAL') existing.RendimientoReal = item.rentabilidad ?? 0
+    // Preservamos null cuando la API no reporta el mes: un rendimiento
+    // ausente no es 0% (la línea debe mostrar hueco, no caer a cero).
+    if (item.tipo === 'NOMINAL') existing.RendimientoNominal = item.rentabilidad ?? null
+    if (item.tipo === 'REAL') existing.RendimientoReal = item.rentabilidad ?? null
     map.set(key, existing)
   }
   return Array.from(map.values())
@@ -216,21 +222,29 @@ export function transformPortafolios(raw: RawPortafolio[]): Portafolio[] {
 export function transformAfiliados(raw: RawAfiliado[]): Afiliado[] {
   // La API devuelve afiliados desglosados por sexo y rango de edad.
   // Sumamos los afiliados por (entidad, fecha) para obtener el total por OPC.
-  const map = new Map<string, Afiliado>()
+  // Si todas las filas de la celda vienen null, queda null (no 0): la API no
+  // reporta el conteo y 0 inventaría una caída.
+  interface Acc { entidad: string; fondo: string; fecha: string; sum: number; allNull: boolean }
+  const map = new Map<string, Acc>()
   for (const item of raw) {
     const entidad = normalizeEntityName(item.entidad)
     const key = `${entidad}|${item.fecha}`
     const existing = map.get(key) ?? {
-      Entidad: entidad,
-      Fondo: item.codigofondo,
-      FechaCorte: item.fecha,
-      CantidadAfiliados: 0,
-      MontoAportes: 0,
+      entidad, fondo: item.codigofondo, fecha: item.fecha, sum: 0, allNull: true,
     }
-    existing.CantidadAfiliados += item.afiliados ?? 0
+    if (item.afiliados != null) {
+      existing.sum += item.afiliados
+      existing.allNull = false
+    }
     map.set(key, existing)
   }
-  return Array.from(map.values())
+  return Array.from(map.values()).map(a => ({
+    Entidad: a.entidad,
+    Fondo: a.fondo,
+    FechaCorte: a.fecha,
+    CantidadAfiliados: a.allNull ? null : a.sum,
+    MontoAportes: 0,
+  }))
 }
 
 /**
@@ -414,21 +428,28 @@ export function transformCuentas(raw: RawCuenta[]): Cuenta[] {
   // La API devuelve un desglose por categoría contable (ACTIVO, GASTOS,
   // INGRESOS, PASIVO, PATRIMONIO, VALOR DE LA CUOTA...) con montos en colones.
   // Mapeamos cada registro a (entidad, tipo de cuenta, fecha, monto).
-  const map = new Map<string, Cuenta>()
+  // Si todas las filas de la celda vienen null, queda null (no 0).
+  interface Acc { entidad: string; fondo: string; fecha: string; cuenta: string; sum: number; allNull: boolean }
+  const map = new Map<string, Acc>()
   for (const item of raw) {
     const entidad = normalizeEntityName(item.entidad)
     const key = `${entidad}|${item.cuenta}|${item.fecha}|${item.codigofondo}`
     const existing = map.get(key) ?? {
-      Entidad: entidad,
-      Fondo: item.codigofondo,
-      FechaCorte: item.fecha,
-      CuentaTipo: item.cuenta,
-      MontoColones: 0,
+      entidad, fondo: item.codigofondo, fecha: item.fecha, cuenta: item.cuenta, sum: 0, allNull: true,
     }
-    existing.MontoColones += item.montocolones ?? 0
+    if (item.montocolones != null) {
+      existing.sum += item.montocolones
+      existing.allNull = false
+    }
     map.set(key, existing)
   }
-  return Array.from(map.values())
+  return Array.from(map.values()).map(a => ({
+    Entidad: a.entidad,
+    Fondo: a.fondo,
+    FechaCorte: a.fecha,
+    CuentaTipo: a.cuenta,
+    MontoColones: a.allNull ? null : a.sum,
+  }))
 }
 
 export function transformLibreTransferencia(raw: RawLibreTransferencia[]): LibreTransferencia[] {
@@ -476,7 +497,7 @@ export function transformPortafolioISIN(raw: RawPortafolioISIN[]): PortafolioISI
       FechaCorte: item.fecha,
       CodigoISIN: item.isin,
       Descripcion: item.emisor_gestor || item.isin,
-      Monto: item.montocolones ?? 0,
+      Monto: item.montocolones ?? null,
       Porcentaje: 0,
     })
   }
