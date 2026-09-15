@@ -32,10 +32,15 @@ export function filtersToSearch(applied: { fondo: FondoTipo | ''; dates?: DateRa
 export function useReportQuery<T>(
   key: readonly unknown[],
   fetchFn: (signal?: AbortSignal) => Promise<T[]>,
+  options?: { enabled?: boolean },
 ) {
   const query = useQuery({
     queryKey: key,
     queryFn: ({ signal }) => fetchFn(signal),
+    // `enabled: false` evita descargar un endpoint que la vista actual no usa
+    // (ej. /traslados alterna entre /afiliado y /lt); la data se conserva en
+    // caché y se sirve al volver, evitando descargas innecesarias (~80k regs).
+    enabled: options?.enabled,
     // La API de SUPEN no soporta bien reintentos concurrentes en endpoints
     // pesados; con retry:1 global basta.
     placeholderData: prev => prev,

@@ -30,9 +30,14 @@ export const Route = createFileRoute('/traslados')({
 })
 
 function TrasladosPage() {
-  const search = useSearch({ strict: false })
+  const search = useSearch({ strict: false }) as { vista?: 'neto' | 'traslados' }
   const applied = resolveFilters(validateReportSearch(search), FILTER_DEFAULTS.standard)
   const filters = useUrlFilters(applied)
+
+  // Cada vista consume un endpoint distinto (~80k registros cada uno): se
+  // descarga solo el del endpoint activo. Al volver a la otra vista, React
+  // Query sirve la data en caché de la query deshabilitada.
+  const verNeto = search.vista !== 'traslados'
 
   // /afiliado devuelve el desglose demográfico; lo agrupamos por
   // (entidad, fecha, fondo) preservando null para que la variación neta no
@@ -40,10 +45,12 @@ function TrasladosPage() {
   const { data: afiliadosRaw, loading: loadingAfiliados, error: errorAfiliados, refetch: refetchAfiliados } = useReportQuery<RawAfiliado>(
     ['afiliados-traslados', applied.fondo || null, applied.dates?.FechaInicio ?? null, applied.dates?.FechaFinal ?? null],
     signal => fetchAfiliadosRaw(applied.fondo || undefined, applied.dates, signal),
+    { enabled: verNeto },
   )
   const { data: ltMatriz, loading: loadingLT, error: errorLT, refetch: refetchLT } = useReportQuery<RawLibreTransferencia>(
     ['lt-matriz', applied.fondo || null, applied.dates?.FechaInicio ?? null, applied.dates?.FechaFinal ?? null],
     signal => fetchLibreTransferenciaMatriz(applied.fondo || undefined, applied.dates, signal),
+    { enabled: !verNeto },
   )
 
   const loading = loadingAfiliados || loadingLT
