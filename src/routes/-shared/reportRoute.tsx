@@ -7,14 +7,14 @@ import { reportSearchSchema, resolveFilters } from '../../constants/filters'
 import type { ReportSearchInput } from '../../constants/filters'
 import type { FondoTipo, DateRange } from '../../types/supen'
 
-interface ReportRouteConfig {
+interface ReportRouteConfig<T> {
   /** Nombre del endpoint para la queryKey. */
   endpoint: string
   defaults: { fondo: FondoTipo | ''; dates?: DateRange }
   fondoOptions?: { value: FondoTipo | ''; label: string }[]
   /** Fetcher de apiService; recibe los filtros resueltos y el signal. */
-  fetcher: (filters: { fondo: FondoTipo | ''; dates?: DateRange }, signal?: AbortSignal) => Promise<unknown[]>
-  render: (data: unknown[]) => ReactNode
+  fetcher: (filters: { fondo: FondoTipo | ''; dates?: DateRange }, signal?: AbortSignal) => Promise<T[]>
+  render: (data: T[]) => ReactNode
 }
 
 /**
@@ -34,13 +34,13 @@ export function validateReportSearch(search: Record<string, unknown>): ReportSea
  * patrón draft/applied sobre search params + useQuery + ReportView.
  * Reemplaza las funciones renderX() que vivían en App.tsx.
  */
-export function createReportRoute(config: ReportRouteConfig) {
+export function createReportRoute<T>(config: ReportRouteConfig<T>) {
   return function ReportRoute() {
     const search = useSearch({ strict: false }) as ReportSearchInput
     const applied = resolveFilters(search, config.defaults)
     const filters = useUrlFilters(applied)
 
-    const { data, loading, error, refetch } = useReportQuery(
+    const { data, loading, error, refetch } = useReportQuery<T>(
       [config.endpoint, applied.fondo || null, applied.dates?.FechaInicio ?? null, applied.dates?.FechaFinal ?? null],
       signal => config.fetcher(applied, signal),
     )
