@@ -37,18 +37,35 @@ export const FILTER_DEFAULTS = {
  * Resuelve los filtros efectivos de una ruta: search params si están
  * presentes, defaults del reporte si no.
  */
+const API_MIN_DATE = '2010-01-01'
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * Normaliza una fecha de filtro: vacíos, no-ISO o anteriores a 2010-01-01
+ * (la API de SUPEN no publica antes) se convierten en undefined, lo que hace
+ * que `resolveFilters` caiga al default del reporte. Enviar sin fechas hace
+ * que la API responda todo el histórico desde 2010 (55MB+ en /portafolio),
+ * así que es crítico nunca dejar pasar un rango incompleto. La comparación
+ * de ISO como string es lexicográfica, válida para YYYY-MM-DD.
+ */
+export function sanitizeDate(v: string): string | undefined {
+  if (!v || !ISO_DATE.test(v)) return undefined
+  return v < API_MIN_DATE ? API_MIN_DATE : v
+}
+
 export function resolveFilters(
   search: ReportSearchInput,
   defaults: { fondo: FondoTipo | ''; dates?: DateRange },
 ): { fondo: FondoTipo | ''; dates?: DateRange } {
   const hasDates = defaults.dates !== undefined
-  return {
-    fondo: (search.fondo as FondoTipo | undefined) ?? defaults.fondo,
-    dates: hasDates
-      ? {
-          FechaInicio: search.fechaInicio ?? defaults.dates!.FechaInicio,
-          FechaFinal: search.fechaFinal ?? defaults.dates!.FechaFinal,
-        }
-      : undefined,
+  // `??` (no `||`) preserva '' ("Todos los fondos").
+  const fondo = (search.fondo as FondoTipo | '' | undefined) ?? defaults.fondo
+  if (!hasDates) return { fondo }
+  const inicio = sanitizeDate(search.fechaInicio ?? '') ?? defaults.dates!.FechaInicio
+  const fin = sanitizeDate(search.fechaFinal ?? '') ?? defaults.dates!.FechaFinal
+  // Rango invertido (Inicio > Final): caer a los defaults del reporte.
+  if (inicio > fin) {
+    return { fondo, dates: { ...defaults.dates! } }
   }
+  return { fondo, dates: { FechaInicio: inicio, FechaFinal: fin } }
 }

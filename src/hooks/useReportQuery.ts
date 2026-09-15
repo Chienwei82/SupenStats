@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import type { FondoTipo, DateRange } from '../types/supen'
@@ -15,7 +15,9 @@ export interface ReportSearch {
 
 export function filtersToSearch(applied: { fondo: FondoTipo | ''; dates?: DateRange }): ReportSearch {
   return {
-    fondo: applied.fondo || undefined,
+    // `??` (no `||`) preserva '' ("Todos los fondos"): con `||`, '' se perdía
+    // y el pipeline volvía en silencio al fondo por defecto.
+    fondo: applied.fondo ?? undefined,
     fechaInicio: applied.dates?.FechaInicio,
     fechaFinal: applied.dates?.FechaFinal,
   }
@@ -60,6 +62,20 @@ export function useReportQuery<T>(
 export function useUrlFilters(defaults: { fondo: FondoTipo | ''; dates?: DateRange }) {
   const navigate = useNavigate()
   const [draft, setDraft] = useState(defaults)
+
+  // Re-sincroniza el draft cuando los applied cambian por fuera de la edición
+  // (back/forward, link compartido): antes el draft quedaba desincronizado y
+  // FilterBar mostraba valores viejos mientras el query ya refetcheaba. Se
+  // compara un key via ref y no `defaults` directamente para no resetear en
+  // cada render (defaults es una objeto nuevo por ruta).
+  const appliedKey = JSON.stringify([defaults.fondo, defaults.dates?.FechaInicio, defaults.dates?.FechaFinal])
+  const lastAppliedRef = useRef(appliedKey)
+  useEffect(() => {
+    if (lastAppliedRef.current !== appliedKey) {
+      lastAppliedRef.current = appliedKey
+      setDraft(defaults)
+    }
+  }, [appliedKey, defaults])
 
   const consult = useCallback(() => {
     void navigate({
