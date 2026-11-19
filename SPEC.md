@@ -19,8 +19,8 @@ Generar reportes gráficos que muestren:
 |------|-----------|---------|
 | Bundler | Vite | 8.x |
 | Framework | React | 19.x |
-| Lenguaje | TypeScript | 5.x |
-| Gráficos | Recharts | 2.x |
+| Lenguaje | TypeScript | 6.x |
+| Gráficos | Recharts | 3.x |
 | Estilos | Tailwind CSS | 4.x |
 | HTTP | Fetch API nativo | - |
 
@@ -81,6 +81,11 @@ https://webapps.supen.fi.cr/Estadisticas/API/documentacion/index.html
 
 ## Estructura de Datos
 
+> Los tipos de dominio normalizan la respuesta cruda de la API (campos en
+> minúscula y con tildes) y **preservan `null`** cuando la API no reporta un
+> valor. Los shapes crudos verificados están documentados en
+> `docs/docs/api-notes.md`.
+
 ### Comision
 
 ```typescript
@@ -88,9 +93,7 @@ interface Comision {
   Entidad: string          // Nombre de la OPC
   Fondo: string            // Tipo de fondo (ROP, FCL, etc.)
   FechaCorte: string       // Fecha de corte YYYY-MM-DD
-  ComisionAdministracion: number  // Comisión por administración (%)
-  ComisionReserva: number  // Comisión de reserva (%)
-  ComisionTotal: number    // Comisión total (%)
+  ComisionTotal: number | null  // Comisión sobre saldo (%); null = no reportada
 }
 ```
 
@@ -101,8 +104,8 @@ interface Rendimiento {
   Entidad: string          // Nombre de la OPC
   Fondo: string            // Tipo de fondo
   FechaCorte: string       // Fecha de corte
-  RendimientoNominal: number  // Rendimiento nominal (%)
-  RendimientoReal: number  // Rendimiento real (descontando inflación)
+  RendimientoNominal: number | null  // null = no reportado; no pintar como 0%
+  RendimientoReal: number | null     // Real (descontando inflación)
   ValorCuota: number       // Valor de la cuota
 }
 ```
@@ -115,8 +118,7 @@ interface Portafolio {
   Fondo: string            // Tipo de fondo
   FechaCorte: string       // Fecha de corte
   TipoInstrumento: string  // Tipo de instrumento de inversión
-  Monto: number            // Monto invertido (₡)
-  Porcentaje: number       // Porcentaje del portafolio (%)
+  Monto: number | null     // Monto invertido (₡); null = posición no reportada
 }
 ```
 
@@ -127,7 +129,7 @@ interface Afiliado {
   Entidad: string          // Nombre de la OPC
   Fondo: string            // Tipo de fondo
   FechaCorte: string       // Fecha de corte
-  CantidadAfiliados: number  // Número de afiliados
+  CantidadAfiliados: number | null  // null = celda no reportada; no sumar como 0
   MontoAportes: number     // Monto total de aportes (₡)
 }
 ```
@@ -151,8 +153,8 @@ interface Cuenta {
   Entidad: string          // Nombre de la OPC
   Fondo: string            // Tipo de fondo
   FechaCorte: string       // Fecha de corte
-  CantidadCuentas: number  // Número de cuentas
-  SaldoPromedio: number    // Saldo promedio por cuenta (₡)
+  CuentaTipo: string       // Categoría contable (ACTIVO, PASIVO, PATRIMONIO, ...)
+  MontoColones: number | null  // null = monto no reportado
 }
 ```
 
@@ -160,7 +162,8 @@ interface Cuenta {
 
 ```typescript
 interface LibreTransferencia {
-  Entidad: string          // Nombre de la OPC
+  Entidad: string          // OPC origen (normalizada)
+  Fondo: string            // Tipo de fondo
   FechaCorte: string       // Fecha de corte
   CantidadTransferencias: number  // Número de transferencias
   MontoTransferido: number  // Monto transferido (₡)
@@ -172,82 +175,70 @@ interface LibreTransferencia {
 ```
 src/
 ├── api/
-│   └── apiService.ts          # Capa de acceso a datos
+│   └── apiService.ts          # Fetchers por endpoint + query builder + timeout
 ├── types/
-│   └── supen.ts               # Definiciones de tipos
+│   └── supen.ts               # Tipos de dominio + Raw de la API
 ├── utils/
-│   └── dataTransformers.ts    # Funciones de transformación
+│   ├── dataTransformers.ts    # parseDate, formatters y transformers
+│   └── reportes.ts            # Cálculos puros (rentabilidad, inflación, proyección)
 ├── hooks/
-│   └── useSupenData.ts        # Hook genérico de fetching
+│   ├── useReportQuery.ts      # React Query + filtros en URL (useUrlFilters/useUrlParam)
+│   ├── useInflacion.ts        # IPC/BCCR (degrada si no está configurado)
+│   └── useTheme.ts            # Tema claro/oscuro
 ├── constants/
-│   └── supen.ts               # Constantes y configuración
+│   ├── supen.ts               # Colores OPC, rangos por defecto, mapas
+│   ├── filters.ts             # Defaults por reporte + validación zod
+│   └── chartNotes.ts          # Notas educativas por gráfico
+├── routes/
+│   ├── __root.tsx             # Layout + Header + ReportTabs + footer
+│   ├── index.tsx              # Bienvenida
+│   └── -shared/reportRoute.tsx # Factory createReportRoute<T>
 ├── components/
-│   ├── layout/
-│   │   ├── Header.tsx         # Cabecera del dashboard
-│   │   └── KpiCards.tsx       # Tarjetas de indicadores clave
-│   ├── charts/
-│   │   ├── RendimientoChart.tsx    # Gráfico de líneas
-│   │   ├── ComisionesChart.tsx     # Gráfico de barras
-│   │   ├── PortafolioChart.tsx     # Gráfico de donut
-│   │   ├── AfiliadosChart.tsx      # Gráfico de área
-│   │   └── ActivosChart.tsx        # Gráfico de barras agrupadas
-│   └── ui/
-│       ├── LoadingSkeleton.tsx     # Estado de carga
-│       └── ErrorMessage.tsx        # Manejo de errores
-├── App.tsx                     # Componente raíz
-└── main.tsx                    # Punto de entrada
+│   ├── layout/                # Header, ReportTabs, WelcomeScreen, ThemeToggle
+│   ├── charts/                # Gráficos Recharts + tablas
+│   └── ui/                    # ChartCard, FilterBar, ShareButton, estados
+└── main.tsx                   # QueryClient + Router + entrypoint
 ```
 
 ## Funcionalidades
 
-### 1. Dashboard Responsive
+### Navegación
 
-- Layout de grid 4 columnas en desktop, 2 en tablet, 1 en mobile
-- Tarjetas KPI en la parte superior
-- Gráficos en grid de 2 columnas
+- SPA con **17 reportes** organizados en un menú desplegable accesible
+  (WAI-ARIA menu, navegación por teclado, cierre con Escape/click fuera).
+- Estado de filtros y selectores en la URL: cada vista es compartible y
+  soporta back/forward del navegador.
 
-### 2. Tarjetas KPI
+### Reportes
 
-- **Rendimiento Promedio**: Promedio nominal de todas las OPCs
-- **OPC más Rentable**: Entidad con mayor rendimiento
-- **Total Afiliados**: Suma de afiliados del sistema
-- **Comisión Promedio**: Promedio de comisiones de administración
+| Reporte | Contenido |
+|---------|-----------|
+| Rendimiento / Rend. Real | Rentabilidad nominal y real por OPC, con periodicidad y corte seleccionables |
+| Comisiones / Comisión vs Rend. | Evolución de comisiones y dispersión comisión–rentabilidad |
+| Portafolio / Instrumentos | Distribución por tipo de instrumento y por ISIN |
+| Afiliados / Aportantes | Evolución y comparación de afiliados vs. aportantes |
+| Activos / Cuentas | Activos netos y desglose contable por OPC |
+| Beneficios | Pensionados por OPC y tipo de beneficio |
+| Transferencias / Traslados | Libre transferencia y balance neto entre operadoras |
+| Demografía / Pirámide | Distribución por sexo y rango de edad (afiliados y pensionados) |
+| Simulador | Proyección del saldo al retiro con rentabilidad histórica y poder adquisitivo |
 
-### 3. Gráfico de Rendimiento (Líneas)
+### Interacción y UX
 
-- Línea por cada OPC
-- Tooltip interactivo con fecha y valor
-- Leyenda clickeable
-- Eje X: fechas, Eje Y: rendimiento %
+- Filtros por fondo y rango de fechas con patrón draft/applied y botón
+  **Restablecer**.
+- Gráficos con tooltip, leyenda clicable y selectores en URL (periodicidad,
+  corte, métrica, OPC).
+- Botón **Copiar enlace** para compartir la vista exacta.
+- Notas educativas colapsables en cada gráfico (`ChartNote`).
+- Tema claro/oscuro persistente y respeto por `prefers-reduced-motion`.
 
-### 4. Gráfico de Comisiones (Barras Horizontales)
+### Estados de carga y error
 
-- Ordenado de menor a mayor comisión
-- Colores diferenciados por OPC
-- Tooltip con valor exacto
-
-### 5. Gráfico de Portafolio (Donut)
-
-- Desglose por tipo de instrumento
-- Labels con porcentaje
-- Tooltip con monto y porcentaje
-
-### 6. Gráfico de Afiliados (Área)
-
-- Evolución temporal de afiliados por OPC
-- Áreas con transparencia
-- Formato numérico con separadores
-
-### 7. Gráfico de Activos (Barras Agrupadas)
-
-- Comparación de activos netos por OPC
-- Montos en formato de billones (₡B)
-
-### 8. Estados de Carga y Error
-
-- Skeleton animado durante la carga
-- Mensaje de error con opción de reintentar
-- Manejo de errores de red
+- Skeleton en la primera carga, overlay cuando hay datos previos y
+  `ErrorBoundary` por gráfico.
+- Timeout de 90 s con mensaje diferenciado para APIs lentas.
+- Mensaje de error con opción de reintentar.
 
 ## Decisiones de Diseño
 

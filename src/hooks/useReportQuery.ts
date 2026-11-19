@@ -91,7 +91,27 @@ export function useUrlFilters(defaults: { fondo: FondoTipo | ''; dates?: DateRan
     })
   }, [draft, navigate])
 
-  return { draft, setDraft, consult } as const
+  /**
+   * Restablece los filtros a los defaults del reporte y limpia los search
+   * params de fondo/fechas. Los selectores propios (periodicidad, corte,
+   * métrica, vista) se conservan: no son filtros de API.
+   */
+  const reset = useCallback(() => {
+    setDraft(defaults)
+    void navigate({
+      to: '.',
+      search: (prev: Record<string, unknown>) => {
+        const next = { ...prev }
+        delete next.fondo
+        delete next.fechaInicio
+        delete next.fechaFinal
+        return next
+      },
+      replace: false,
+    })
+  }, [defaults, navigate])
+
+  return { draft, setDraft, consult, reset } as const
 }
 
 /**

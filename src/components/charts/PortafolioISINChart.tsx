@@ -1,8 +1,10 @@
+import { useMemo } from 'react'
 import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { formatCurrencyBillions, sortByDateAsc } from '../../utils/dataTransformers'
 import { CHART_COLORS, ISIN_LAST_PUBLICATION } from '../../constants/supen'
+import { ChartCard } from '../ui/ChartCard'
 import { ChartNote } from '../ui/ChartNote'
 import type { PortafolioISIN } from '../../types/supen'
 
@@ -11,30 +13,34 @@ interface Props {
 }
 
 export function PortafolioISINChart({ data }: Props) {
-  const sorted = sortByDateAsc(data, 'FechaCorte')
-  const latestDate = sorted.length > 0 ? sorted[sorted.length - 1].FechaCorte : null
-  const latest = latestDate ? data.filter(d => d.FechaCorte === latestDate) : data
+  const { chartData, total, latestDate, desactualizado } = useMemo(() => {
+    const sorted = sortByDateAsc(data, 'FechaCorte')
+    const latestDate = sorted.length > 0 ? sorted[sorted.length - 1].FechaCorte : null
+    const latest = latestDate ? data.filter(d => d.FechaCorte === latestDate) : data
 
-  const aggregated = latest.reduce<Record<string, number>>((acc, item) => {
-    // Sin posición reportada para el título → no contarlo (un `?? 0`
-    // desinflaría la distribución con ceros falsos).
-    if (item.Monto == null) return acc
-    const key = item.Descripcion || item.CodigoISIN || 'Sin clasificar'
-    acc[key] = (acc[key] || 0) + item.Monto
-    return acc
-  }, {})
+    const aggregated = latest.reduce<Record<string, number>>((acc, item) => {
+      // Sin posición reportada para el título → no contarlo (un `?? 0`
+      // desinflaría la distribución con ceros falsos).
+      if (item.Monto == null) return acc
+      const key = item.Descripcion || item.CodigoISIN || 'Sin clasificar'
+      acc[key] = (acc[key] || 0) + item.Monto
+      return acc
+    }, {})
 
-  const chartData = Object.entries(aggregated)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 8)
+    const chartData = Object.entries(aggregated)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8)
 
-  const total = chartData.reduce((sum, d) => sum + d.value, 0)
+    const total = chartData.reduce((sum, d) => sum + d.value, 0)
 
-  // SUPEN congeló la publicación del detalle por ISIN (ver api-notes y
-  // constants/supen): avisamos cuando el último corte mostrado es anterior
-  // a la última publicación conocida o cuando no hay datos en el rango.
-  const desactualizado = latestDate == null || latestDate.slice(0, 10) < ISIN_LAST_PUBLICATION
+    // SUPEN congeló la publicación del detalle por ISIN (ver api-notes y
+    // constants/supen): avisamos cuando el último corte mostrado es anterior
+    // a la última publicación conocida o cuando no hay datos en el rango.
+    const desactualizado = latestDate == null || latestDate.slice(0, 10) < ISIN_LAST_PUBLICATION
+
+    return { chartData, total, latestDate, desactualizado }
+  }, [data])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tooltipFormatter = (value: any, name: any) => {
@@ -43,10 +49,10 @@ export function PortafolioISINChart({ data }: Props) {
   }
 
   return (
-    <div className="bg-white dark:bg-[#25293c] rounded-xl border border-gray-200 dark:border-[#34324a] p-6 shadow-md dark:shadow-xl dark:shadow-black/30">
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-[#eeffff] mb-4">
-        Portafolio por Instrumento (ISIN) {latestDate ? `(${latestDate})` : ''}
-      </h3>
+    <ChartCard
+      title={`Portafolio por Instrumento (ISIN) ${latestDate ? `(${latestDate})` : ''}`}
+      description="Gráfico de dona: principales instrumentos del portafolio por código ISIN."
+    >
       <ResponsiveContainer width="100%" height={350}>
         <PieChart>
           <Pie
@@ -92,6 +98,6 @@ export function PortafolioISINChart({ data }: Props) {
         </p>
       )}
       <ChartNote noteId="isin" />
-    </div>
+    </ChartCard>
   )
 }

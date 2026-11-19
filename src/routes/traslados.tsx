@@ -6,6 +6,7 @@ import { FILTER_DEFAULTS, resolveFilters } from '../constants/filters'
 import { useReportQuery, useUrlFilters } from '../hooks/useReportQuery'
 import { FilterBar } from '../components/ui/FilterBar'
 import { ReportView } from '../components/ui/ReportView'
+import { ShareButton } from '../components/ui/ShareButton'
 import { transformAfiliadosMensual } from '../utils/dataTransformers'
 import type { AfiliadoMensual, RawAfiliado, RawLibreTransferencia } from '../types/supen'
 
@@ -71,12 +72,16 @@ function TrasladosPage() {
       tabIndex={0}
       className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg space-y-4"
     >
+      <div className="flex justify-end">
+        <ShareButton />
+      </div>
       <FilterBar
         fondo={filters.draft.fondo}
         onFondoChange={(f) => filters.setDraft(d => ({ ...d, fondo: f }))}
         dateRange={filters.draft.dates}
         onDateRangeChange={(r) => filters.setDraft(d => ({ ...d, dates: r }))}
         onConsult={filters.consult}
+        onReset={filters.reset}
       />
       <ReportView loading={loading} error={error} dataCount={dataCount} onRetry={refetch}>
         <Traslados afiliados={afiliados} trasladosMatriz={ltMatriz} />

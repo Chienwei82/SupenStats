@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { useSearch } from '@tanstack/react-router'
 import { FilterBar } from '../../components/ui/FilterBar'
 import { ReportView } from '../../components/ui/ReportView'
+import { ShareButton } from '../../components/ui/ShareButton'
 import { useReportQuery, useUrlFilters } from '../../hooks/useReportQuery'
 import { reportSearchSchema, resolveFilters } from '../../constants/filters'
 import type { ReportSearchInput } from '../../constants/filters'
@@ -53,6 +54,9 @@ export function createReportRoute<T>(config: ReportRouteConfig<T>) {
         tabIndex={0}
         className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg space-y-4"
       >
+        <div className="flex justify-end">
+          <ShareButton />
+        </div>
         <FilterBar
           fondo={filters.draft.fondo}
           onFondoChange={(f: FondoTipo | '') => filters.setDraft(d => ({ ...d, fondo: f }))}
@@ -60,6 +64,7 @@ export function createReportRoute<T>(config: ReportRouteConfig<T>) {
           dateRange={filters.draft.dates}
           onDateRangeChange={(r: DateRange) => filters.setDraft(d => ({ ...d, dates: r }))}
           onConsult={filters.consult}
+          onReset={filters.reset}
         />
         <ReportView loading={loading} error={error} dataCount={data.length} onRetry={refetch}>
           {config.render(data)}

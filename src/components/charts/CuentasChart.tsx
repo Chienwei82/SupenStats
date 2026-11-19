@@ -1,9 +1,11 @@
+import { useMemo } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { formatDateShort, formatCurrencyBillions, groupBy, getUniqueValues, sortByDateAsc } from '../../utils/dataTransformers'
 import { entityColor } from '../../constants/supen'
+import { ChartCard } from '../ui/ChartCard'
 import { ChartNote } from '../ui/ChartNote'
 import type { Cuenta } from '../../types/supen'
 
@@ -12,31 +14,37 @@ interface Props {
 }
 
 export function CuentasChart({ data }: Props) {
-  // Filtrar solo la categoria que representa activo neto del fondo
-  const activoNeto = data.filter(c => c.CuentaTipo.includes('ACTIVO NETO'))
+  const { chartData, entities } = useMemo(() => {
+    // Filtrar solo la categoria que representa activo neto del fondo
+    const activoNeto = data.filter(c => c.CuentaTipo.includes('ACTIVO NETO'))
 
-  const sorted = sortByDateAsc(activoNeto, 'FechaCorte')
-  const entities = getUniqueValues(activoNeto, 'Entidad')
-  const grouped = groupBy(activoNeto, 'Entidad')
-  const uniqueDates = getUniqueValues(sorted, 'FechaCorte')
+    const sorted = sortByDateAsc(activoNeto, 'FechaCorte')
+    const entities = getUniqueValues(activoNeto, 'Entidad')
+    const grouped = groupBy(activoNeto, 'Entidad')
+    const uniqueDates = getUniqueValues(sorted, 'FechaCorte')
 
-  const chartData = uniqueDates.map(fecha => {
-    const point: Record<string, string | number> = { fecha: formatDateShort(fecha) }
-    entities.forEach(ent => {
-      const match = grouped[ent]?.find((c: Cuenta) => c.FechaCorte === fecha)
-      // Hueco (sin punto) cuando el monto no está disponible: un `?? 0`
-      // dibujaba un 0 falso para el mes sin registro.
-      if (match && match.MontoColones != null) point[ent] = match.MontoColones
+    const chartData = uniqueDates.map(fecha => {
+      const point: Record<string, string | number> = { fecha: formatDateShort(fecha) }
+      entities.forEach(ent => {
+        const match = grouped[ent]?.find((c: Cuenta) => c.FechaCorte === fecha)
+        // Hueco (sin punto) cuando el monto no está disponible: un `?? 0`
+        // dibujaba un 0 falso para el mes sin registro.
+        if (match && match.MontoColones != null) point[ent] = match.MontoColones
+      })
+      return point
     })
-    return point
-  })
+
+    return { chartData, entities }
+  }, [data])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tooltipFormatter = (value: any, name: any) => [formatCurrencyBillions(Number(value)), name]
 
   return (
-    <div className="bg-white dark:bg-[#25293c] rounded-xl border border-gray-200 dark:border-[#34324a] p-6 shadow-md dark:shadow-xl dark:shadow-black/30">
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-[#eeffff] mb-4">Activo Neto del Fondo por OPC</h3>
+    <ChartCard
+      title="Activo Neto del Fondo por OPC"
+      description="Gráfico de líneas: activo neto del fondo de pensiones de cada operadora a lo largo del tiempo."
+    >
       <ResponsiveContainer width="100%" height={350}>
         <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -67,6 +75,6 @@ export function CuentasChart({ data }: Props) {
         </LineChart>
       </ResponsiveContainer>
       <ChartNote noteId="cuentas" />
-    </div>
+    </ChartCard>
   )
 }
