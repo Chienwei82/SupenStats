@@ -90,5 +90,5 @@ npm run verify   # lint + typecheck + tests
 - Bundle de charts grande (~460 kB); aislado en su chunk, aún sin lazy route.
 - Sin E2E (Playwright) ni axe.
 - 9 warnings de oxlint (`react/only-export-components`), no bloqueantes.
-- `scripts/git_*.py` con cambios locales guardados en `git stash`.
+- `scripts/git_cleanup.py`: borrado seguro de ramas (aware de squash merges) — ya commiteado.
 - API de SUPEN lenta; UX depende de caching y feedback de carga.

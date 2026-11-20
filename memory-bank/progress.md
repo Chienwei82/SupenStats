@@ -25,7 +25,6 @@
 - Resolver los **9 warnings** de oxlint (`react/only-export-components`).
 - **Lazy routes** (TanStack) + cargar Recharts solo al abrir un reporte.
 - Tests **E2E** (Playwright) y accesibilidad automatizada (axe).
-- Commitear o descartar los cambios en `scripts/git_*.py` (guardados en stash).
 
 ## Estado
 
