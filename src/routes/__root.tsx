@@ -20,8 +20,14 @@ function RootLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#202331]">
+      <a
+        href="#contenido"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-[#7c4dff] focus:text-white focus:rounded-lg"
+      >
+        Saltar al contenido
+      </a>
       <Header theme={theme} onToggleTheme={toggleTheme} />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <main id="contenido" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <ReportTabs />
         <Outlet />
       </main>

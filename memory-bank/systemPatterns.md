@@ -67,6 +67,36 @@ src/routes/<reporte>.tsx  →  src/api/apiService.ts  →  src/utils/dataTransfo
 - `defaultPreload: 'intent'` en el router.
 - Timeout de 90 s con `TimeoutError` diferenciado.
 
+## Navegación y educación (Fases 1–2)
+
+- `ReportTabs`: menú WAI-ARIA agrupado (Reportes / Aprender) con buscador
+  (`utils/search.matchesQuery`, sin distinción de acentos) y navegación por
+  teclado sobre la lista filtrada.
+- `WelcomeScreen`: Home por categorías (tarjetas `<Link>` a cada reporte).
+- Rutas de aprendizaje en `constants/learningPaths.ts` + `LearningPathsView`
+  (enlaces a reportes y a términos del glosario).
+- `Glosario` (`constants/glossary.ts` + `GlossaryView`), `Metodología`
+  (`constants/methodology.ts` + `MethodologyView`), `Quiz` (`constants/quiz.ts`
+  con scoring puro `evaluateQuiz` + componente interactivo).
+
+## Tablas y exportación (Fases 1–2)
+
+- `DataTable<T>`: tabla ordenable genérica (reutiliza `useSortableTable` +
+  `SortHeader`); nulos → "N/D" y siempre al final.
+- `TimeSeriesChart`: alternador gráfico ⇄ tabla + **Brush/zoom** + exportación.
+- `utils/export.ts`: `toCsv` (puro, RFC 4180), `safeFilename`, `downloadCsv`
+  (BOM para Excel). `ExportButton` envuelve la descarga.
+- `Comparador` (`/comparador`): dos selectores de OPC + métrica en URL; una sola
+  descarga de `/rendimiento` filtrada en cliente (cross-filter por OPC).
+
+## Plataforma (Fase 3)
+
+- Code splitting vía `manualChunks` (función) en `vite.config.ts`.
+- PWA: `public/manifest.webmanifest` + `public/sw.js`; registro en PROD.
+- SEO por ruta: `hooks/usePageMeta.ts` (título/meta/canónica/JSON-LD).
+- CI: `.github/workflows/ci.yml`.
+- Tests de componentes sin DOM: `renderToStaticMarkup` + Vitest.
+
 ## Testing
 
 - Vitest para lógica pura: transformers, cálculos de reportes, filtros,

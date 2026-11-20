@@ -13,12 +13,16 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ActivosRouteImport } from './routes/activos'
 import { Route as AfiliadosRouteImport } from './routes/afiliados'
 import { Route as AportantesRouteImport } from './routes/aportantes'
+import { Route as AprenderRouteImport } from './routes/aprender'
 import { Route as BeneficiosRouteImport } from './routes/beneficios'
 import { Route as ComisionRentabilidadRouteImport } from './routes/comision-rentabilidad'
 import { Route as ComisionesRouteImport } from './routes/comisiones'
+import { Route as ComparadorRouteImport } from './routes/comparador'
 import { Route as CuentasRouteImport } from './routes/cuentas'
 import { Route as DemografiaRouteImport } from './routes/demografia'
+import { Route as GlosarioRouteImport } from './routes/glosario'
 import { Route as IsinRouteImport } from './routes/isin'
+import { Route as MetodologiaRouteImport } from './routes/metodologia'
 import { Route as PiramideRouteImport } from './routes/piramide'
 import { Route as PortafolioRouteImport } from './routes/portafolio'
 import { Route as RendimientoRouteImport } from './routes/rendimiento'
@@ -47,6 +51,11 @@ const AportantesRoute = AportantesRouteImport.update({
   path: '/aportantes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AprenderRoute = AprenderRouteImport.update({
+  id: '/aprender',
+  path: '/aprender',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BeneficiosRoute = BeneficiosRouteImport.update({
   id: '/beneficios',
   path: '/beneficios',
@@ -62,6 +71,11 @@ const ComisionesRoute = ComisionesRouteImport.update({
   path: '/comisiones',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ComparadorRoute = ComparadorRouteImport.update({
+  id: '/comparador',
+  path: '/comparador',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CuentasRoute = CuentasRouteImport.update({
   id: '/cuentas',
   path: '/cuentas',
@@ -72,9 +86,19 @@ const DemografiaRoute = DemografiaRouteImport.update({
   path: '/demografia',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GlosarioRoute = GlosarioRouteImport.update({
+  id: '/glosario',
+  path: '/glosario',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IsinRoute = IsinRouteImport.update({
   id: '/isin',
   path: '/isin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MetodologiaRoute = MetodologiaRouteImport.update({
+  id: '/metodologia',
+  path: '/metodologia',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PiramideRoute = PiramideRouteImport.update({
@@ -118,12 +142,16 @@ export interface FileRoutesByFullPath {
   '/activos': typeof ActivosRoute
   '/afiliados': typeof AfiliadosRoute
   '/aportantes': typeof AportantesRoute
+  '/aprender': typeof AprenderRoute
   '/beneficios': typeof BeneficiosRoute
   '/comision-rentabilidad': typeof ComisionRentabilidadRoute
   '/comisiones': typeof ComisionesRoute
+  '/comparador': typeof ComparadorRoute
   '/cuentas': typeof CuentasRoute
   '/demografia': typeof DemografiaRoute
+  '/glosario': typeof GlosarioRoute
   '/isin': typeof IsinRoute
+  '/metodologia': typeof MetodologiaRoute
   '/piramide': typeof PiramideRoute
   '/portafolio': typeof PortafolioRoute
   '/rendimiento': typeof RendimientoRoute
@@ -137,12 +165,16 @@ export interface FileRoutesByTo {
   '/activos': typeof ActivosRoute
   '/afiliados': typeof AfiliadosRoute
   '/aportantes': typeof AportantesRoute
+  '/aprender': typeof AprenderRoute
   '/beneficios': typeof BeneficiosRoute
   '/comision-rentabilidad': typeof ComisionRentabilidadRoute
   '/comisiones': typeof ComisionesRoute
+  '/comparador': typeof ComparadorRoute
   '/cuentas': typeof CuentasRoute
   '/demografia': typeof DemografiaRoute
+  '/glosario': typeof GlosarioRoute
   '/isin': typeof IsinRoute
+  '/metodologia': typeof MetodologiaRoute
   '/piramide': typeof PiramideRoute
   '/portafolio': typeof PortafolioRoute
   '/rendimiento': typeof RendimientoRoute
@@ -157,12 +189,16 @@ export interface FileRoutesById {
   '/activos': typeof ActivosRoute
   '/afiliados': typeof AfiliadosRoute
   '/aportantes': typeof AportantesRoute
+  '/aprender': typeof AprenderRoute
   '/beneficios': typeof BeneficiosRoute
   '/comision-rentabilidad': typeof ComisionRentabilidadRoute
   '/comisiones': typeof ComisionesRoute
+  '/comparador': typeof ComparadorRoute
   '/cuentas': typeof CuentasRoute
   '/demografia': typeof DemografiaRoute
+  '/glosario': typeof GlosarioRoute
   '/isin': typeof IsinRoute
+  '/metodologia': typeof MetodologiaRoute
   '/piramide': typeof PiramideRoute
   '/portafolio': typeof PortafolioRoute
   '/rendimiento': typeof RendimientoRoute
@@ -178,12 +214,16 @@ export interface FileRouteTypes {
     | '/activos'
     | '/afiliados'
     | '/aportantes'
+    | '/aprender'
     | '/beneficios'
     | '/comision-rentabilidad'
     | '/comisiones'
+    | '/comparador'
     | '/cuentas'
     | '/demografia'
+    | '/glosario'
     | '/isin'
+    | '/metodologia'
     | '/piramide'
     | '/portafolio'
     | '/rendimiento'
@@ -197,12 +237,16 @@ export interface FileRouteTypes {
     | '/activos'
     | '/afiliados'
     | '/aportantes'
+    | '/aprender'
     | '/beneficios'
     | '/comision-rentabilidad'
     | '/comisiones'
+    | '/comparador'
     | '/cuentas'
     | '/demografia'
+    | '/glosario'
     | '/isin'
+    | '/metodologia'
     | '/piramide'
     | '/portafolio'
     | '/rendimiento'
@@ -216,12 +260,16 @@ export interface FileRouteTypes {
     | '/activos'
     | '/afiliados'
     | '/aportantes'
+    | '/aprender'
     | '/beneficios'
     | '/comision-rentabilidad'
     | '/comisiones'
+    | '/comparador'
     | '/cuentas'
     | '/demografia'
+    | '/glosario'
     | '/isin'
+    | '/metodologia'
     | '/piramide'
     | '/portafolio'
     | '/rendimiento'
@@ -236,12 +284,16 @@ export interface RootRouteChildren {
   ActivosRoute: typeof ActivosRoute
   AfiliadosRoute: typeof AfiliadosRoute
   AportantesRoute: typeof AportantesRoute
+  AprenderRoute: typeof AprenderRoute
   BeneficiosRoute: typeof BeneficiosRoute
   ComisionRentabilidadRoute: typeof ComisionRentabilidadRoute
   ComisionesRoute: typeof ComisionesRoute
+  ComparadorRoute: typeof ComparadorRoute
   CuentasRoute: typeof CuentasRoute
   DemografiaRoute: typeof DemografiaRoute
+  GlosarioRoute: typeof GlosarioRoute
   IsinRoute: typeof IsinRoute
+  MetodologiaRoute: typeof MetodologiaRoute
   PiramideRoute: typeof PiramideRoute
   PortafolioRoute: typeof PortafolioRoute
   RendimientoRoute: typeof RendimientoRoute
@@ -281,6 +333,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AportantesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/aprender': {
+      id: '/aprender'
+      path: '/aprender'
+      fullPath: '/aprender'
+      preLoaderRoute: typeof AprenderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/beneficios': {
       id: '/beneficios'
       path: '/beneficios'
@@ -302,6 +361,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComisionesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/comparador': {
+      id: '/comparador'
+      path: '/comparador'
+      fullPath: '/comparador'
+      preLoaderRoute: typeof ComparadorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cuentas': {
       id: '/cuentas'
       path: '/cuentas'
@@ -316,11 +382,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemografiaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/glosario': {
+      id: '/glosario'
+      path: '/glosario'
+      fullPath: '/glosario'
+      preLoaderRoute: typeof GlosarioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/isin': {
       id: '/isin'
       path: '/isin'
       fullPath: '/isin'
       preLoaderRoute: typeof IsinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metodologia': {
+      id: '/metodologia'
+      path: '/metodologia'
+      fullPath: '/metodologia'
+      preLoaderRoute: typeof MetodologiaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/piramide': {
@@ -380,12 +460,16 @@ const rootRouteChildren: RootRouteChildren = {
   ActivosRoute: ActivosRoute,
   AfiliadosRoute: AfiliadosRoute,
   AportantesRoute: AportantesRoute,
+  AprenderRoute: AprenderRoute,
   BeneficiosRoute: BeneficiosRoute,
   ComisionRentabilidadRoute: ComisionRentabilidadRoute,
   ComisionesRoute: ComisionesRoute,
+  ComparadorRoute: ComparadorRoute,
   CuentasRoute: CuentasRoute,
   DemografiaRoute: DemografiaRoute,
+  GlosarioRoute: GlosarioRoute,
   IsinRoute: IsinRoute,
+  MetodologiaRoute: MetodologiaRoute,
   PiramideRoute: PiramideRoute,
   PortafolioRoute: PortafolioRoute,
   RendimientoRoute: RendimientoRoute,
