@@ -34,3 +34,7 @@ pnpm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Python (scripts de automatización git)
+__pycache__/
+*.pyc
