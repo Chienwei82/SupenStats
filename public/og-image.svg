@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="SUPEN Stats — Estadísticas de Pensiones de Costa Rica">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#202331" />
+      <stop offset="55%" stop-color="#2b2a3e" />
+      <stop offset="100%" stop-color="#34324a" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7c4dff" />
+      <stop offset="100%" stop-color="#82aaff" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <circle cx="1040" cy="100" r="230" fill="#7c4dff" opacity="0.14" />
+  <circle cx="1130" cy="540" r="270" fill="#82aaff" opacity="0.08" />
+
+  <rect x="80" y="150" width="8" height="190" rx="4" fill="url(#accent)" />
+  <text x="115" y="225" font-family="DejaVu Sans, Arial, sans-serif" font-size="74" font-weight="700" fill="#eeffff">SUPEN Stats</text>
+  <text x="115" y="285" font-family="DejaVu Sans, Arial, sans-serif" font-size="30" fill="#a6accd">Estadísticas de Pensiones de Costa Rica</text>
+  <text x="115" y="340" font-family="DejaVu Sans, Arial, sans-serif" font-size="21" fill="#89ddff">Rentabilidad · Comisiones · Portafolio · Demografía · Simulador</text>
+
+  <g transform="translate(115,400)">
+    <rect x="0" y="90" width="72" height="80" rx="8" fill="#3b82f6" />
+    <rect x="92" y="60" width="72" height="110" rx="8" fill="#10b981" />
+    <rect x="184" y="110" width="72" height="60" rx="8" fill="#f59e0b" />
+    <rect x="276" y="30" width="72" height="140" rx="8" fill="#ef4444" />
+    <rect x="368" y="75" width="72" height="95" rx="8" fill="#8b5cf6" />
+    <rect x="460" y="120" width="72" height="50" rx="8" fill="#ec4899" />
+  </g>
+
+  <line x1="80" y1="575" x2="1120" y2="575" stroke="#34324a" stroke-width="2" />
+  <text x="80" y="605" font-family="DejaVu Sans, Arial, sans-serif" font-size="17" fill="#676e95">Datos: Superintendencia de Pensiones (SUPEN) · Proyecto educativo y recreativo</text>
+</svg>

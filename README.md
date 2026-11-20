@@ -25,15 +25,18 @@ SUPEN a través de un proxy local. El flujo de datos sigue una dirección única
 
 ```
 API SUPEN (webapps.supen.fi.cr)
-        │  (proxy Vite '/estadisticas' en dev)
+        │  (proxy Vite '/estadisticas' en dev; rewrite en Vercel)
         ▼
-src/api/apiService.ts          Capa de acceso; construye query params y llama fetch
+src/routes/<reporte>.tsx        Ruta TanStack Router + createReportRoute
+        │  fetcher
+        ▼
+src/api/apiService.ts          Query params + timeout 90s + validación de array
         │  respuesta cruda (lowercase / con tildes)
         ▼
-src/utils/dataTransformers.ts  Transforma raw → tipos de dominio (PascalCase)
+src/utils/dataTransformers.ts  raw → tipos de dominio (PascalCase); preserva null
         │
         ▼
-src/hooks/useSupenData.ts      Hook genérico: data, loading, error, refetch
+src/hooks/useReportQuery.ts    React Query: data, loading, error, refetch + caché
         │
         ▼
 src/components/charts/*.tsx    Componentes de Recharts (líneas, barras, donut)
@@ -42,16 +45,18 @@ src/components/charts/*.tsx    Componentes de Recharts (líneas, barras, donut)
 ### Principios de diseño
 
 - **Lazy loading por pestaña**: cada reporte solo descarga sus datos cuando su
-  pestaña está activa (`useSupenData(fetchFn, enabled)`). La pantalla de
-  bienvenida (tab *Inicio*) no dispara ninguna petición, por lo que el arranque
+  pestaña está activa (`useReportQuery(key, fetchFn, { enabled })`). La pantalla
+  de bienvenida (tab *Inicio*) no dispara ninguna petición, por lo que el arranque
   es instantáneo.
 - **Capa de transformación separada**: la API devuelve campos en minúscula y
   con acentos (`beneficiocolones`, `codigofondo`) y datos desglosados por
   (sexo, edad, tipo). Los transformers agregan y normalizan antes de llegar a
   los gráficos. Los shapes verificados se documentan en `docs/docs/api-notes.md`.
-- **Filtros por reporte**: cada pestaña mantiene su propio estado de filtros
-  (fondo, rango de fechas, entidad). Los cambios en el `FilterBar` regeneran el
-  `fetchFn` (via `useCallback`), lo que dispara un refetch automático.
+- **Filtros por reporte**: cada ruta mantiene su estado de filtros (fondo, rango
+  de fechas) en la URL. `FilterBar` usa un patrón draft/applied: el borrador
+  vive en memoria y **Consultar** escribe los search params, lo que cambia la
+  query key y dispara el refetch. **Restablecer** vuelve a los defaults del
+  reporte y limpia esos search params.
 - **Tema claro/oscuro**: la app ofrece un toggle de tema (claro/oscuro) con
   look futurista inspirado en la paleta *Palenight* de Material Theme. La
   elección se guarda en `localStorage` y, si no existe, se usa la preferencia
@@ -80,17 +85,24 @@ src/
 ├── types/supen.ts              # Interfaces de dominio y Raw de la API
 ├── utils/dataTransformers.ts    # parseDate/formatters y transformers
 ├── hooks/
-│   ├── useSupenData.ts          # Hook de fetching con enabled / lazy
-│   └── useTheme.ts              # Hook de tema claro/oscuro (localStorage + sistema)
+│   ├── useReportQuery.ts        # React Query + useUrlFilters + useUrlParam
+│   ├── useInflacion.ts          # IPC/BCCR (degrada si no está configurado)
+│   └── useTheme.ts              # Tema claro/oscuro (localStorage + sistema)
 ├── constants/
 │   ├── supen.ts                # Colores OPC, rangos por defecto, mapas
+│   ├── filters.ts              # Defaults por reporte + validación zod
 │   └── chartNotes.ts            # Notas educativas y referencias por gráfico
+├── routes/                      # Rutas file-based (una por reporte)
+│   ├── __root.tsx               # Layout, Header, ReportTabs, footer
+│   ├── index.tsx                # Pantalla de bienvenida
+│   └── -shared/reportRoute.tsx  # Factory createReportRoute<T>
 ├── components/
 │   ├── layout/                  # Header, ReportTabs, WelcomeScreen, ThemeToggle
-│   ├── charts/                  # gráficos (Recharts)
-│   └── ui/                      # FilterBar, skeletons, errores, boundary, ChartNote
-├── App.tsx                      # Orquesta pestañas + hooks + vistas
-└── main.tsx                     # Punto de entrada
+│   ├── charts/                  # Gráficos (Recharts) + tablas
+│   ├── Simulador.tsx            # Proyección de pensión
+│   ├── Traslados.tsx            # Vistas neto/traslados
+│   └── ui/                      # ChartCard, FilterBar, ShareButton, skeletons, errores
+└── main.tsx                     # Punto de entrada + QueryClient + Router
 ```
 
 ## Inicio Rápido
@@ -114,7 +126,7 @@ npm install
 npm run dev
 ```
 
-El dashboard estará disponible en `http://localhost:5173`
+El dashboard estará disponible en `http://localhost:3000`
 
 ### Build para Producción
 
@@ -270,28 +282,39 @@ const portafolio = await fetchPortafolio('POPULAR PENSIONES', 'ROP')
 
 ```
 SupenStats/
-├── public/                    # Archivos estáticos
+├── public/                    # Archivos estáticos (favicon, iconos, OG image)
 ├── src/
 │   ├── api/                   # Capa de acceso a datos
 │   │   └── apiService.ts
 │   ├── types/                 # Tipos de dominio + Raw de la API
 │   │   └── supen.ts
-│   ├── utils/                 # Transformers y formateadores
-│   │   └── dataTransformers.ts
-│   ├── hooks/                 # Custom hooks de React
-│   │   └── useSupenData.ts
-│   ├── constants/             # Constantes y configuración
-│   │   └── supen.ts
+│   ├── utils/                 # Transformers, formateadores y cálculos de reportes
+│   │   ├── dataTransformers.ts
+│   │   └── reportes.ts
+│   ├── hooks/                 # React Query, filtros URL, tema, inflación
+│   │   ├── useReportQuery.ts
+│   │   ├── useTheme.ts
+│   │   └── useInflacion.ts
+│   ├── constants/             # Colores, rangos, filtros y notas educativas
+│   │   ├── supen.ts
+│   │   ├── filters.ts
+│   │   └── chartNotes.ts
+│   ├── routes/                # Rutas file-based (TanStack Router)
+│   │   ├── __root.tsx
+│   │   ├── index.tsx
+│   │   └── <reporte>.tsx
 │   ├── components/
 │   │   ├── layout/            # Header, ReportTabs, WelcomeScreen
-│   │   ├── charts/            # gráficos de Recharts
-│   │   └── ui/                # FilterBar, skeletons, errores
-│   ├── App.tsx                # Orquestador: pestañas + hooks + vistas
+│   │   ├── charts/            # Gráficos de Recharts y tablas
+│   │   └── ui/                # ChartCard, FilterBar, ShareButton, estados
 │   └── main.tsx               # Punto de entrada
+├── docs/                      # SPEC/DESIGN por reporte + notas de API
+├── memory-bank/               # Contexto persistente para Cline
 ├── index.html
 ├── package.json
 ├── tsconfig.json
 ├── vite.config.ts
+├── vercel.json
 ├── SPEC.md                    # Especificaciones técnicas
 └── README.md                  # Este archivo
 ```
@@ -307,12 +330,12 @@ SupenStats/
 ### Charts
 
 - **RendimientoChart**: Gráfico de líneas con múltiples series (una por OPC)
-- **ComisionesChart**: Gráfico de barras horizontales ordenado de menor a mayor
+- **ComisionesChart**: Evolución de la comisión de administración por OPC (líneas temporales)
 - **PortafolioChart**: Gráfico de donut con distribución por tipo de instrumento
 - **AfiliadosChart**: Gráfico de área con evolución temporal
 - **ActivosChart**: Gráfico de barras agrupadas por operadora
-- **BeneficiosChart**: Pensionados por OPC
-- **CuentasChart**: Activo neto del fondo por OPC
+- **BeneficiosChart**: Pensionados por OPC (barras horizontales)
+- **CuentasChart**: Activo neto del fondo por OPC (líneas temporales)
 - **TransferenciasChart**: Libre transferencia saliente por OPC
 - **Traslados** (`src/components/Traslados.tsx`): dos vistas — variación neta de afiliados (estimado derivado) y traslados reales desde /lt (balance neto por OPC + top flujos origen→destino)
 - **AportantesChart**: Afiliados vs Aportantes por OPC
@@ -323,27 +346,37 @@ SupenStats/
 
 ### UI
 
-- **FilterBar**: Filtros por fondo, rango de fechas y entidad (según el reporte)
+- **ChartCard**: contenedor estándar de gráfico (título + descripción accesible)
+- **FilterBar**: Filtros por fondo y rango de fechas, con **Consultar** y
+  **Restablecer**
+- **ShareButton**: copia la URL actual (con filtros y selectores) al portapapeles
 - **LoadingSkeleton / LoadingOverlay**: Estados de carga
 - **ErrorMessage**: Mensaje de error con botón de reintentar
 - **ErrorBoundary**: Aislamiento de errores por gráfico
 
 ## Hooks Personalizados
 
-### useSupenData
+### useReportQuery
 
-Hook genérico para fetching de datos con estados de carga y error:
+Hook genérico de fetching sobre TanStack Query con estados de carga y error:
 
 ```typescript
-const { data, loading, error, refetch } = useSupenData(fetchFn, enabled)
+const { data, loading, error, refetch } = useReportQuery(key, fetchFn, { enabled })
 ```
 
-- **data**: Array de datos obtenidos
-- **loading**: Booleano indicando si está cargando
+- **data**: Array de datos obtenidos (nunca `undefined`; `[]` si no hay datos)
+- **loading**: `isFetching` (true en primera carga y en refetch con datos previos)
 - **error**: Mensaje de error o null
 - **refetch**: Función para reintentar la carga
-- **enabled**: (opcional) si es `false`, no ejecuta el fetch. Se usa para la
-  carga perezosa por pestaña.
+- **enabled**: (opcional) si es `false`, no ejecuta el fetch. Se usa cuando una
+  vista alterna entre endpoints (ej. `/traslados`).
+
+### useUrlFilters / useUrlParam
+
+- `useUrlFilters(defaults)`: patrón draft/applied sobre los search params de la
+  URL. Devuelve `{ draft, setDraft, consult, reset }`.
+- `useUrlParam(key, isValid, fallback)`: lee y escribe un selector simple
+  (periodicidad, corte, métrica, vista) en la URL, con validación.
 
 ## Funciones de Transformación
 
@@ -382,28 +415,34 @@ sortByDateAsc(data, 'FechaCorte')  // Ordena por fecha ascendente
 ### Comandos Disponibles
 
 ```bash
-npm run dev      # Servidor de desarrollo con hot reload
-npm run build    # Build para producción
-npm run preview  # Vista previa del build
-npm run lint     # Verificación de código
+npm run dev       # Servidor de desarrollo con hot reload (puerto 3000)
+npm run build     # Build para producción
+npm run preview   # Vista previa del build
+npm run lint      # Verificación de código (oxlint)
+npm run typecheck # Verificación de tipos (tsc -b --noEmit)
+npm test          # Tests unitarios (Vitest)
+npm run verify    # lint + typecheck + tests
 ```
 
 ### Agregar Nuevo Gráfico
 
-1. Crear componente en `src/components/charts/`
-2. Agregar un id y una etiqueta en `TABS` en `src/components/layout/ReportTabs.tsx`
-3. En `App.tsx`: crear el estado de filtros, el `fetchFn` (con `useCallback`) y
-   el hook `useSupenData(fetchFn, activeTab === 'miReporte')`
-4. Crear la función `renderMiReporte()` con su `FilterBar` y registrarla en el
-   mapa `views`
+1. Crear componente en `src/components/charts/` usando `ChartCard` + `ChartNote`.
+2. Agregar un id y una etiqueta en `TABS` en `src/components/layout/ReportTabs.tsx`.
+3. Crear la ruta en `src/routes/<nombre>.tsx` con `createFileRoute` +
+   `createReportRoute<T>` (o una variante local si compone varias queries).
+4. Definir los defaults del reporte en `src/constants/filters.ts` si usa fechas.
 
 ### Agregar Nuevo Endpoint
 
 1. Definir la interfaz de dominio **y** el tipo `Raw*` en `src/types/supen.ts`
-   (verificar la forma real con la API antes)
-2. Agregar función fetch en `src/api/apiService.ts`
-3. Agregar la transformación en `src/utils/dataTransformers.ts`
-4. Conectarla con `useSupenData` en `App.tsx` bajo su pestaña
+   (verificar la forma real contra la API y documentarla en
+   `docs/docs/api-notes.md`).
+2. Agregar función fetch en `src/api/apiService.ts` (con `assertArray`).
+3. Agregar la transformación en `src/utils/dataTransformers.ts` (preservar
+   `null`, nunca convertir ausencias a `0`).
+4. Conectarla en la ruta del reporte con `useReportQuery`.
+
+> Para el detalle completo de convenciones, ver `CONTRIBUTING.md`.
 
 ## Troubleshooting
 
@@ -424,6 +463,12 @@ El proxy de Vite debería resolver esto en desarrollo. Para producción, configu
 rm -rf node_modules package-lock.json
 npm install
 ```
+
+## Contribuir
+
+Las convenciones de ramas, commits, verificación y creación de reportes están en
+[`CONTRIBUTING.md`](CONTRIBUTING.md). El contexto persistente del proyecto para
+asistentes de código vive en `memory-bank/`.
 
 ## Créditos
 

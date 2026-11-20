@@ -1,7 +1,9 @@
+import { useMemo } from 'react'
 import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { CHART_COLORS } from '../../constants/supen'
+import { ChartCard } from '../ui/ChartCard'
 import { ChartNote } from '../ui/ChartNote'
 import { sortByDateAsc } from '../../utils/dataTransformers'
 import type { Portafolio } from '../../types/supen'
@@ -12,25 +14,28 @@ interface Props {
 }
 
 export function PortafolioChart({ data, title = 'Distribucion del Portafolio de Inversion' }: Props) {
-  // Usamos solo la fecha de corte más reciente para la distribución actual.
-  const sorted = sortByDateAsc(data, 'FechaCorte')
-  const latestDate = sorted.length > 0 ? sorted[sorted.length - 1].FechaCorte : null
-  const latestData = latestDate ? data.filter(d => d.FechaCorte === latestDate) : data
+  const { chartData, total } = useMemo(() => {
+    // Usamos solo la fecha de corte más reciente para la distribución actual.
+    const sorted = sortByDateAsc(data, 'FechaCorte')
+    const latestDate = sorted.length > 0 ? sorted[sorted.length - 1].FechaCorte : null
+    const latestData = latestDate ? data.filter(d => d.FechaCorte === latestDate) : data
 
-  const aggregated = latestData.reduce<Record<string, number>>((acc, item) => {
-    // Sin posición reportada para el instrumento → no contarlo (un `?? 0`
-    // desinflaría la distribución con ceros falsos).
-    if (item.Monto == null) return acc
-    const key = item.TipoInstrumento || 'Sin clasificar'
-    acc[key] = (acc[key] || 0) + item.Monto
-    return acc
-  }, {})
+    const aggregated = latestData.reduce<Record<string, number>>((acc, item) => {
+      // Sin posición reportada para el instrumento → no contarlo (un `?? 0`
+      // desinflaría la distribución con ceros falsos).
+      if (item.Monto == null) return acc
+      const key = item.TipoInstrumento || 'Sin clasificar'
+      acc[key] = (acc[key] || 0) + item.Monto
+      return acc
+    }, {})
 
-  const chartData = Object.entries(aggregated)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value)
+    const chartData = Object.entries(aggregated)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
 
-  const total = chartData.reduce((sum, d) => sum + d.value, 0)
+    const total = chartData.reduce((sum, d) => sum + d.value, 0)
+    return { chartData, total }
+  }, [data])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tooltipFormatter = (value: any, name: any) => {
@@ -39,8 +44,10 @@ export function PortafolioChart({ data, title = 'Distribucion del Portafolio de 
   }
 
   return (
-    <div className="bg-white dark:bg-[#25293c] rounded-xl border border-gray-200 dark:border-[#34324a] p-6 shadow-md dark:shadow-xl dark:shadow-black/30">
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-[#eeffff] mb-4">{title}</h3>
+    <ChartCard
+      title={title}
+      description="Gráfico de dona: distribución porcentual del portafolio de inversión por tipo de instrumento."
+    >
       <ResponsiveContainer width="100%" height={350}>
         <PieChart>
           <Pie
@@ -78,6 +85,6 @@ export function PortafolioChart({ data, title = 'Distribucion del Portafolio de 
         </PieChart>
       </ResponsiveContainer>
       <ChartNote noteId="portafolio" />
-    </div>
+    </ChartCard>
   )
 }
