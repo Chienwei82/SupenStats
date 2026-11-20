@@ -33,6 +33,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+// PWA (Fase 3): registra el service worker solo en producción para cachear la
+// app shell y servir sin conexión. En desarrollo se omite para no interferir con
+// el HMR ni cachear código viejo.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Si el registro falla (navegador sin soporte, entorno no seguro), la app
+      // sigue funcionando con normalidad; el SW es una mejora progresiva.
+    })
+  })
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>

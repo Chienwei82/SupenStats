@@ -9,6 +9,18 @@ Dashboard de visualización de datos financieros y de pensiones de Costa Rica, c
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite)
 ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss)
 ![Recharts](https://img.shields.io/badge/Recharts-2-FF6384)
+## Funcionalidades
+
+- **17 reportes** con datos reales de SUPEN, filtros por fondo/fechas y estado en la URL (compartible).
+- **Navegación agrupada y con buscador** (menú colapsable por categorías, búsqueda sin distinción de acentos) y **nueva Home** con tarjetas por categoría.
+- **Interactividad**: los gráficos de series temporales incluyen **brush/zoom** y un **alternador gráfico ⇄ tabla** con **exportación a CSV**.
+- **Comparador de operadoras**: compara dos OPC (métrica nominal/real) en el tiempo, con KPIs, tabla y exportación (cross-filter por OPC).
+- **Educación financiera**: **Glosario** con buscador, **rutas de aprendizaje** guiadas, **quiz** interactivo y **metodología** (transparencia de datos y limitaciones).
+- **PWA**: instalable, con *app shell* cacheado y soporte offline (service worker en producción).
+- **Rendimiento**: *code splitting* en chunks separados (react, charts, vendor) para reducir el bundle inicial.
+- **SEO**: títulos, descripciones y datos estructurados (JSON-LD) por ruta.
+- **Accesibilidad (WCAG)**: enlace "Saltar al contenido", navegación por teclado, foco visible y `prefers-reduced-motion`.
+- **Calidad**: CI en GitHub Actions (lint + typecheck + tests + build), pruebas unitarias y de componentes con Vitest.
 
 ## Herramientas de Desarrollo
 

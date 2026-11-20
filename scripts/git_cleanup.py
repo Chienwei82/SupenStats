@@ -10,7 +10,10 @@ Qué hace:
 
 Seguridad:
 - Nunca borra la rama actual ni la rama principal configurada.
-- Nunca usa `-D`: respeta ramas con cambios sin mergear.
+- Usa `-d` (borrado seguro) por defecto.
+- Solo usa `-D` cuando demuestra que el contenido de la rama ya está integrado
+  en la rama principal. Esto es necesario porque un merge con *squash* no deja
+  los commits originales como ancestros, y `git branch -d` los rechaza.
 """
 from __future__ import annotations
 
@@ -42,6 +45,18 @@ def git_output(args: list[str]) -> str:
 def git_check(args: list[str]) -> bool:
     """Ejecuta git y devuelve True si el código de salida es 0 (éxito)."""
     return subprocess.run(["git", *args], capture_output=True).returncode == 0
+
+def git_output_or_none(args: list[str]) -> str | None:
+    """Ejecuta git y devuelve stdout, o None si el comando falla.
+
+    Para comandos donde un código de salida distinto de cero es informativo y
+    no un error. Caso concreto: `merge-tree --write-tree` devuelve 1 cuando hay
+    conflictos, pero sigue imprimiendo el árbol resultante.
+    """
+    result = subprocess.run(["git", *args], capture_output=True, text=True)
+    if result.returncode != 0:
+        return None
+    return result.stdout.rstrip("\n")
 
 # ==============================================================================
 # LÓGICA DE NEGOCIO
@@ -75,6 +90,30 @@ def get_gone_branches(protected_branch: str) -> list[str]:
             gone.append(name)
 
     return gone
+
+def is_branch_content_integrated(branch: str, base_ref: str) -> bool:
+    """Determina si el contenido de `branch` ya está integrado en `base_ref`.
+
+    Necesario porque un merge con *squash* reescribe los commits: la rama queda
+    con commits que no son ancestros de la base, por lo que `git branch -d`
+    falla con "not fully merged" aunque el contenido ya esté aplicado.
+
+    Señal principal: el árbol resultante de fusionar `branch` en `base_ref` es
+    idéntico al árbol de `base_ref` (no aporta ningún cambio pendiente).
+    Señal de respaldo: `git cherry` reporta todos los commits como ya aplicados.
+    """
+    # `merge-tree` falla con conflicto (exit 1), así que se usa la variante
+    # tolerante: un conflicto implica que la rama aporta cambios no integrados.
+    merge_tree = git_output_or_none(["merge-tree", "--write-tree", base_ref, branch])
+    if merge_tree:
+        first_line = merge_tree.splitlines()[0].strip()
+        if first_line and first_line == git_output(["rev-parse", f"{base_ref}^{{tree}}"]):
+            return True
+
+    cherry = git_output(["cherry", base_ref, branch])
+    lines = [line for line in cherry.splitlines() if line.strip()]
+    return bool(lines) and all(line.startswith("-") for line in lines)
+
 
 def is_branch_behind(branch: str) -> bool:
     """Verifica si la rama local está estrictamente detrás de su remoto."""
@@ -135,6 +174,18 @@ def confirm_action(prompt: str, auto_yes: bool) -> bool:
     except EOFError:
         return False
 
+def describe_branch_skip_reason(branch: str, current_branch: str, protected_branch: str) -> str | None:
+    """Devuelve una razón legible si la rama no debe borrarse.
+
+    No se valida el tracking remoto: que el upstream ya no exista es justamente
+    la condición que identifica una rama huérfana, no un motivo para omitirla.
+    """
+    if branch == current_branch:
+        return f"es la rama actual '{current_branch}'"
+    if branch == protected_branch:
+        return f"es la rama protegida '{protected_branch}'"
+    return None
+
 def remove_worktree_safely(path: str, is_dry_run: bool) -> bool:
     if is_dry_run:
         print(f"  [dry] worktree remove {path}")
@@ -148,17 +199,25 @@ def remove_worktree_safely(path: str, is_dry_run: bool) -> bool:
         print(f"  [skip] worktree con cambios sin commitear: {e.stderr.strip()}", file=sys.stderr)
         return False
 
-def delete_branch_safely(name: str, is_dry_run: bool) -> bool:
+def delete_branch_safely(name: str, is_dry_run: bool, force: bool = False) -> bool:
+    """Elimina la rama. Usa `-D` solo si `force` indica integración demostrada."""
+    flag = "-D" if force else "-d"
+
     if is_dry_run:
-        print(f"  [dry] branch -d {name}")
+        print(f"  [dry] branch {flag} {name}")
         return True
 
     try:
-        subprocess.run(["git", "branch", "-d", name], check=True, capture_output=True, text=True)
+        subprocess.run(["git", "branch", flag, name], check=True, capture_output=True, text=True)
         print(f"  [ok] rama eliminada: {name}")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"  [skip] rama sin mergear completa, la dejo: {e.stderr.strip()}", file=sys.stderr)
+        detail = (e.stderr or "").strip()
+        reason = "no está mergeada en la rama actual"
+        if detail:
+            print(f"  [skip] rama omitida: {name}. Motivo: {reason}. Detalle: {detail}", file=sys.stderr)
+        else:
+            print(f"  [skip] rama omitida: {name}. Motivo: {reason}.", file=sys.stderr)
         return False
 
 # ==============================================================================
@@ -220,10 +279,26 @@ def main() -> None:
     gone_branches = get_gone_branches(main_branch)
     print(f"  -> Encontradas: {len(gone_branches)}")
 
+    # La integración se evalúa contra el remoto ya actualizado, no contra la
+    # copia local de la rama principal, que puede estar desactualizada.
+    base_ref = f"origin/{main_branch}"
+    if not git_check(["rev-parse", "--verify", "--quiet", f"refs/remotes/{base_ref}"]):
+        base_ref = main_branch
+
     for branch in sorted(gone_branches):
-        if branch in (current_branch, main_branch):
-            print(f"  [skip] Protegida (actual o principal): {branch}")
+        skip_reason = describe_branch_skip_reason(branch, current_branch, main_branch)
+        if skip_reason:
+            print(f"  [skip] {branch}: {skip_reason}.")
             continue
+
+        # Un merge con squash deja los commits originales fuera de la base, así
+        # que `git branch -d` los rechaza. Se verifica el contenido antes de
+        # decidir entre borrado seguro (-d) y forzado (-D).
+        is_integrated = is_branch_content_integrated(branch, base_ref)
+        if is_integrated:
+            print(f"  -> {branch}: contenido ya integrado en '{base_ref}' (merge con squash).")
+        else:
+            print(f"  [warn] {branch}: no se pudo confirmar que su contenido esté en '{base_ref}'.")
 
         if not confirm_action(f"  ¿Eliminar rama y worktrees de '{branch}'?", auto_yes):
             print(f"  [skip] Cancelado por usuario: {branch}")
@@ -234,7 +309,7 @@ def main() -> None:
         wt_ok = all(remove_worktree_safely(wt, is_dry_run) for wt in worktrees)
 
         if wt_ok:
-            delete_branch_safely(branch, is_dry_run)
+            delete_branch_safely(branch, is_dry_run, force=is_integrated)
 
     # 4. Restaurar .gitignore
     print(f"\n4. Verificando .gitignore...")

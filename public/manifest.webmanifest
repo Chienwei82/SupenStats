@@ -1,0 +1,27 @@
+{
+  "name": "SUPEN Stats — Estadísticas de Pensiones de Costa Rica",
+  "short_name": "SUPEN Stats",
+  "description": "Dashboard educativo e interactivo con estadísticas del sistema de pensiones de Costa Rica.",
+  "lang": "es-CR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#202331",
+  "theme_color": "#202331",
+  "categories": ["finance", "education", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

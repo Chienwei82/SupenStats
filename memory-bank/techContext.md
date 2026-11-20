@@ -56,14 +56,39 @@ npm run verify   # lint + typecheck + tests
 
 - Lint: `oxlint` (plugins react/typescript/oxc).
 - Types: `tsc -b --noEmit`.
-- Tests: `vitest run`.
-- Build: `tsc -b && vite build`.
-- Deploy: Vercel (SPA + rewrites).
+- Tests: `vitest run` (unitarios + componentes con `react-dom/server`).
+- Build: `tsc -b && vite build` (Vite 8 / **Rolldown**).
+- Deploy: Vercel (SPA + rewrites) + **PWA** (manifest + `sw.js`).
+- CI: `.github/workflows/ci.yml` (lint + typecheck + tests + build).
+
+## Code splitting (Fase 3)
+
+- `vite.config.ts` usa `manualChunks` como **función** (Rolldown no acepta objeto).
+- Chunks: `react` (react, react-dom, @tanstack), `charts` (recharts, d3),
+  `vendor` (resto de node_modules) e `index` (código propio).
+- Pendiente: lazy routes de TanStack para cargar Recharts solo al abrir un reporte.
+
+## PWA (Fase 3)
+
+- `public/manifest.webmanifest` (name, icons, theme/background, standalone).
+- `public/sw.js`: navegación network-first (offline fallback a index), estáticos
+  cache-first con revalidación; **nunca** cachea `/estadisticas` (API de datos).
+- Registro en `src/main.tsx` solo si `import.meta.env.PROD`.
+
+## SEO por ruta (Fase 3)
+
+- `src/hooks/usePageMeta.ts`: título, `<meta description>`, canónica, Open Graph
+  y JSON-LD (schema.org). Se llama en el componente de cada página nueva.
+
+## Tests de componentes (Fase 3)
+
+- Sin jsdom ni dependencias nuevas: `renderToStaticMarkup` de `react-dom/server`.
+- Ejemplo: `src/components/ui/__tests__/DataTable.test.tsx`.
 
 ## Problemas conocidos
 
-- Bundle único de ~904 kB (261 kB gzip); sin code splitting.
-- Sin CI (`.github/workflows` ausente).
-- Sin tests de componentes ni E2E.
-- 5 warnings de oxlint (`react/only-export-components`).
-- `scripts/git_*.py` con cambios locales sin commitear.
+- Bundle de charts grande (~460 kB); aislado en su chunk, aún sin lazy route.
+- Sin E2E (Playwright) ni axe.
+- 9 warnings de oxlint (`react/only-export-components`), no bloqueantes.
+- `scripts/git_cleanup.py`: borrado seguro de ramas (aware de squash merges) — ya commiteado.
+- API de SUPEN lenta; UX depende de caching y feedback de carga.
