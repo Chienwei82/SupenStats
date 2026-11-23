@@ -1,7 +1,9 @@
 import { Outlet, createRootRoute, Link } from '@tanstack/react-router'
 import { Header } from '../components/layout/Header'
 import { ReportTabs } from '../components/layout/ReportTabs'
+import { BadgeToast } from '../components/ui/BadgeToast'
 import { useTheme } from '../hooks/useTheme'
+import { useBadges } from '../hooks/useBadges'
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -17,6 +19,14 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   const { theme, toggleTheme } = useTheme()
+  const { recordDarkMode } = useBadges()
+
+  const handleToggleTheme = () => {
+    toggleTheme()
+    if (theme === 'light') {
+      recordDarkMode()
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#202331]">
@@ -26,7 +36,7 @@ function RootLayout() {
       >
         Saltar al contenido
       </a>
-      <Header theme={theme} onToggleTheme={toggleTheme} />
+      <Header theme={theme} onToggleTheme={handleToggleTheme} />
       <main id="contenido" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <ReportTabs />
         <Outlet />
@@ -56,6 +66,8 @@ function RootLayout() {
           </a>
         </div>
       </footer>
+
+      <BadgeToast />
     </div>
   )
 }

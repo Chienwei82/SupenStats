@@ -1,4 +1,5 @@
 import { toCsv, downloadCsv, safeFilename, type CsvColumn } from '../../utils/export'
+import { useBadges } from '../../hooks/useBadges'
 
 interface ExportButtonProps<T> {
   /** Filas a exportar. */
@@ -15,14 +16,22 @@ interface ExportButtonProps<T> {
  * Botón que descarga los datos de una tabla/reporte como CSV (Fase 2 —
  * Exportación). Reutiliza `toCsv`/`downloadCsv`; accesible por teclado y con
  * `aria-label` descriptivo. Deshabilita la exportación si no hay filas.
+ * Registra la exportación para insignias.
  */
 export function ExportButton<T>({ rows, columns, filename, label = 'Exportar CSV' }: ExportButtonProps<T>) {
   const disabled = rows.length === 0
+  const { recordExport } = useBadges()
+
+  const handleExport = () => {
+    recordExport()
+    downloadCsv(safeFilename(filename), toCsv(rows, columns))
+  }
+
   return (
     <button
       type="button"
       disabled={disabled}
-      onClick={() => downloadCsv(safeFilename(filename), toCsv(rows, columns))}
+      onClick={handleExport}
       aria-label={disabled ? 'No hay datos para exportar' : `Descargar ${label.toLowerCase()}`}
       className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 dark:border-[#34324a] bg-white dark:bg-[#25293c] text-gray-700 dark:text-[#a6accd] hover:bg-gray-100 dark:hover:bg-[#303348] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#82aaff] focus-visible:ring-offset-1 dark:focus-visible:ring-offset-[#202331] disabled:opacity-50 disabled:cursor-not-allowed"
     >

@@ -1,14 +1,19 @@
 import { useState } from 'react'
 import { QUIZ_QUESTIONS, evaluateQuiz } from '../../constants/quiz'
+import { useBadges } from '../../hooks/useBadges'
+import { Confetti } from '../ui/Confetti'
 
 /**
  * Quiz educativo interactivo (Fase 2 — Educación). Selección de respuesta por
  * pregunta (radios nativos accesibles), evaluación con `evaluateQuiz` y
  * explicación por pregunta al enviar. El resultado se anuncia con aria-live.
+ * Integra confetti al obtener 100% y registra la actividad para insignias.
  */
 export function Quiz() {
   const [selections, setSelections] = useState<Record<string, number>>({})
   const [submitted, setSubmitted] = useState(false)
+  const [confetti, setConfetti] = useState(false)
+  const { completeQuiz } = useBadges()
 
   const result = evaluateQuiz(QUIZ_QUESTIONS, selections)
   const allAnswered = result.total === QUIZ_QUESTIONS.length
@@ -21,6 +26,16 @@ export function Quiz() {
   const reset = () => {
     setSelections({})
     setSubmitted(false)
+    setConfetti(false)
+  }
+
+  const handleSubmit = () => {
+    completeQuiz(result.percent)
+    setSubmitted(true)
+    if (result.percent >= 100) {
+      setConfetti(true)
+      setTimeout(() => setConfetti(false), 1500)
+    }
   }
 
   return (
@@ -42,8 +57,14 @@ export function Quiz() {
           <p className="text-3xl font-bold text-blue-900 dark:text-[#89ddff]">
             {result.correct} de {result.total} correctas ({result.percent}%)
           </p>
+          {result.percent >= 100 && (
+            <p className="text-sm text-green-700 dark:text-green-300 mt-2">
+              🎉 ¡Puntuación perfecta! Has desbloqueado el confeti.
+            </p>
+          )}
         </div>
       )}
+      <Confetti trigger={confetti} />
 
       <ol className="space-y-5">
         {QUIZ_QUESTIONS.map((q, qi) => (
@@ -100,7 +121,7 @@ export function Quiz() {
         {!submitted ? (
           <button
             type="button"
-            onClick={() => setSubmitted(true)}
+            onClick={handleSubmit}
             disabled={!allAnswered}
             className="px-4 py-2 text-sm font-medium text-white bg-[#7c4dff] hover:opacity-90 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#82aaff]"
           >
