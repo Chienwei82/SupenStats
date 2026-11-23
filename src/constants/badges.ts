@@ -40,6 +40,14 @@ export interface UserActivityState {
   darkModeUsed: boolean
   /** Última fecha de visita (ISO string) para calcular racha. */
   lastVisitDate: string | null
+  /** ¿Ha usado al menos un slider del simulador? */
+  sliderUsed: boolean
+  /** Número de tarjetas de flashcards estudiadas. */
+  flashcardStudied: number
+  /** Número de aciertos en el mini-juego "Adivina la tendencia". */
+  trendGuessesCorrect: number
+  /** ¿Ha usado el comparador con 3+ operadoras? */
+  comparadorMultiOpc: boolean
 }
 
 /** Estado vacío por defecto. */
@@ -51,6 +59,10 @@ export const EMPTY_STATE: UserActivityState = {
   csvExports: 0,
   darkModeUsed: false,
   lastVisitDate: null,
+  sliderUsed: false,
+  flashcardStudied: 0,
+  trendGuessesCorrect: 0,
+  comparadorMultiOpc: false,
 }
 
 /** Lista de insignias disponibles. Las condiciones son funciones puras. */
@@ -138,6 +150,39 @@ export const BADGES: Badge[] = [
     emoji: '🌙',
     category: 'personalizacion',
     condition: s => s.darkModeUsed,
+  },
+  // --- Interacción ampliada (Fase 4B/4C) ---
+  {
+    id: 'lider-de-slider',
+    name: 'Líder de slider',
+    description: 'Ajusta cualquier parámetro con los sliders del simulador.',
+    emoji: '🎚️',
+    category: 'interaccion',
+    condition: s => s.sliderUsed,
+  },
+  {
+    id: 'estudiando-flashcards',
+    name: 'Estudiando con flashcards',
+    description: 'Estudia al menos una tarjeta del glosario en modo estudio.',
+    emoji: '🃏',
+    category: 'aprendizaje',
+    condition: s => s.flashcardStudied >= 1,
+  },
+  {
+    id: 'adivinador',
+    name: 'Adivinador',
+    description: 'Acerta al menos una predicción en "Adivina la tendencia".',
+    emoji: '🔮',
+    category: 'aprendizaje',
+    condition: s => s.trendGuessesCorrect >= 1,
+  },
+  {
+    id: 'triple-comparador',
+    name: 'Triple comparador',
+    description: 'Compara tres o más operadoras al mismo tiempo.',
+    emoji: '⚖️',
+    category: 'interaccion',
+    condition: s => s.comparadorMultiOpc,
   },
 ]
 

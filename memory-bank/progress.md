@@ -17,7 +17,12 @@
 - **Code splitting** (react / charts / vendor) y **SEO por ruta** (JSON-LD).
 - **CI** (GitHub Actions), enlace "Saltar al contenido".
 - Tema claro/oscuro, responsive, accesibilidad (ARIA, foco, reduced motion).
-- **130 tests** (unitarios + componentes); lint sin errores; typecheck y build OK.
+- **Sistema de insignias** (10 badges en 4 categorías, localStorage).
+- **Confetti CSS** al obtener 100% en el quiz.
+- **Botón "Sorpréndeme"** en el Home para reportes aleatorios.
+- **Dato del día** rotativo con curiosidades financieras.
+- **152 tests** (unitarios + componentes); lint sin errores (9 warnings pre-existentes);
+  typecheck y build OK.
 
 ## Qué falta
 
@@ -28,8 +33,9 @@
 
 ## Estado
 
-- Fases 0–3 completadas en `feat/fase-1-interactividad` (base `main` = `f5fd7a5`).
-- Verificación: `npm run verify` ✓ (0 errores, 130 tests), `npm run build` ✓.
+- Fases 0–3 completadas en `main` (base `f5fd7a5`).
+- Fase 4A implementada en `feat/fase-4-interactividad-divertida` (commit `0d32d51`).
+- Verificación: `npm run verify` ✓ (0 errores, 152 tests), `npm run build` ✓.
 
 ## Issues conocidos
 

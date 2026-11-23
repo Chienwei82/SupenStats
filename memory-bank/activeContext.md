@@ -2,11 +2,10 @@
 
 ## Estado actual
 
-- Rama de trabajo: `feat/fase-1-interactividad` (contiene Fases 1, 2 y 3).
+- Rama de trabajo: `feat/fase-4-interactividad-divertida` (Fase 4A implementada).
 - Base: `main` en `f5fd7a5` (PR #17, Fase 0 ya fusionada).
-- `npm run verify` en verde: 0 errores de lint (9 warnings de
-  `react/only-export-components`, mismo patrón que `piramide.tsx`/`traslados.tsx`),
-  typecheck OK, **130 tests** OK (antes 110).
+- `npm run verify` en verde: 0 errores de lint (9 warnings pre-existentes),
+  typecheck OK, **152 tests** OK (130 antes + 22 nuevos: badges + dailyFacts).
 - `npm run build` OK con **code splitting**: chunks `react` (~290 kB),
   `charts` (~460 kB, Recharts), `vendor` (~59 kB) e `index` (~146 kB).
 
@@ -44,6 +43,22 @@
 - **SEO**: `hooks/usePageMeta.ts` (título, description, canónica, JSON-LD) usado
   por las rutas nuevas.
 - **Accesibilidad**: enlace "Saltar al contenido" en `__root.tsx`.
+
+### Fase 4A — Interactividad divertida (implementada en feat/fase-4-interactividad-divertida)
+- **Sistema de insignias** (`constants/badges.ts`, `hooks/useBadges.ts`): 10 badges
+  en 4 categorías (exploración, aprendizaje, interacción, personalización),
+  persistidos en localStorage, condiciones puras testeables.
+- **BadgeToast** (`components/ui/BadgeToast.tsx`): notificación flotante al
+  desbloquear una insignia nueva, accesible (aria-live, Escape para cerrar).
+- **Confetti** (`components/ui/Confetti.tsx`): animación CSS-only al obtener 100%
+  en el quiz, respeta `prefers-reduced-motion`.
+- **Botón "Sorpréndeme"** (`components/layout/WelcomeScreen.tsx`): navega a un
+  reporte aleatorio para descubrir datos inesperados.
+- **Dato del día** (`constants/dailyFacts.ts`): curiosidad financiera rotativa
+  basada en el día del año, con enlace al reporte relacionado.
+- **Tracking automático**: visitas a reportes (`-shared/reportRoute.tsx`),
+  visitas al glosario (`GlossaryView.tsx`), exportaciones CSV (`ExportButton.tsx`),
+  uso de tema oscuro (`__root.tsx`), puntuaciones del quiz (`Quiz.tsx`).
 
 ## Próximos pasos (opcionales / backlog)
 
