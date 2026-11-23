@@ -32,6 +32,10 @@ function loadState(): UserActivityState {
         bestQuizScore: typeof parsed.bestQuizScore === 'number' ? parsed.bestQuizScore : 0,
         csvExports: typeof parsed.csvExports === 'number' ? parsed.csvExports : 0,
         darkModeUsed: typeof parsed.darkModeUsed === 'boolean' ? parsed.darkModeUsed : false,
+        sliderUsed: typeof parsed.sliderUsed === 'boolean' ? parsed.sliderUsed : false,
+        flashcardStudied: typeof parsed.flashcardStudied === 'number' ? parsed.flashcardStudied : 0,
+        trendGuessesCorrect: typeof parsed.trendGuessesCorrect === 'number' ? parsed.trendGuessesCorrect : 0,
+        comparadorMultiOpc: typeof parsed.comparadorMultiOpc === 'boolean' ? parsed.comparadorMultiOpc : false,
         lastVisitDate: typeof parsed.lastVisitDate === 'string' ? parsed.lastVisitDate : null,
       }
     }
@@ -134,6 +138,38 @@ export function useBadges() {
     }))
   }, [recordActivity])
 
+  /** Registra que el usuario ha usado un slider del simulador. */
+  const recordSliderUse = useCallback(() => {
+    recordActivity(prev => ({
+      ...prev,
+      sliderUsed: true,
+    }))
+  }, [recordActivity])
+
+  /** Registra que el usuario ha estudiado una tarjeta de flashcards. */
+  const studyFlashcard = useCallback(() => {
+    recordActivity(prev => ({
+      ...prev,
+      flashcardStudied: prev.flashcardStudied + 1,
+    }))
+  }, [recordActivity])
+
+  /** Registra un intento del mini-juego "Adivina la tendencia". */
+  const recordTrendGuess = useCallback((correct: boolean) => {
+    recordActivity(prev => ({
+      ...prev,
+      trendGuessesCorrect: correct ? prev.trendGuessesCorrect + 1 : prev.trendGuessesCorrect,
+    }))
+  }, [recordActivity])
+
+  /** Registra que el usuario ha usado el comparador con 3+ operadoras. */
+  const recordComparadorMultiOpc = useCallback(() => {
+    recordActivity(prev => ({
+      ...prev,
+      comparadorMultiOpc: true,
+    }))
+  }, [recordActivity])
+
   /** Marca una insignia como notificada (ya se mostró al usuario). */
   const markNotified = useCallback((badgeId: string) => {
     setNotifiedIds(prev => new Set(prev).add(badgeId))
@@ -157,6 +193,10 @@ export function useBadges() {
     completeQuiz,
     recordExport,
     recordDarkMode,
+    recordSliderUse,
+    studyFlashcard,
+    recordTrendGuess,
+    recordComparadorMultiOpc,
     markNotified,
     markAllNotified,
     hasNew: newBadges.length > 0,

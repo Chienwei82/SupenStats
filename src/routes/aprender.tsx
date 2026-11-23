@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { LearningPathsView } from '../components/education/LearningPathsView'
 import { Quiz } from '../components/education/Quiz'
+import { AdivinaTendencia } from '../components/education/AdivinaTendencia'
 import { ErrorBoundary } from '../components/ui/ErrorBoundary'
 import { usePageMeta } from '../hooks/usePageMeta'
 
@@ -23,6 +24,9 @@ function AprenderPage() {
         <LearningPathsView />
         <div className="border-t border-gray-200 dark:border-[#34324a] pt-8">
           <Quiz />
+        </div>
+        <div className="border-t border-gray-200 dark:border-[#34324a] pt-8">
+          <AdivinaTendencia />
         </div>
       </ErrorBoundary>
     </section>

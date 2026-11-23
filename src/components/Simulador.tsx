@@ -7,6 +7,7 @@ import { calcularRentabilidadPromedio, proyeccionPension, valorPresente, MIN_COR
 import { formatCurrency, formatCurrencyMillions, getUniqueValues } from '../utils/dataTransformers'
 import { useUrlParam } from '../hooks/useReportQuery'
 import { useInflacion } from '../hooks/useInflacion'
+import { useBadges } from '../hooks/useBadges'
 import { ChartCard } from './ui/ChartCard'
 import { ChartNote } from './ui/ChartNote'
 import { OPC_LIST } from '../constants/supen'
@@ -42,21 +43,18 @@ export function Simulador({ data }: Props) {
   )
 
   // Inputs del usuario (formulario local, no son filtros de API).
-  const [saldo, setSaldo] = useState('5 000 000')
-  const [aporte, setAporte] = useState('50 000')
-  const [edadActual, setEdadActual] = useState('30')
-  const [edadRetiro, setEdadRetiro] = useState('65')
+  const [saldo, setSaldo] = useState(5_000_000)
+  const [aporte, setAporte] = useState(50_000)
+  const [edadActual, setEdadActual] = useState(30)
+  const [edadRetiro, setEdadRetiro] = useState(65)
 
-  const saldoN = Number(saldo.replace(/\s/g, ''))
-  const aporteN = Number(aporte.replace(/\s/g, ''))
-  const edadActualN = Number(edadActual)
-  const edadRetiroN = Number(edadRetiro)
+  const { recordSliderUse } = useBadges()
 
   const inputsValidos =
-    Number.isFinite(saldoN) && saldoN >= 0 &&
-    Number.isFinite(aporteN) && aporteN >= 0 &&
-    Number.isFinite(edadActualN) && edadActualN >= 18 && edadActualN <= 99 &&
-    Number.isFinite(edadRetiroN) && edadRetiroN > edadActualN && edadRetiroN <= 99
+    Number.isFinite(saldo) && saldo >= 0 &&
+    Number.isFinite(aporte) && aporte >= 0 &&
+    Number.isFinite(edadActual) && edadActual >= 18 && edadActual <= 99 &&
+    Number.isFinite(edadRetiro) && edadRetiro > edadActual && edadRetiro <= 99
 
   const rentabilidad = useMemo(
     () => calcularRentabilidadPromedio(data, opcEfectiva, metrica),
@@ -66,13 +64,13 @@ export function Simulador({ data }: Props) {
   const proyeccion = useMemo(() => {
     if (!inputsValidos || rentabilidad.promedio == null) return null
     return proyeccionPension({
-      saldoInicial: saldoN,
-      aporteMensual: aporteN,
-      anios: edadRetiroN - edadActualN,
+      saldoInicial: saldo,
+      aporteMensual: aporte,
+      anios: edadRetiro - edadActual,
       tasaAnual: (rentabilidad.promedio as number) / 100,
-      edadActual: edadActualN,
+      edadActual: edadActual,
     })
-  }, [inputsValidos, rentabilidad.promedio, saldoN, aporteN, edadRetiroN, edadActualN])
+  }, [inputsValidos, rentabilidad.promedio, saldo, aporte, edadRetiro, edadActual])
 
   // Poder adquisitivo (Reporte 7): descuenta el monto nominal proyectado por
   // la inflación promedio. Si no hay tasa de inflación (BCCR no conectado o
@@ -80,7 +78,7 @@ export function Simulador({ data }: Props) {
   // monto nominal. Nunca se inventa una cifra equivalente.
   const { inflacion, integracionActiva, error: errorInflacion } = useInflacion()
 
-  const añosProyeccion = edadRetiroN - edadActualN
+  const añosProyeccion = edadRetiro - edadActual
 
   const montoValorPresente = useMemo(() => {
     if (!proyeccion) return null
@@ -102,10 +100,40 @@ export function Simulador({ data }: Props) {
       description="Proyección del saldo acumulado al retiro usando la rentabilidad histórica promedio de la OPC seleccionada."
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-        <Campo label="Saldo actual del ROP (₡)" value={saldo} onChange={setSaldo} />
-        <Campo label="Aporte mensual (₡)" value={aporte} onChange={setAporte} />
-        <Campo label="Edad actual" value={edadActual} onChange={setEdadActual} />
-        <Campo label="Edad de retiro" value={edadRetiro} onChange={setEdadRetiro} />
+        <CampoSlider
+          label="Saldo actual del ROP (₡)"
+          value={saldo}
+          onChange={v => { setSaldo(v); recordSliderUse() }}
+          min={0}
+          max={50_000_000}
+          step={100_000}
+          format={formatCurrency}
+        />
+        <CampoSlider
+          label="Aporte mensual (₡)"
+          value={aporte}
+          onChange={v => { setAporte(v); recordSliderUse() }}
+          min={0}
+          max={5_000_000}
+          step={10_000}
+          format={formatCurrency}
+        />
+        <CampoSlider
+          label="Edad actual"
+          value={edadActual}
+          onChange={v => { setEdadActual(v); recordSliderUse() }}
+          min={18}
+          max={99}
+          step={1}
+        />
+        <CampoSlider
+          label="Edad de retiro"
+          value={edadRetiro}
+          onChange={v => { setEdadRetiro(v); recordSliderUse() }}
+          min={19}
+          max={99}
+          step={1}
+        />
       </div>
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -228,22 +256,50 @@ export function Simulador({ data }: Props) {
   )
 }
 
-interface CampoProps {
+function CampoSlider({
+  label,
+  value,
+  onChange,
+  min = 0,
+  max = 100,
+  step = 1,
+  format,
+}: {
   label: string
-  value: string
-  onChange: (v: string) => void
-}
-
-function Campo({ label, value, onChange }: CampoProps) {
+  value: number
+  onChange: (v: number) => void
+  min?: number
+  max?: number
+  step?: number
+  format?: (v: number) => string
+}) {
+  const display = format ? format(value) : value.toLocaleString()
   return (
-    <label className="flex flex-col gap-1 text-xs font-medium text-gray-600 dark:text-[#a6accd]">
-      {label}
+    <label className="flex flex-col gap-2 text-xs font-medium text-gray-600 dark:text-[#a6accd]">
+      <div className="flex justify-between">
+        <span>{label}</span>
+        <span className="text-gray-500 dark:text-[#676e95]">{display}</span>
+      </div>
       <input
-        type="text"
-        inputMode="numeric"
+        type="range"
+        min={min}
+        max={max}
+        step={step}
         value={value}
-        onChange={e => onChange(e.target.value)}
-        className="px-3 py-1.5 text-sm bg-white dark:bg-[#25293c] dark:text-[#eeffff] border border-gray-300 dark:border-[#34324a] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#82aaff]"
+        onChange={e => onChange(Number(e.target.value))}
+        className="w-full accent-[#7c4dff] h-2 bg-gray-200 dark:bg-[#34324a] rounded-lg cursor-pointer appearance-none"
+      />
+      <input
+        type="number"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={e => {
+          const v = Number(e.target.value)
+          if (Number.isFinite(v)) onChange(v)
+        }}
+        className="w-full px-3 py-1.5 text-sm bg-white dark:bg-[#25293c] dark:text-[#eeffff] border border-gray-300 dark:border-[#34324a] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#82aaff] text-right"
       />
     </label>
   )
