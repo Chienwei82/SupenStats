@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react'
-import { useSearch } from '@tanstack/react-router'
+import { useEffect } from 'react'
+import { useSearch, useLocation } from '@tanstack/react-router'
 import { FilterBar } from '../../components/ui/FilterBar'
 import { ReportView } from '../../components/ui/ReportView'
 import { ShareButton } from '../../components/ui/ShareButton'
 import { useReportQuery, useUrlFilters } from '../../hooks/useReportQuery'
+import { useBadges } from '../../hooks/useBadges'
 import { reportSearchSchema, resolveFilters } from '../../constants/filters'
 import type { ReportSearchInput } from '../../constants/filters'
 import type { FondoTipo, DateRange } from '../../types/supen'
@@ -38,8 +40,15 @@ export function validateReportSearch(search: Record<string, unknown>): ReportSea
 export function createReportRoute<T>(config: ReportRouteConfig<T>) {
   return function ReportRoute() {
     const search = useSearch({ strict: false }) as ReportSearchInput
+    const location = useLocation()
     const applied = resolveFilters(search, config.defaults)
     const filters = useUrlFilters(applied)
+    const { visitRoute } = useBadges()
+
+    // Registrar visita al reporte para insignias (una vez por montaje).
+    useEffect(() => {
+      visitRoute(location.pathname)
+    }, [visitRoute, location.pathname])
 
     const { data, loading, error, refetch } = useReportQuery<T>(
       [config.endpoint, applied.fondo || null, applied.dates?.FechaInicio ?? null, applied.dates?.FechaFinal ?? null],

@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { GLOSSARY } from '../../constants/glossary'
 import { matchesQuery } from '../../utils/search'
+import { useBadges } from '../../hooks/useBadges'
 
 /**
  * Vista del glosario de términos (Fase 2 — Educación). Buscador sin
@@ -9,6 +10,12 @@ import { matchesQuery } from '../../utils/search'
  */
 export function GlossaryView() {
   const [query, setQuery] = useState('')
+  const { visitGlossary } = useBadges()
+
+  // Registrar visita al glosario para insignias (una vez por montaje).
+  useEffect(() => {
+    visitGlossary()
+  }, [visitGlossary])
 
   const filtered = useMemo(
     () => GLOSSARY.filter(t => matchesQuery(`${t.term} ${t.definition}`, query)),
