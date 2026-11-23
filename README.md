@@ -1,491 +1,320 @@
 # SUPEN Stats
 
-Dashboard de visualización de datos financieros y de pensiones de Costa Rica, consumiendo la API pública de la Superintendencia de Pensiones (SUPEN).
+**Dashboard educativo e interactivo de estadísticas del sistema de pensiones de Costa Rica.**
 
-> **Aviso**: Este es un proyecto recreativo con fines educativos. No es oficial de la Superintendencia de Pensiones de Costa Rica (SUPEN) ni tiene afiliación alguna con entes gubernamentales. Es un proyecto de código abierto creado para practicar desarrollo web y visualización de datos.
+Consume la API pública de la Superintendencia de Pensiones (SUPEN) para visualizar rentabilidad, comisiones, afiliados, activos, beneficios, traslados y más. Incluye herramientas de aprendizaje financiero: glosario, quiz interactivo, simulador de pensión y comparador de operadoras.
 
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)
-![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite)
-![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss)
-![Recharts](https://img.shields.io/badge/Recharts-2-FF6384)
-## Funcionalidades
+> ⚠️ **Aviso importante**: Este es un proyecto recreativo y educativo. **No es oficial** de la Superintendencia de Pensiones de Costa Rica (SUPEN) ni tiene afiliación con entes gubernamentales. Los datos provienen de la API pública de SUPEN y se presentan con fines de práctica de desarrollo web y educación financiera.
 
-- **17 reportes** con datos reales de SUPEN, filtros por fondo/fechas y estado en la URL (compartible).
-- **Navegación agrupada y con buscador** (menú colapsable por categorías, búsqueda sin distinción de acentos) y **nueva Home** con tarjetas por categoría.
-- **Interactividad**: los gráficos de series temporales incluyen **brush/zoom** y un **alternador gráfico ⇄ tabla** con **exportación a CSV**.
-- **Comparador de operadoras**: compara dos OPC (métrica nominal/real) en el tiempo, con KPIs, tabla y exportación (cross-filter por OPC).
-- **Educación financiera**: **Glosario** con buscador, **rutas de aprendizaje** guiadas, **quiz** interactivo y **metodología** (transparencia de datos y limitaciones).
-- **PWA**: instalable, con *app shell* cacheado y soporte offline (service worker en producción).
-- **Rendimiento**: *code splitting* en chunks separados (react, charts, vendor) para reducir el bundle inicial.
-- **SEO**: títulos, descripciones y datos estructurados (JSON-LD) por ruta.
-- **Accesibilidad (WCAG)**: enlace "Saltar al contenido", navegación por teclado, foco visible y `prefers-reduced-motion`.
-- **Calidad**: CI en GitHub Actions (lint + typecheck + tests + build), pruebas unitarias y de componentes con Vitest.
 
-## Herramientas de Desarrollo
+---
 
-En este proyecto se usaron los siguientes productos:
+## 📸 Capturas de pantalla
 
-- **[OpenCode](https://opencode.ai)** — CLI de agente de código asistido
-- **[DeepSeek](https://openrouter.com)** — modelo de lenguaje usado para asistencia de código
-- **Big-Pickle** — asistencia adicional en el desarrollo
+A continuación se muestran las pantallas principales de la aplicación. Las imágenes se generan ejecutando `npm run dev` y navegando a cada ruta.
 
-## Arquitectura
+| Pantalla | Descripción |
+|----------|-------------|
+| ![Home](docs/screenshots/home.png) | Página de inicio con tarjetas agrupadas por categoría, botón "Sorpréndeme" y dato del día. |
+| ![Reporte](docs/screenshots/reporte.png) | Reporte de series temporales con gráfico Recharts, alternador gráfico/tabla y exportación CSV. |
+| ![Simulador](docs/screenshots/simulador.png) | Simulador de pensión con sliders interactivos, proyección de saldo y ajuste por inflación. |
+| ![Comparador](docs/screenshots/comparador.png) | Comparador de dos operadoras con KPIs, gráfico comparativo y tabla exportable. |
+| ![Glosario](docs/screenshots/glosario.png) | Glosario de términos con buscador y modo estudio (flashcards volteables). |
+| ![Quiz](docs/screenshots/quiz.png) | Quiz educativo interactivo con confetti al obtener 100% y explicaciones por pregunta. |
 
-El proyecto es una SPA de React con TypeScript que consume la API pública de
-SUPEN a través de un proxy local. El flujo de datos sigue una dirección única:
+> 💡 **Para generar las capturas**: ejecuta `npm run dev`, abre `http://localhost:3000` en cada ruta y toma una captura con herramientas nativas del sistema (ej. `Shift + Print` en Linux, `Cmd + Shift + 4` en macOS).
 
-```
-API SUPEN (webapps.supen.fi.cr)
-        │  (proxy Vite '/estadisticas' en dev; rewrite en Vercel)
-        ▼
-src/routes/<reporte>.tsx        Ruta TanStack Router + createReportRoute
-        │  fetcher
-        ▼
-src/api/apiService.ts          Query params + timeout 90s + validación de array
-        │  respuesta cruda (lowercase / con tildes)
-        ▼
-src/utils/dataTransformers.ts  raw → tipos de dominio (PascalCase); preserva null
-        │
-        ▼
-src/hooks/useReportQuery.ts    React Query: data, loading, error, refetch + caché
-        │
-        ▼
-src/components/charts/*.tsx    Componentes de Recharts (líneas, barras, donut)
-```
 
-### Principios de diseño
+---
 
-- **Lazy loading por pestaña**: cada reporte solo descarga sus datos cuando su
-  pestaña está activa (`useReportQuery(key, fetchFn, { enabled })`). La pantalla
-  de bienvenida (tab *Inicio*) no dispara ninguna petición, por lo que el arranque
-  es instantáneo.
-- **Capa de transformación separada**: la API devuelve campos en minúscula y
-  con acentos (`beneficiocolones`, `codigofondo`) y datos desglosados por
-  (sexo, edad, tipo). Los transformers agregan y normalizan antes de llegar a
-  los gráficos. Los shapes verificados se documentan en `docs/docs/api-notes.md`.
-- **Filtros por reporte**: cada ruta mantiene su estado de filtros (fondo, rango
-  de fechas) en la URL. `FilterBar` usa un patrón draft/applied: el borrador
-  vive en memoria y **Consultar** escribe los search params, lo que cambia la
-  query key y dispara el refetch. **Restablecer** vuelve a los defaults del
-  reporte y limpia esos search params.
-- **Tema claro/oscuro**: la app ofrece un toggle de tema (claro/oscuro) con
-  look futurista inspirado en la paleta *Palenight* de Material Theme. La
-  elección se guarda en `localStorage` y, si no existe, se usa la preferencia
-  del sistema (`prefers-color-scheme`). El tema se aplica con la clase `.dark`
-  en `<html>` y variantes `dark:` de Tailwind.
-- **Notas educativas**: cada gráfico incluye un acordeón *"¿Cómo leer este
-  gráfico?"* que explica en lenguaje sencillo qué significa y cómo interpretar
-  el dato, con referencias a SUPEN y otras fuentes, para apoyar la educación
-  financiera de la ciudadanía.
-- **Accesibilidad (WCAG)**: la UI usa etiquetas asociadas a controles, patrón
-  WAI-ARIA tabs con navegación por teclado, `role="alert"`/`role="status"` para
-  errores y carga, foco visible (`:focus-visible`) y respeta
-  `prefers-reduced-motion`.
-- **Predeterminados sensatos**:
-  - Fondo por defecto: `ROP`.
-  - Rango de fechas por defecto: **últimos 5 años** (dinámico) para reportes
-    históricos (`DATE_RANGE_DEFAULT`).
-  - `PORTFOLIO_RANGE`: últimos ~3 meses, porque el endpoint de portafolio es
-    muy pesado (decenas de MB sin filtro).
+## 🚀 Funcionalidades principales
 
-### Componentes
+### Reportes estadísticos (17 reportes)
 
-```
-src/
-├── api/apiService.ts            # Fetchers por endpoint + query builder
-├── types/supen.ts              # Interfaces de dominio y Raw de la API
-├── utils/dataTransformers.ts    # parseDate/formatters y transformers
-├── hooks/
-│   ├── useReportQuery.ts        # React Query + useUrlFilters + useUrlParam
-│   ├── useInflacion.ts          # IPC/BCCR (degrada si no está configurado)
-│   └── useTheme.ts              # Tema claro/oscuro (localStorage + sistema)
-├── constants/
-│   ├── supen.ts                # Colores OPC, rangos por defecto, mapas
-│   ├── filters.ts              # Defaults por reporte + validación zod
-│   └── chartNotes.ts            # Notas educativas y referencias por gráfico
-├── routes/                      # Rutas file-based (una por reporte)
-│   ├── __root.tsx               # Layout, Header, ReportTabs, footer
-│   ├── index.tsx                # Pantalla de bienvenida
-│   └── -shared/reportRoute.tsx  # Factory createReportRoute<T>
-├── components/
-│   ├── layout/                  # Header, ReportTabs, WelcomeScreen, ThemeToggle
-│   ├── charts/                  # Gráficos (Recharts) + tablas
-│   ├── Simulador.tsx            # Proyección de pensión
-│   ├── Traslados.tsx            # Vistas neto/traslados
-│   └── ui/                      # ChartCard, FilterBar, ShareButton, skeletons, errores
-└── main.tsx                     # Punto de entrada + QueryClient + Router
-```
+| Categoría | Reportes | Qué muestran |
+|-----------|----------|--------------|
+| **Rendimiento y costos** | Rendimiento, Rend. Real, Comisiones, Comisión vs Rend. | Rentabilidad nominal y real por operadora, comisiones cobradas, balance costo-rendimiento. |
+| **Inversiones y cuentas** | Portafolio, Instrumentos (ISIN), Activos netos, Cuentas | Distribución de inversiones, títulos ISIN, patrimonio de fondos, desglose contable. |
+| **Personas y demografía** | Afiliados, Aportantes, Beneficios, Demografía, Pirámide | Afiliados, aportantes activos, pensionados, distribución por sexo y edad. |
+| **Movilidad y proyección** | Transferencias, Traslados, Simulador | Flujos entre operadoras, proyección de ahorro para la jubilación. |
 
-## Inicio Rápido
+### Interactividad avanzada
 
-### Requisitos
+- **Brush/zoom** en gráficos de series temporales para explorar rangos de fechas.
+- **Alternador gráfico ⇄ tabla** para ver los mismos datos en diferentes formatos.
+- **Exportación a CSV** de cualquier reporte o comparación.
+- **Estado en la URL**: filtros y vistas son compartibles vía enlace (back/forward funciona).
+- **Sliders interactivos** en el simulador para ajustar saldo, aporte y edades en tiempo real.
+
+### Educación financiera
+
+- **Glosario** con buscador (sin distinción de acentos) y **modo estudio** con tarjetas volteables tipo flashcard.
+- **Quiz interactivo** con preguntas sobre pensiones, confetti al 100% y explicaciones por respuesta.
+- **Mini-juego "Adivina la tendencia"**: predice si la rentabilidad de una operadora subió o bajó entre dos cortes.
+- **Rutas de aprendizaje guiadas** en la sección `/aprender`.
+- **Metodología** transparente sobre el origen y limitaciones de los datos.
+
+### Gamificación (insignias)
+
+Sistema de 14 insignias desbloqueables almacenadas en `localStorage`:
+
+| Categoría | Insignias | Cómo desbloquear |
+|-----------|-----------|------------------|
+| 🔍 Exploración | Primer reporte, Explorador, Coleccionista, Viajero del tiempo | Visitar reportes y categorías |
+| 🎓 Aprendizaje | Glosario iniciado, Quiz perfecto, Aprendiz constante, Estudiando con flashcards, Adivinador | Glosario, quiz, flashcards, mini-juego |
+| ⚡ Interacción | Exportador, Comparador, Líder de slider, Triple comparador | CSV, comparador, sliders, 3+ OPCs |
+| 🌙 Personalización | Nocturno | Activar tema oscuro |
+
+
+---
+
+## 🛠️ Tecnologías
+
+| Categoría | Tecnología | Versión |
+|-----------|------------|---------|
+| Framework | React | 19 |
+| Lenguaje | TypeScript | 5 |
+| Build tool | Vite | 8 |
+| Estilos | Tailwind CSS | 4 |
+| Gráficos | Recharts | 3 |
+| Ruteo | TanStack Router | 1.170 |
+| Estado remoto | TanStack Query | 5 |
+| Validación | Zod | 4 |
+| Tests | Vitest | 4 |
+| Linter | oxlint | 1 |
+| PWA | Service Worker + Workbox | — |
+
+---
+
+## 📦 Instalación y puesta en marcha
+
+### Requisitos previos
 
 - Node.js 18+
-- npm 9+ (o yarn/pnpm)
+- npm 9+
 
-### Instalación
+### Comandos
 
 ```bash
-# Clonar el repositorio
-git clone <url-del-repositorio>
+# 1. Clonar el repositorio
+git clone https://github.com/Chienwei82/SupenStats.git
 cd SupenStats
 
-# Instalar dependencias
+# 2. Instalar dependencias
 npm install
 
-# Iniciar servidor de desarrollo
+# 3. Servidor de desarrollo (http://localhost:3000)
 npm run dev
-```
 
-El dashboard estará disponible en `http://localhost:3000`
-
-### Build para Producción
-
-```bash
+# 4. Build para producción
 npm run build
-```
 
-Los archivos estáticos se generan en `dist/`
-
-### Vista Previa de Producción
-
-```bash
+# 5. Vista previa del build
 npm run preview
 ```
 
-## Configuración
-
-### Proxy de API
-
-El proxy está configurado en `vite.config.ts` para desarrollo:
-
-```typescript
-server: {
-  proxy: {
-    '/estadisticas': {
-      target: 'https://webapps.supen.fi.cr',
-      changeOrigin: true,
-      secure: false,
-    },
-  },
-},
-```
-
-Para producción, configurar un proxy inverso (Nginx, Apache, etc.) o consumir la API directamente.
-
-### Cambiar Período de Datos
-
-El rango por defecto de los reportes históricos son los **últimos 5 años**,
-calculado dinámicamente en `src/constants/supen.ts`:
-
-```typescript
-export const DATE_RANGE_DEFAULT = {
-  FechaInicio: isoDate(5),  // 5 años atrás desde hoy
-  FechaFinal: new Date().toISOString().split('T')[0],  // Fecha actual
-}
-```
-
-Cada pestaña permite además ajustar el rango en su barra de filtros.
-
-### Cambiar Fondo por Defecto
-
-```typescript
-export const FONDO_DEFAULT = 'ROP' as const  // O 'FCL', 'VOL', etc.
-```
-
-### Personalizar Colores de OPCs
-
-Editar `src/constants/supen.ts`:
-
-```typescript
-export const OPC_COLORS: Record<string, string> = {
-  'POPULAR PENSIONES': '#3b82f6',
-  'BCR-PENSION': '#10b981',
-  'BN-VITAL': '#f59e0b',
-  'CCSS-OPC': '#ef4444',
-  'VIDA PLENA OPC': '#8b5cf6',
-  'BAC SJ PENSIONES': '#ec4899',
-  // Regímenes básicos (fondo BASI)
-  'FONDO IVM-CCSS': '#0ea5e9',
-  'MAGISTERIO NAL': '#f97316',
-  'PODER JUDICIAL': '#14b8a6',
-  'FONDO BOMBEROS': '#e11d48',
-  'TRANS. MAGIST.': '#a855f7',
-  // Regímenes ocupacionales (fondo OCUP)
-  'FONDO FBNCR': '#06b6d4',
-  'FONDO FICE': '#84cc16',
-  'FONDO FRE-CCSS': '#d946ef',
-  'FONDO VEND LOT': '#f43f5e',
-}
-```
-
-> `OPC_LIST` se mantiene separado de `OPC_COLORS` para que el filtro de libre
-> transferencia solo liste operadoras (OPC), sin incluir los regímenes básicos
-> u ocupacionales.
-
-### Tema Claro/Oscuro
-
-La app incluye un toggle de tema en el encabezado. La elección se guarda en
-`localStorage` (`supen-theme`) y, si no hay elección previa, se usa la
-preferencia del sistema operativo (`prefers-color-scheme`). El dark mode usa
-una paleta inspirada en *Palenight* de Material Theme.
-
-Para evitar un destello al cargar, `index.html` aplica la clase `dark` antes
-del primer render con un script inline. El modo oscuro se activa con la clase
-`.dark` en `<html>` y las variantes `dark:` de Tailwind (configuradas con
-`@custom-variant dark` en `src/index.css`).
-
-## Uso de la API
-
-### Endpoints Disponibles
-
-| Endpoint | Descripción | Parámetros |
-|----------|------------|-----------|
-| `GET /api/comision` | Comisiones de administración | `Fondo`, `FechaInicio`, `FechaFinal` |
-| `GET /api/rendimiento` | Rendimientos históricos | `Fondo`, `Entidad`, `FechaInicio`, `FechaFinal` |
-| `GET /api/portafolio` | Composición del portafolio | `Entidad`, `Fondo`, `FechaInicio`, `FechaFinal` |
-| `GET /api/portafolioisin` | Portafolio por código ISIN | `Entidad`, `Fondo` (pesado, usar rangos) |
-| `GET /api/afiliado` | Datos de afiliados (sexo, edad, aportantes) | `Entidad`, `Fondo`, `FechaInicio`, `FechaFinal` |
-| `GET /api/beneficio` | Datos de pensionados | `Entidad`, `Fondo`, `FechaInicio`, `FechaFinal` |
-| `GET /api/cuenta` | Estado contable del fondo | `Entidad`, `Fondo`, `FechaInicio`, `FechaFinal` |
-| `GET /api/lt` | Libre transferencia | `Entidad`, `FechaInicio`, `FechaFinal` |
-
-> Nota: los endpoints respetan los filtros de fecha solo cuando se envían
-> **ambos** `FechaInicio` y `FechaFinal`. Sin ellos devuelven todo el histórico
-> (desde 2010), lo que alarga mucho la respuesta.
-
-### Ejemplos de Uso
+### Verificación de calidad
 
 ```bash
-# Obtener comisiones del ROP
-curl "https://webapps.supen.fi.cr/estadisticas/api/comision?Fondo=ROP"
+# Lint + typecheck + tests (ejecutar antes de cada commit/PR)
+npm run verify
 
-# Obtener rendimiento de una OPC específica
-curl "https://webapps.supen.fi.cr/estadisticas/api/rendimiento?Entidad=POPULAR%20PENSIONES"
+# Solo tests
+npm test
 
-# Obtener portafolio de inversión
-curl "https://webapps.supen.fi.cr/estadisticas/api/portafolio?Fondo=ROP"
+# Solo lint
+npm run lint
+
+# Solo typecheck
+npm run typecheck
 ```
 
-### Uso en Código TypeScript
 
-```typescript
-import {
-  fetchComisiones,
-  fetchRendimiento,
-  fetchPortafolio
-} from './api/apiService'
+---
 
-// Obtener comisiones del ROP
-const comisiones = await fetchComisiones('ROP', {
-  FechaInicio: '2023-01-01',
-  FechaFinal: '2023-12-31'
-})
+## 🏗️ Arquitectura del sistema
 
-// Obtener rendimiento de todas las OPCs
-const rendimientos = await fetchRendimiento('ROP')
-
-// Obtener portafolio de una OPC específica
-const portafolio = await fetchPortafolio('POPULAR PENSIONES', 'ROP')
+```mermaid
+flowchart TD
+    A[API SUPEN<br/>webapps.supen.fi.cr] -->|proxy Vite /estadisticas| B[src/api/apiService.ts]
+    B -->|fetch con timeout 90s| C[src/routes/<reporte>.tsx]
+    C -->|useReportQuery| D[src/hooks/useReportQuery.ts]
+    D -->|React Query: caché, loading, error| E[src/utils/dataTransformers.ts]
+    E -->|raw → dominio, preserva null| F[src/components/charts/*.tsx]
+    F -->|Recharts + ChartCard| G[UI: gráficos, tablas, KPIs]
+    
+    subgraph Educación
+        H[Quiz]
+        I[Glosario]
+        J[Simulador]
+        K[Adivina la tendencia]
+    end
+    
+    subgraph Gamificación
+        L[useBadges]
+        M[constantes/badges.ts]
+        N[BadgeToast]
+    end
+    
+    E --> H
+    E --> I
+    E --> J
+    F --> K
+    H --> L
+    I --> L
+    J --> L
+    K --> L
+    L --> M
+    L --> N
 ```
 
-## Estructura del Proyecto
+### Capas de datos
+
+1. **API SUPEN** — fuente de datos públicos (webapps.supen.fi.cr).
+2. **apiService.ts** — fetcher con `assertArray`, timeout de 90s, validación de respuesta.
+3. **dataTransformers.ts** — transforma campos crudos (minúscula, con acentos) a tipos de dominio (PascalCase). **Nunca convierte `null` en `0`.**
+4. **useReportQuery** — React Query con caché, loading, error, refetch y lazy loading por pestaña.
+5. **Componentes UI** — Recharts para gráficos, `ChartCard` como contenedor accesible, `ReportView` para estados de carga/error.
+
+---
+
+## 📁 Estructura de carpetas
 
 ```
 SupenStats/
-├── public/                    # Archivos estáticos (favicon, iconos, OG image)
+├── README.md                 # Esta documentación
+├── CONTRIBUTING.md           # Guía de contribución detallada
+├── SPEC.md                   # Especificación técnica del proyecto
+├── vercel.json               # Configuración de despliegue en Vercel
+├── vite.config.ts            # Configuración de Vite
+├── tsconfig.json             # Configuración de TypeScript
+├── public/
+│   ├── og-image.png          # Imagen para redes sociales
+│   ├── manifest.webmanifest  # PWA manifest
+│   ├── sw.js                 # Service worker (offline)
+│   └── icons.svg             # Iconos del sistema
 ├── src/
-│   ├── api/                   # Capa de acceso a datos
-│   │   └── apiService.ts
-│   ├── types/                 # Tipos de dominio + Raw de la API
-│   │   └── supen.ts
-│   ├── utils/                 # Transformers, formateadores y cálculos de reportes
-│   │   ├── dataTransformers.ts
-│   │   └── reportes.ts
-│   ├── hooks/                 # React Query, filtros URL, tema, inflación
-│   │   ├── useReportQuery.ts
-│   │   ├── useTheme.ts
-│   │   └── useInflacion.ts
-│   ├── constants/             # Colores, rangos, filtros y notas educativas
-│   │   ├── supen.ts
-│   │   ├── filters.ts
-│   │   └── chartNotes.ts
-│   ├── routes/                # Rutas file-based (TanStack Router)
-│   │   ├── __root.tsx
-│   │   ├── index.tsx
-│   │   └── <reporte>.tsx
+│   ├── api/                  # Capa de datos (fetcher, tipos raw)
 │   ├── components/
-│   │   ├── layout/            # Header, ReportTabs, WelcomeScreen
-│   │   ├── charts/            # Gráficos de Recharts y tablas
-│   │   └── ui/                # ChartCard, FilterBar, ShareButton, estados
-│   └── main.tsx               # Punto de entrada
-├── docs/                      # SPEC/DESIGN por reporte + notas de API
-├── memory-bank/               # Contexto persistente para Cline
-├── index.html
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-├── vercel.json
-├── SPEC.md                    # Especificaciones técnicas
-└── README.md                  # Este archivo
+│   │   ├── charts/           # Componentes de gráficos Recharts
+│   │   ├── education/        # Quiz, glosario, simulador, mini-juegos
+│   │   ├── layout/           # Header, WelcomeScreen, ReportTabs, ThemeToggle
+│   │   ├── Compare/          # Comparador de operadoras
+│   │   └── ui/               # Componentes base (ChartCard, ReportView, etc.)
+│   ├── hooks/                # Custom hooks (useReportQuery, useBadges, etc.)
+│   ├── constants/            # Constantes (badges, quiz, glosario, filtros)
+│   ├── routes/               # Rutas de TanStack Router
+│   ├── types/                # Tipos de dominio y Raw* de la API
+│   └── utils/                # Utilidades (transformers, export, search)
+├── docs/                     # Documentación técnica
+│   ├── screenshots/          # Capturas de pantalla (placeholders)
+│   ├── architecture.md       # Arquitectura detallada
+│   ├── components.md         # Referencia de componentes UI
+│   ├── hooks.md              # Referencia de hooks
+│   ├── education.md          # Sistema educativo
+│   └── gamification.md       # Sistema de insignias
+├── memory-bank/              # Contexto persistente para asistentes de código
+├── scripts/                  # Scripts de Git (rama, limpieza)
+└── dist/                     # Build de producción (generado)
 ```
 
-## Componentes
 
-### Layout
+---
 
-- **Header**: Cabecera con gradiente azul, título y enlace al código fuente en GitHub
-- **ReportTabs**: Navegación horizontal entre los reportes (Inicio + pestañas: rendimiento, rendimiento-real, comisiones, comisión-rentabilidad, portafolio, afiliados, activos, beneficios, cuentas, transferencias, aportantes, demografía, simulador, pirámide, instrumentos)
-- **WelcomeScreen**: Pantalla de bienvenida con la lista de APIs de datos usadas
+## 🛤️ Roadmap
 
-### Charts
+### Fase 1 ✅ — Reportes base
+- 17 reportes con datos reales de SUPEN
+- Navegación agrupada con buscador
+- Brush/zoom en gráficos
+- Alternador gráfico/tabla y exportación CSV
 
-- **RendimientoChart**: Gráfico de líneas con múltiples series (una por OPC)
-- **ComisionesChart**: Evolución de la comisión de administración por OPC (líneas temporales)
-- **PortafolioChart**: Gráfico de donut con distribución por tipo de instrumento
-- **AfiliadosChart**: Gráfico de área con evolución temporal
-- **ActivosChart**: Gráfico de barras agrupadas por operadora
-- **BeneficiosChart**: Pensionados por OPC (barras horizontales)
-- **CuentasChart**: Activo neto del fondo por OPC (líneas temporales)
-- **TransferenciasChart**: Libre transferencia saliente por OPC
-- **Traslados** (`src/components/Traslados.tsx`): dos vistas — variación neta de afiliados (estimado derivado) y traslados reales desde /lt (balance neto por OPC + top flujos origen→destino)
-- **AportantesChart**: Afiliados vs Aportantes por OPC
-- **DemografiaChart**: Distribución por rango de edad y sexo
-- **Simulador** (`src/components/Simulador.tsx`): Proyección del saldo al retiro a partir de saldo/aporte/edad del usuario y la rentabilidad histórica promedio de la OPC
-- **PiramideChart** (`src/components/charts/PiramideChart.tsx`): Pirámide poblacional de afiliados/pensionados por sexo y rango de edad (barras opuestas)
-- **PortafolioISINChart**: Portafolio por instrumento (código ISIN)
+### Fase 2 ✅ — Educación
+- Glosario con buscador
+- Quiz interactivo con confetti
+- Metodología y transparencia de datos
 
-### UI
+### Fase 3 ✅ — Interactividad
+- Simulador de pensión con sliders
+- Comparador de operadoras
+- Dato del día y botón "Sorpréndeme"
 
-- **ChartCard**: contenedor estándar de gráfico (título + descripción accesible)
-- **FilterBar**: Filtros por fondo y rango de fechas, con **Consultar** y
-  **Restablecer**
-- **ShareButton**: copia la URL actual (con filtros y selectores) al portapapeles
-- **LoadingSkeleton / LoadingOverlay**: Estados de carga
-- **ErrorMessage**: Mensaje de error con botón de reintentar
-- **ErrorBoundary**: Aislamiento de errores por gráfico
+### Fase 4 ✅ — Gamificación
+- 14 insignias desbloqueables
+- Modo estudio (flashcards)
+- Mini-juego "Adivina la tendencia"
 
-## Hooks Personalizados
+### 🔮 Fase 5 — Planificada
+- Comparador de 3+ operadoras (extendido)
+- Racha de visitas diarias (streak)
+- "Mi resumen del año" (tipo Spotify Wrapped)
+- Flashcards del glosario como sección independiente
 
-### useReportQuery
+---
 
-Hook genérico de fetching sobre TanStack Query con estados de carga y error:
+## ❓ Preguntas frecuentes
 
-```typescript
-const { data, loading, error, refetch } = useReportQuery(key, fetchFn, { enabled })
-```
+### ¿Es este un producto oficial de SUPEN?
 
-- **data**: Array de datos obtenidos (nunca `undefined`; `[]` si no hay datos)
-- **loading**: `isFetching` (true en primera carga y en refetch con datos previos)
-- **error**: Mensaje de error o null
-- **refetch**: Función para reintentar la carga
-- **enabled**: (opcional) si es `false`, no ejecuta el fetch. Se usa cuando una
-  vista alterna entre endpoints (ej. `/traslados`).
+No. Es un proyecto de código abierto creado con fines educativos y de práctica de desarrollo web. Los datos provienen de la API pública de SUPEN pero la aplicación no está afiliada a la institución.
 
-### useUrlFilters / useUrlParam
+### ¿Puedo usar los datos para decisiones financieras?
 
-- `useUrlFilters(defaults)`: patrón draft/applied sobre los search params de la
-  URL. Devuelve `{ draft, setDraft, consult, reset }`.
-- `useUrlParam(key, isValid, fallback)`: lee y escribe un selector simple
-  (periodicidad, corte, métrica, vista) en la URL, con validación.
+Los datos se presentan con fines informativos y educativos. Para decisiones financieras reales, consulte directamente con SUPEN y un asesor financiero certificado.
 
-## Funciones de Transformación
+### ¿Cómo agrego un nuevo reporte?
 
-### Formateo de Fechas
+1. Definir tipos de dominio y `Raw*` en `src/types/supen.ts`
+2. Agregar función fetch en `src/api/apiService.ts`
+3. Agregar transformación en `src/utils/dataTransformers.ts`
+4. Crear ruta en `src/routes/<nombre>.tsx` con `createReportRoute<T>`
+5. Agregar componente de gráfico en `src/components/charts/`
+6. Registrar en `src/components/layout/ReportTabs.tsx`
 
-```typescript
-parseDate('2023-12-31')        // → Date object
-formatDate('2023-12-31')       // → "dic 2023"
-formatDateShort('2023-12-31')  // → "12/23"
-```
+Ver guía completa en [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-### Formateo de Moneda
+### ¿Cómo funcionan las insignias?
 
-```typescript
-formatCurrency(1500000)        // → "₡1.500.000"
-formatCurrencyMillions(1500000) // → "₡1.5M"
-formatCurrencyBillions(1500000000) // → "₡1.50B"
-```
+Las insignias se almacenan en `localStorage` del navegador. Cada insignia tiene una condición pura que se evalúa contra la actividad del usuario (visitas, quiz, sliders, etc.). Al desbloquearse, aparece una notificación accesible (`BadgeToast`). Ver [`docs/gamification.md`](docs/gamification.md).
 
-### Formateo de Porcentajes
+### ¿La aplicación funciona sin conexión?
 
-```typescript
-formatPercent(7.25)  // → "7.25%"
-```
+Sí, es una PWA (Progressive Web App) con service worker que cachea el app shell. Puede instalarse como aplicación en dispositivos móviles y de escritorio.
 
-### Agrupación y Ordenamiento
+---
 
-```typescript
-groupBy(data, 'Entidad')           // Agrupa por campo
-getUniqueValues(data, 'Entidad')   // Valores únicos
-sortByDateAsc(data, 'FechaCorte')  // Ordena por fecha ascendente
-```
+## 🤝 Contribuir
 
-## Desarrollo
+¡Las contribuciones son bienvenidas! Antes de abrir un PR:
 
-### Comandos Disponibles
+1. Lee [`CONTRIBUTING.md`](CONTRIBUTING.md) para convenciones de ramas y commits.
+2. Ejecuta `npm run verify` para asegurar calidad de código.
+3. Para reportes nuevos, incluye `SPEC.md` y `DESIGN.md` en `docs/reportes/<nombre>/`.
 
-```bash
-npm run dev       # Servidor de desarrollo con hot reload (puerto 3000)
-npm run build     # Build para producción
-npm run preview   # Vista previa del build
-npm run lint      # Verificación de código (oxlint)
-npm run typecheck # Verificación de tipos (tsc -b --noEmit)
-npm test          # Tests unitarios (Vitest)
-npm run verify    # lint + typecheck + tests
-```
+Tipos de rama válidos: `feat`, `fix`, `chore`, `refactor`, `hotfix`, `docs`.
 
-### Agregar Nuevo Gráfico
+---
 
-1. Crear componente en `src/components/charts/` usando `ChartCard` + `ChartNote`.
-2. Agregar un id y una etiqueta en `TABS` en `src/components/layout/ReportTabs.tsx`.
-3. Crear la ruta en `src/routes/<nombre>.tsx` con `createFileRoute` +
-   `createReportRoute<T>` (o una variante local si compone varias queries).
-4. Definir los defaults del reporte en `src/constants/filters.ts` si usa fechas.
+## 📄 Licencia
 
-### Agregar Nuevo Endpoint
+Este proyecto es de código abierto y está disponible para fines educativos. Los datos de SUPEN son públicos y provienen de [webapps.supen.fi.cr](https://webapps.supen.fi.cr/Estadisticas/ui).
 
-1. Definir la interfaz de dominio **y** el tipo `Raw*` en `src/types/supen.ts`
-   (verificar la forma real contra la API y documentarla en
-   `docs/docs/api-notes.md`).
-2. Agregar función fetch en `src/api/apiService.ts` (con `assertArray`).
-3. Agregar la transformación en `src/utils/dataTransformers.ts` (preservar
-   `null`, nunca convertir ausencias a `0`).
-4. Conectarla en la ruta del reporte con `useReportQuery`.
+---
 
-> Para el detalle completo de convenciones, ver `CONTRIBUTING.md`.
+## 🙌 Créditos
 
-## Troubleshooting
+| Recurso | Enlace |
+|---------|--------|
+| Datos | [Superintendencia de Pensiones (SUPEN)](https://www.supen.fi.cr) |
+| Gráficos | [Recharts](https://recharts.org) |
+| Estilos | [Tailwind CSS](https://tailwindcss.com) |
+| Framework | [React](https://react.dev) |
+| Build | [Vite](https://vitejs.dev) |
+| Ruteo | [TanStack Router](https://tanstack.com/router) |
+| Estado remoto | [TanStack Query](https://tanstack.com/query) |
 
-### Error CORS
+---
 
-El proxy de Vite debería resolver esto en desarrollo. Para producción, configurar un proxy inverso.
-
-### Datos No Se Muestran
-
-1. Verificar que la API de SUPEN esté accesible
-2. Revisar la consola del navegador para errores
-3. Verificar los parámetros de filtro (Fondo, Fechas)
-
-### Build Falla
-
-```bash
-# Limpiar node_modules y reinstalar
-rm -rf node_modules package-lock.json
-npm install
-```
-
-## Contribuir
-
-Las convenciones de ramas, commits, verificación y creación de reportes están en
-[`CONTRIBUTING.md`](CONTRIBUTING.md). El contexto persistente del proyecto para
-asistentes de código vive en `memory-bank/`.
-
-## Créditos
-
-- Datos: [Superintendencia de Pensiones de Costa Rica (SUPEN)](https://www.supen.fi.cr)
-- Gráficos: [Recharts](https://recharts.org)
-- Estilos: [Tailwind CSS](https://tailwindcss.com)
-- Framework: [React](https://react.dev)
-- Build: [Vite](https://vitejs.dev)
+<p align="center">
+  <b>SUPEN Stats</b> — Educación financiera hecha accesible para todos los costarricenses 🇨🇷
+</p>
